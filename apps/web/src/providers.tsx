@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { BrowserRouter } from "react-router-dom"
 import { useState, type ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -18,7 +17,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>{children}</BrowserRouter>
+      {children}
     </QueryClientProvider>
   )
 }
