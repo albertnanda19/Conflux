@@ -1,12 +1,12 @@
 # STATUS.md
 
-**Last updated:** 2026-06-16 (Phase 8: Modul 1 Inbox UI Complete)
+**Last updated:** 2026-06-16 (Phase 8: Modul 2 — Final Integration + Verification)
 
 ## Current State
 
 | Category | Status |
 |----------|--------|
-| **Project Phase** | 🔨 Foundation — Modul 1 Inbox UI Complete (mock data) |
+| **Project Phase** | 🔨 Foundation — Modul 2 AI Auto-Reply UI COMPLETE (Phase 1-8) |
 | **PRD** | ✅ Final (v1.2) — Document Extraction + Feature-Based Architecture |
 | **Tech Stack** | ✅ Finalized (Bun + Elysia + Drizzle + Vercel AI SDK) |
 | **Backend Architecture** | ✅ Feature-based (DEC-010) — 14 modules + 4 workers + shared lib |
@@ -21,10 +21,10 @@
 | **Database Schema** | ✅ Drizzle ORM schema (12 tables), seeded |
 | **Testing** | ✅ Vitest (backend+frontend) + Playwright (E2E config) |
 | **Modul 1 Inbox UI** | ✅ Complete (Phase 1-8) — All 5.1.1–5.1.6 with mock data |
+| **Modul 2 AI Auto-Reply UI** | ✅ Complete (Phase 1-8) — Settings + Knowledge Base + AI Chat Preview |
 
 ## Open Items
 
-- [ ] Setup CI/CD pipeline (GitHub Actions)
 - [ ] Setup WebSocket server untuk real-time messaging
 - [ ] Integrasi WhatsApp Business API
 - [ ] Backend API Modul 1 — conversations, contacts, messages endpoints
@@ -38,10 +38,19 @@ _(None)_
 
 1. **WebSocket** — Real-time messaging foundation
 2. **Backend conversations API** — CRUD conversations + messages
-3. **Connect inbox UI ke backend** — ganti mock data dengan API calls
+3. **Connect frontend ke backend API** — ganti mock data
 
 ## Done Items
 
+- [x] Modul 2 Phase 8: Final Integration + Verification — Typecheck zero errors, Vite build success (all chunks verified), all pages navigable, all components verified present
+- [x] Modul 2 Phase 7: AI Chat Preview + Persona Config UI — PersonaConfig (name, language, tone selector, system prompt), AIChatPreview (chat simulator with mock responses), "Test AI" button in Persona section
+- [x] Modul 2 Phase 6: Handoff Configuration UI — HandoffConfig component with trigger keywords (add/remove chips), conversion signal toggles, handoff message editor, max AI messages input, priority notification toggle
+- [x] Modul 2 Phase 5: Working Hours Configuration UI — WorkingHours component with per-day toggles, time pickers, timezone display, OOO message textarea
+- [x] Modul 2 Phase 4: Knowledge Base Document Editor — KBDocumentEditor (Tiptap), KnowledgeBasePage detail popup with toolbar, mock content for all 8 documents
+- [x] Modul 2 Phase 3: Knowledge Base Document List + Upload — KBDocumentList, KBDocumentCard, KBUploadModal, KBCategoryFilter, /knowledge-base route
+- [x] Modul 2 Phase 2: AI Provider Configuration — ProviderConfig (3 provider cards, drag-to-reorder, toggle, status badges, advanced settings)
+- [x] Modul 2 Phase 1: Foundation — Tabbed Settings + Shared Infrastructure (pill-tab, mock/ai-settings.ts, stores/ai-settings.ts, SettingsPage rewrite)
+- [x] Modul 2 AI Auto-Reply UI COMPLETE (Phase 1-8) — Full settings page with all 5 sections (AI toggle, providers, working hours, handoff, persona) + knowledge base page (list, upload, editor) + AI chat preview
 - [x] Modul 1 Inbox UI Complete (Phases 1-8) — Full 5.1.1–5.1.6 UI with mock data simulation, zero TS errors, build success
 - [x] Phase 8: Wire & verify — typecheck zero errors, build success (347KB gzip total), all pages navigable
 - [x] Phase 7: ContactDetailPanel — Info/History tabs, editable notes, activity timeline, conversation history, LabelBadge integration

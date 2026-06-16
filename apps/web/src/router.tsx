@@ -20,6 +20,9 @@ const SettingsPage = lazy(() =>
 const LabelsPage = lazy(() =>
   import("./pages/LabelsPage").then((m) => ({ default: m.LabelsPage })),
 )
+const KnowledgeBasePage = lazy(() =>
+  import("./pages/KnowledgeBasePage").then((m) => ({ default: m.KnowledgeBasePage })),
+)
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 )
@@ -105,7 +108,7 @@ export const router = createBrowserRouter([
         path: "knowledge-base",
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ContactsPage />
+            <KnowledgeBasePage />
           </Suspense>
         ),
       },

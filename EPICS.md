@@ -31,12 +31,12 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 
 ### Minggu 7–10: Modul 2 — AI Auto-Reply Engine
 
-- [ ] 🔴 Knowledge base management (CRUD + upload dokumen)
-- [ ] 🔴 Integrasi AI provider (Gemini Flash + fallback chain)
-- [ ] 🔴 Logika aktivasi/deaktivasi AI
-- [ ] 🔴 Handoff otomatis ke human agent
-- [ ] 🔴 Pengaturan jam kerja
-- [ ] 🔴 AI persona konfigurasi
+- [ ] 🟢 Knowledge base management (CRUD + upload dokumen + editor) — UI mock selesai (Phase 1-4)
+- [ ] 🟢 Integrasi AI provider (Gemini Flash + fallback chain) — UI mock selesai (Phase 1-2)
+- [ ] 🟢 Logika aktivasi/deaktivasi AI — UI mock selesai (toggle ready)
+- [ ] 🟢 Handoff otomatis ke human agent — UI mock selesai (Phase 6)
+- [ ] 🟢 Pengaturan jam kerja — UI mock selesai (Phase 5)
+- [ ] 🟢 AI persona konfigurasi — UI mock selesai (Phase 7)
 
 ### Minggu 11–12: Modul 4 — CRM Dasar
 
