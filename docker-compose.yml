@@ -3,7 +3,7 @@ services:
     image: pgvector/pgvector:pg16
     container_name: dbb-psc-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: dbb_psc
       POSTGRES_USER: postgres
