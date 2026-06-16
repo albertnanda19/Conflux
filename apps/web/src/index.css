@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 210 40% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 40% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 10%;
+    --primary: 0 0% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 210 40% 10%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 210 20% 50%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 210 40% 10%;
+    --destructive: 0 72% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 210 80% 50%;
+    --radius: 0.75rem;
+    --sidebar: 0 0% 98%;
+    --sidebar-foreground: 210 40% 10%;
+    --sidebar-border: 210 20% 90%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 210 40% 10%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ink font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .pill-button {
+    @apply rounded-full px-6 py-2.5 text-sm font-semibold transition-colors;
+  }
+
+  .pill-button-primary {
+    @apply pill-button bg-ink text-white hover:bg-charcoal;
+  }
+
+  .pill-button-secondary {
+    @apply pill-button bg-transparent text-ink border border-ink hover:bg-surface;
+  }
+
+  .pill-button-tertiary {
+    @apply pill-button bg-canvas text-ink border border-hairline hover:bg-surface;
+  }
+
+  .pill-tab {
+    @apply rounded-full px-4 py-1.5 text-sm border border-hairline text-steel bg-canvas;
+  }
+
+  .pill-tab-active {
+    @apply pill-tab bg-ink text-white border-ink;
+  }
+
+  .card-base {
+    @apply bg-canvas rounded-xl border border-hairline p-5;
+  }
+
+  .card-channel {
+    @apply rounded-hero p-8 text-white;
+  }
+
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full px-2.5 py-0.5;
+  }
+
+  .badge-new {
+    @apply bg-coral text-white text-xs font-semibold rounded-full px-2.5 py-0.5;
+  }
+
+  .badge-info {
+    @apply bg-brand-blue-200 text-brand-blue-deep text-xs font-semibold rounded-full px-2.5 py-0.5;
+  }
+
+  .input-field {
+    @apply w-full h-10 px-3 rounded-md border border-hairline bg-canvas text-ink text-sm
+           focus:outline-none focus:border-2 focus:border-brand-blue-deep
+           placeholder:text-stone;
+  }
+
+  .input-error {
+    @apply border border-red-400 focus:border-red-500;
+  }
+}

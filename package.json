@@ -1,0 +1,20 @@
+{
+  "name": "dbb-psc",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"bun run dev:web\" \"bun run dev:server\"",
+    "dev:web": "bun --filter @dbb-psc/web dev",
+    "dev:server": "bun --filter @dbb-psc/server dev",
+    "build": "bun --filter @dbb-psc/web build && bun --filter @dbb-psc/server build",
+    "lint": "bun --filter @dbb-psc/* lint",
+    "db:migrate": "bun --filter @dbb-psc/server db:migrate",
+    "db:seed": "bun --filter @dbb-psc/server db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
