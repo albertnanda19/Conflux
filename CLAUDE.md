@@ -155,6 +155,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 | **File Storage** | MinIO (dev) / Cloudflare R2 (prod) | Media attachments from chat |
 | **AI** | Vercel AI SDK | Multi-provider: Gemini → OpenRouter → GPT-4o-mini |
 | **Error Tracking** | Sentry Cloud (free tier) | 5K events/month |
+| **Unit/Integration Test** | Vitest | Fast, native ESM, TypeScript-first. Backend & Frontend |
+| **E2E Test** | Playwright | Cross-browser testing untuk critical user flows |
 | **Containerization** | Docker + Docker Compose | Dev environment consistency |
 | **CI/CD** | GitHub Actions | Free for private repos |
 
@@ -532,6 +534,144 @@ Pastikan backend sedang running (`bun run dev:server`).
 - Render all list items? → NEVER if >50 — paginate/virtualize
 - Raw fetch/axios? → NEVER — use TanStack Query
 - Manual WebSocket reconnection? → Implement it, never assume it works
+
+---
+
+# SECTION 5.5: MANDATORY TESTING PROTOCOL (NON-NEGOTIABLE)
+
+## ⛔ Rule Utama
+
+**Setiap fitur baru, endpoint baru, atau perubahan behavior WAJIB punya test sebelum dianggap selesai. Tidak ada pengecualian.**
+
+## Tujuan
+
+- **Regression detection** — AI agent atau developer tidak sengaja merusak fitur lain
+- **Refactor safety** — percaya diri mengubah kode tanpa takut pecah
+- **Living documentation** — test menjelaskan apa yang kode seharusnya lakukan
+- **CI/CD gate** — test harus PASS sebelum code di-merge
+
+## Framework
+
+| Layer | Framework | Config Location |
+|---|---|---|
+| **Backend unit/integration** | Vitest | `apps/server/vitest.config.ts` |
+| **Frontend unit/integration** | Vitest | `apps/web/vitest.config.ts` |
+| **E2E** | Playwright | `playwright.config.ts` (root) |
+
+## Apa yang Harus Ditest
+
+### Backend (apps/server/)
+
+| Component | Test Type | Contoh |
+|---|---|---|
+| **Service layer** | Unit test | `contacts/services.test.ts` — test createContact, searchContacts logic |
+| **Query layer** | Integration test | `contacts/queries.test.ts` — test against real/test database |
+| **Handler layer** | Integration test | `contacts/handlers.test.ts` — test HTTP request/response |
+| **Auth middleware** | Unit test | `lib/auth.test.ts` — test JWT verify, role check |
+| **AI fallback chain** | Unit test | `lib/ai.test.ts` — test fallback provider behavior |
+| **Workers** | Integration test | `workers/document-worker.test.ts` — test queue processing |
+| **Zod schemas** | Unit test | `contacts/types.test.ts` — test validation (valid + invalid) |
+
+### Frontend (apps/web/)
+
+| Component | Test Type | Contoh |
+|---|---|---|
+| **Zustand stores** | Unit test | `stores/ui.test.ts` — test state transitions |
+| **Utility functions** | Unit test | `lib/utils.test.ts` — test formatDate, formatRelativeTime |
+| **Complex components** | Integration test | `components/InboxList.test.tsx` — test rendering + interaction |
+| **Forms** | Integration test | Contact form validation + submission |
+| **Router** | Integration test | Navigation between pages |
+
+### E2E (Critical Flows Only)
+
+| Flow | Test |
+|---|---|
+| Login → Dashboard | Auth flow works |
+| Inbox → Select conversation → Reply | Core messaging flow |
+| Create contact → Assign to pipeline | CRM flow |
+| Upload document to knowledge base → AI uses it | KB + AI flow |
+
+## Test File Convention
+
+```
+# Unit test — di samping file yang ditest
+apps/server/src/modules/contacts/services.ts
+apps/server/src/modules/contacts/services.test.ts
+
+# Integration test — suffix .integration.test.ts
+apps/server/src/modules/contacts/queries.integration.test.ts
+
+# E2E test — di folder e2e/
+apps/web/e2e/auth.spec.ts
+apps/web/e2e/inbox.spec.ts
+```
+
+## Naming Convention
+
+```typescript
+// services.test.ts
+describe('createContact', () => {
+  it('should create contact with valid data', () => { ... })
+  it('should throw error when phone number already exists', () => { ... })
+  it('should default pipeline_status to new_lead', () => { ... })
+})
+
+// handlers.test.ts
+describe('POST /api/v1/contacts', () => {
+  it('should return 201 with created contact', () => { ... })
+  it('should return 400 with invalid payload', () => { ... })
+  it('should return 401 without auth token', () => { ... })
+})
+```
+
+## Coverage Thresholds
+
+| Layer | Minimum | Target |
+|---|---|---|
+| **Services** | 80% | 90%+ |
+| **Handlers** | 80% | 90%+ |
+| **Queries** | 70% | 80%+ |
+| **Stores** | 80% | 90%+ |
+| **Utils** | 90% | 95%+ |
+| **E2E** | All critical flows | All flows |
+
+## Test Execution
+
+```bash
+# Backend unit tests
+cd apps/server && bun run test
+
+# Frontend unit tests
+cd apps/web && bun run test
+
+# All unit tests
+bun run test
+
+# E2E tests
+bun run test:e2e
+
+# Coverage report
+bun run test:coverage
+```
+
+## CI/CD Gate
+
+GitHub Actions workflow **WAJIB** include:
+1. `bun run test` — all unit/integration tests pass
+2. `bun run test:coverage` — coverage above threshold
+3. `bun run typecheck` — TypeScript zero errors
+4. `bun run build` — build success
+
+**Merge block jika ada 1 saja yang gagal.**
+
+## Anti-Pattern — Yang TIDAK Boleh
+
+- ❌ Menulis kode fitur baru tanpa test → task TIDAK selesai
+- ❌ Skip test karena "nanti saja" → TIDAK ada nanti
+- ❌ Test yang hanya happy path → WAJIB test error cases juga
+- ❌ Test yang hardcode data tanpa cleanup → test harus isolated
+- ❌ Mock berlebihan → mock hanya external dependencies (DB, API, Redis)
+- ❌ Test yang flaky (kadang pass kadang fail) → fix atau hapus
 
 ---
 

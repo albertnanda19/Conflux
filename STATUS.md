@@ -6,18 +6,20 @@
 
 | Category | Status |
 |----------|--------|
-| **Project Phase** | 🔨 Foundation — Frontend + Backend Boilerplate Done |
+| **Project Phase** | 🔨 Foundation — Full Stack Verified |
 | **PRD** | ✅ Final (v1.2) — Document Extraction + Feature-Based Architecture |
 | **Tech Stack** | ✅ Finalized (Bun + Elysia + Drizzle + Vercel AI SDK) |
 | **Backend Architecture** | ✅ Feature-based (DEC-010) — 14 modules + 4 workers + shared lib |
+| **Env Config** | ✅ Single `.env` at root (DEC-011) |
 | **Icons** | ✅ itsHover (primary) + Lordicon (fallback) + Custom SVG (brand only) |
 | **Skills Installed** | ✅ 6/6 (shadcn, frontend-design, vercel-react-best-practices, tdd, sentry-cli, webapp-testing) |
 | **Core Docs** | ✅ Created (CLAUDE.md, STATUS.md, PROGRESS.md, DECISIONS.md, EPICS.md, CHANGELOG.md) |
 | **Project Setup** | ✅ Monorepo with Bun workspaces |
-| **Docker Compose** | ✅ PostgreSQL pgvector, Redis, MinIO |
+| **Docker Compose** | ✅ PostgreSQL pgvector (port 5433), Redis, MinIO |
 | **Frontend Boilerplate** | ✅ Vite + React + Tailwind + shadcn/ui + Router + Zustand + TanStack Query |
 | **Backend Boilerplate** | ✅ Elysia + Drizzle ORM + BullMQ + Auth (JWT) + Vercel AI SDK |
-| **Database Schema** | ✅ Drizzle ORM schema (12+ tables) |
+| **Database Schema** | ✅ Drizzle ORM schema (12 tables), seeded |
+| **Testing** | ✅ Vitest (backend+frontend) + Playwright (E2E config) |
 
 ## Open Items
 

@@ -12,9 +12,17 @@
     "build": "bun --filter @dbb-psc/web build && bun --filter @dbb-psc/server build",
     "lint": "bun --filter @dbb-psc/* lint",
     "db:migrate": "bun --filter @dbb-psc/server db:migrate",
-    "db:seed": "bun --filter @dbb-psc/server db:seed"
+    "db:seed": "bun --filter @dbb-psc/server db:seed",
+    "test": "bun --filter @dbb-psc/server test && bun --filter @dbb-psc/web test",
+    "test:server": "bun --filter @dbb-psc/server test",
+    "test:web": "bun --filter @dbb-psc/web test",
+    "test:e2e": "playwright test",
+    "test:coverage": "bun --filter @dbb-psc/server test:coverage && bun --filter @dbb-psc/web test:coverage",
+    "typecheck": "bun --filter @dbb-psc/server typecheck && bun --filter @dbb-psc/web typecheck"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@playwright/test": "^1.61.0",
+    "concurrently": "^9.1.2",
+    "vitest": "^4.1.9"
   }
 }

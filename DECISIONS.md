@@ -261,3 +261,29 @@ Log keputusan arsitektural & teknis. Setiap keputusan diberi kode DEC-XXX.
 - 4 BullMQ workers di `workers/`
 - 6 shared utilities di `lib/`
 - Module structure: routes.ts → handlers.ts → services.ts → queries.ts → types.ts
+
+---
+
+## DEC-011: Single .env File at Monorepo Root
+
+**Status:** Final
+**Tanggal:** 2026-06-16
+
+**Keputusan:** Hanya ada satu file `.env` di root monorepo. Backend memuat env dari root pakai `--env-file=../../.env` pada script dev/start.
+
+**Alternatives:**
+- Duplikat `.env` per app (apps/server/.env, apps/web/.env) — mudah tapi risk terhadap drift
+- Single `.env` di root + `--env-file` flag — dipilih
+- dotenv library — tidak perlu, Bun support native `--env-file`
+
+**Alasan:**
+- Single source of truth — tidak ada risk `.env` beda antar apps
+- Bun native support `--env-file` — tidak perlu install dotenv
+- Lebih mudah maintain — ubah sekali di root, semua terpengaruh
+- `apps/server/.env` sering terlupakan di `.gitignore` dan bocor ke repo
+
+**Impact:**
+- `.env` hanya di root monorepo
+- `apps/server/package.json` dev/start script pakai `--env-file=../../.env`
+- `.gitignore` root harus include `.env`
+- `apps/web/` (Vite) baca `VITE_*` dari root `.env` via Vite's built-in support

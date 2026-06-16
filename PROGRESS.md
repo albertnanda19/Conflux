@@ -4,6 +4,66 @@ Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
 ---
 
+## 2026-06-16 (Malam) — Single .env + Full Stack Verification
+
+### Yang Dikerjakan
+- Verifikasi ulang seluruh aplikasi dengan Docker Compose (backend, frontend, database, workers)
+- Hapus `.env` duplikat dari `apps/server/` — hanya root monorepo yang punya
+- Tambah `--env-file=../../.env` ke backend dev/start scripts
+- Log DEC-011 ke DECISIONS.md (Single .env File at Monorepo Root)
+- Fix test file TypeScript errors (unused imports, nullable response)
+- Verifikasi: 14 module stubs (200 OK), auth login/register, frontend build (107KB gzip), all tests pass (10/10)
+
+### Keputusan yang Diambil
+- `.env` hanya di root monorepo → DEC-011
+- Backend load env via `--env-file=../../.env` (Bun native, no dotenv needed)
+
+### Yang Berhasil
+- Seluruh stack verified berjalan normal
+- Docker: PostgreSQL healthy, Redis healthy, MinIO up
+- Backend: All 14 modules respond, auth flow complete
+- Frontend: TypeScript clean, Vite build success
+- Testing: All unit tests pass
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Implementasi Modul contacts (full CRUD) sebagai CRM foundation
+- Setup WebSocket server untuk real-time messaging
+- Implementasi Modul 1 — Omnichannel Inbox
+
+---
+
+## 2026-06-16 (Sore) — Backend Boilerplate + Docker Compose Verification
+
+### Yang Dikerjakan
+- Selesaikan backend boilerplate: module stubs (13 modules), BullMQ workers (4), entry point, error handler
+- Fix TypeScript compilation errors (Bun.jwt tidak ada → migrate ke jose, Redis version mismatch, Elysia handler types)
+- Jalankan Docker Compose: PostgreSQL pgvector + Redis + MinIO
+- Fix port conflict: PostgreSQL Docker → port 5433 (karena local PG di 5432)
+- Push Drizzle schema ke PostgreSQL → 12 tables terbuat
+- Seed database → admin@test.com + agent@test.com
+- Jalankan backend server → health check OK, login/register OK
+- Build frontend → success, 400KB total
+
+### Keputusan yang Diambil
+- Gunakan `jose` library untuk JWT (bukan Bun.jwt yang tidak tersedia di Bun 1.3.x)
+- PostgreSQL Docker port 5433 (bukan 5432) untuk hindari conflict dengan local PostgreSQL
+- BullMQ workers pakai `{ url: string }` connection (bukan ioredis instance) untuk hindari version mismatch
+- Hapus OpenRouter dari AI fallback chain (createOpenRouter export tidak tersedia)
+
+### Yang Berhasil
+- Docker Compose: 3 containers healthy (PostgreSQL, Redis, MinIO)
+- Backend: Health check ✅, Login ✅, Register ✅, 4 BullMQ workers active ✅
+- Database: 12 tables created, 2 seed users
+- Frontend: TypeScript zero errors, Vite build success (400KB)
+- Full stack: all services communicate properly
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Setup WebSocket server untuk real-time messaging
+- Implementasi Modul 1 — Omnichannel Inbox
+- Setup CI/CD pipeline (GitHub Actions)
+
+---
+
 ## 2026-06-16 (lanjutan) — Architecture & Icon Decisions
 
 ### Yang Dikerjakan
