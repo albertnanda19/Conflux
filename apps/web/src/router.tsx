@@ -17,6 +17,9 @@ const PipelinePage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })),
 )
+const LabelsPage = lazy(() =>
+  import("./pages/LabelsPage").then((m) => ({ default: m.LabelsPage })),
+)
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 )
@@ -63,6 +66,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <PipelinePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "labels",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <LabelsPage />
           </Suspense>
         ),
       },

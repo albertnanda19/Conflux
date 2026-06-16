@@ -1,17 +1,24 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { useInboxStore } from '@/stores/ui'
-import { MOCK_CONVERSATIONS, MOCK_MESSAGES, type Message } from '@/mock/inbox'
+import { MOCK_CONVERSATIONS, MOCK_AGENTS, MOCK_MESSAGES, type Message, type ConversationStatus, type Agent } from '@/mock/inbox'
 import { ChannelIcon } from './ChannelIcon'
+import { MessageInput } from './MessageInput'
+import { MediaMessage } from './MediaMessage'
+import { ActionBar } from './ActionBar'
 
 export function ChatPanel() {
   const { selectedConversationId, detailPanelOpen, setDetailPanelOpen } = useInboxStore()
-  const [inputValue, setInputValue] = useState('')
   const [messages, setMessages] = useState(MOCK_MESSAGES)
+  const [convOverrides, setConvOverrides] = useState<Record<string, { status?: ConversationStatus; agent?: Agent | null }>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const conversation = MOCK_CONVERSATIONS.find((c) => c.id === selectedConversationId)
   const conversationMessages = selectedConversationId ? messages[selectedConversationId] ?? [] : []
+
+  const overrides = selectedConversationId ? convOverrides[selectedConversationId] : undefined
+  const currentStatus = overrides?.status ?? conversation?.status ?? 'open'
+  const currentAgent = overrides?.agent !== undefined ? overrides.agent ?? undefined : conversation?.assignedAgent
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -37,15 +44,16 @@ export function ChatPanel() {
     return groups
   }, [conversationMessages])
 
-  const handleSend = () => {
-    if (!inputValue.trim() || !selectedConversationId) return
+  const handleSend = useCallback((content: string) => {
+    if (!selectedConversationId) return
     const newMsg: Message = {
       id: `m${Date.now()}`,
       conversationId: selectedConversationId,
       direction: 'outbound',
       senderType: 'agent',
       senderName: 'Anda',
-      content: inputValue.trim(),
+      content,
+      contentType: 'text',
       status: 'sent',
       createdAt: new Date().toISOString(),
     }
@@ -53,8 +61,88 @@ export function ChatPanel() {
       ...prev,
       [selectedConversationId]: [...(prev[selectedConversationId] ?? []), newMsg],
     }))
-    setInputValue('')
-  }
+  }, [selectedConversationId])
+
+  const handleFileSelect = useCallback((file: File) => {
+    if (!selectedConversationId) return
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    const contentType = isImage ? 'image' : isVideo ? 'video' : 'document'
+    const newMsg: Message = {
+      id: `m${Date.now()}`,
+      conversationId: selectedConversationId,
+      direction: 'outbound',
+      senderType: 'agent',
+      senderName: 'Anda',
+      content: file.name,
+      contentType,
+      status: 'sent',
+      createdAt: new Date().toISOString(),
+      mediaUrl: URL.createObjectURL(file),
+      fileName: file.name,
+      fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+    }
+    setMessages((prev) => ({
+      ...prev,
+      [selectedConversationId]: [...(prev[selectedConversationId] ?? []), newMsg],
+    }))
+  }, [selectedConversationId])
+
+  const handleAssignAgent = useCallback((agentId: string) => {
+    if (!selectedConversationId) return
+    const agent = MOCK_AGENTS.find((a) => a.id === agentId)
+    setConvOverrides((prev) => ({
+      ...prev,
+      [selectedConversationId]: { ...prev[selectedConversationId], agent: agent ?? null },
+    }))
+  }, [selectedConversationId])
+
+  const handleTransfer = useCallback((agentId: string, notes: string) => {
+    if (!selectedConversationId) return
+    const agent = MOCK_AGENTS.find((a) => a.id === agentId)
+    setConvOverrides((prev) => ({
+      ...prev,
+      [selectedConversationId]: { ...prev[selectedConversationId], agent: agent ?? null },
+    }))
+    if (notes) {
+      const systemMsg: Message = {
+        id: `m${Date.now()}`,
+        conversationId: selectedConversationId,
+        direction: 'outbound',
+        senderType: 'system',
+        content: `Percakapan ditransfer. Catatan: ${notes}`,
+        contentType: 'text',
+        status: 'delivered',
+        createdAt: new Date().toISOString(),
+      }
+      setMessages((prev) => ({
+        ...prev,
+        [selectedConversationId]: [...(prev[selectedConversationId] ?? []), systemMsg],
+      }))
+    }
+  }, [selectedConversationId])
+
+  const handleResolve = useCallback(() => {
+    if (!selectedConversationId) return
+    setConvOverrides((prev) => ({
+      ...prev,
+      [selectedConversationId]: {
+        ...prev[selectedConversationId],
+        status: currentStatus === 'resolved' ? 'open' : 'resolved',
+      },
+    }))
+  }, [selectedConversationId, currentStatus])
+
+  const handleSnooze = useCallback(() => {
+    if (!selectedConversationId) return
+    setConvOverrides((prev) => ({
+      ...prev,
+      [selectedConversationId]: {
+        ...prev[selectedConversationId],
+        status: currentStatus === 'snoozed' ? 'open' : 'snoozed',
+      },
+    }))
+  }, [selectedConversationId, currentStatus])
 
   if (!conversation) {
     return (
@@ -101,6 +189,16 @@ export function ChatPanel() {
         </div>
       </button>
 
+      <ActionBar
+        contactName={conversation.contact.name}
+        assignedAgent={currentAgent}
+        status={currentStatus}
+        onAssignAgent={handleAssignAgent}
+        onTransfer={handleTransfer}
+        onResolve={handleResolve}
+        onSnooze={handleSnooze}
+      />
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {groupedMessages.map((group) => (
           <div key={group.date}>
@@ -118,96 +216,74 @@ export function ChatPanel() {
         ))}
       </div>
 
-      <div className="px-4 py-3 border-t border-hairline flex-shrink-0">
-        <div className="flex items-end gap-2">
-          <div className="flex-1 relative">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              placeholder="Ketik pesan..."
-              rows={1}
-              className="w-full resize-none rounded-lg border border-hairline bg-canvas px-3 py-2.5 text-sm text-ink placeholder:text-stone focus:outline-none focus:border-brand-blue-deep max-h-24"
-            />
-          </div>
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            className={cn(
-              'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
-              inputValue.trim()
-                ? 'bg-brand-blue text-white hover:bg-brand-blue-deep'
-                : 'bg-surface text-stone cursor-not-allowed',
-            )}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <MessageInput onSend={handleSend} onFileSelect={handleFileSelect} />
     </div>
   )
 }
 
 function MessageBubble({ message }: { message: Message }) {
   const isOutbound = message.direction === 'outbound'
+  const hasMedia = message.contentType && message.contentType !== 'text'
 
   return (
     <div className={cn('flex', isOutbound ? 'justify-end' : 'justify-start')}>
-      <div
-        className={cn(
-          'max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
-          isOutbound ? 'bg-brand-blue text-white rounded-br-md' : 'bg-surface text-ink rounded-bl-md',
-        )}
-      >
-        {!isOutbound && message.senderType === 'ai' && (
-          <span className="block text-[10px] font-semibold text-cyan-500 mb-1">🤖 AI Assistant</span>
-        )}
-        {!isOutbound && message.senderType === 'agent' && message.senderName && (
-          <span className="block text-[10px] font-semibold text-brand-blue mb-1">{message.senderName}</span>
-        )}
-        <p className="whitespace-pre-wrap">{message.content}</p>
+      <div className="max-w-[75%]">
         <div
           className={cn(
-            'flex items-center gap-1 mt-1',
-            isOutbound ? 'justify-end' : 'justify-start',
+            'rounded-2xl overflow-hidden',
+            isOutbound ? 'bg-brand-blue text-white rounded-br-md' : 'bg-surface text-ink rounded-bl-md',
+            hasMedia && (isOutbound ? 'bg-transparent text-ink' : 'bg-transparent text-ink'),
           )}
         >
-          <span className={cn('text-[10px]', isOutbound ? 'text-white/60' : 'text-steel')}>
-            {new Date(message.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          {isOutbound && (
-            <span className="flex-shrink-0">
-              {message.status === 'read' && (
-                <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M1.5 12.5l5 5L17.5 7" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 12.5l5 5L22.5 7" />
-                </svg>
+          {hasMedia ? (
+            <MediaMessage message={message} isOutbound={isOutbound} />
+          ) : (
+            <div className="px-3.5 py-2.5 text-sm leading-relaxed">
+              {!isOutbound && message.senderType === 'ai' && (
+                <span className="block text-[10px] font-semibold text-cyan-500 mb-1">🤖 AI Assistant</span>
               )}
-              {message.status === 'delivered' && (
-                <svg className="w-4 h-4 text-emerald-500/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M1.5 12.5l5 5L17.5 7" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 12.5l5 5L22.5 7" />
-                </svg>
+              {!isOutbound && message.senderType === 'agent' && message.senderName && (
+                <span className="block text-[10px] font-semibold text-brand-blue mb-1">{message.senderName}</span>
               )}
-              {message.status === 'sent' && (
-                <svg className="w-3.5 h-3.5 text-emerald-500/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12.5l5 5L20 7" />
-                </svg>
-              )}
-              {message.status === 'failed' && (
-                <svg className="w-3.5 h-3.5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              )}
-            </span>
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            </div>
           )}
+          <div
+            className={cn(
+              'flex items-center gap-1 px-3.5 pb-2',
+              isOutbound ? 'justify-end' : 'justify-start',
+            )}
+          >
+            <span className={cn('text-[10px]', isOutbound ? 'text-white/60' : 'text-steel')}>
+              {new Date(message.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            {isOutbound && (
+              <span className="flex-shrink-0">
+                {message.status === 'read' && (
+                  <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M1.5 12.5l5 5L17.5 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 12.5l5 5L22.5 7" />
+                  </svg>
+                )}
+                {message.status === 'delivered' && (
+                  <svg className="w-4 h-4 text-emerald-500/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M1.5 12.5l5 5L17.5 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 12.5l5 5L22.5 7" />
+                  </svg>
+                )}
+                {message.status === 'sent' && (
+                  <svg className="w-3.5 h-3.5 text-emerald-500/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12.5l5 5L20 7" />
+                  </svg>
+                )}
+                {message.status === 'failed' && (
+                  <svg className="w-3.5 h-3.5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

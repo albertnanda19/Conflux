@@ -8,6 +8,8 @@ export type MessageDirection = 'inbound' | 'outbound'
 
 export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed'
 
+export type MessageContentType = 'text' | 'image' | 'video' | 'document' | 'audio' | 'location'
+
 export type PipelineStatus =
   | 'new_lead'
   | 'contacted'
@@ -16,10 +18,20 @@ export type PipelineStatus =
   | 'closed_won'
   | 'closed_lost'
 
+export type ConversationPriority = 'low' | 'medium' | 'high' | 'urgent'
+
 export interface Label {
   id: string
   name: string
   color: string
+}
+
+export interface ActivityLog {
+  id: string
+  type: 'status_change' | 'assignment' | 'note_added' | 'label_added' | 'message_sent' | 'ai_handoff'
+  description: string
+  agentName?: string
+  createdAt: string
 }
 
 export interface Contact {
@@ -33,6 +45,7 @@ export interface Contact {
   source: ChannelType
   labels: Label[]
   notes?: string
+  activityLog: ActivityLog[]
   createdAt: string
 }
 
@@ -41,6 +54,7 @@ export interface Agent {
   name: string
   initials: string
   status: 'online' | 'busy' | 'offline'
+  activeConversationCount: number
 }
 
 export interface Conversation {
@@ -54,6 +68,8 @@ export interface Conversation {
   lastMessage: string
   lastMessageAt: string
   unreadCount: number
+  labels: Label[]
+  priority: ConversationPriority
 }
 
 export interface Message {
@@ -63,8 +79,13 @@ export interface Message {
   senderType: SenderType
   senderName?: string
   content: string
+  contentType: MessageContentType
   status: MessageStatus
   createdAt: string
+  mediaUrl?: string
+  fileName?: string
+  fileSize?: string
+  location?: { lat: number; lng: number; name?: string }
 }
 
 export const LABELS: Label[] = [
@@ -77,16 +98,62 @@ export const LABELS: Label[] = [
 ]
 
 export const MOCK_AGENTS: Agent[] = [
-  { id: 'a1', name: 'Sari Dewi', initials: 'SD', status: 'online' },
-  { id: 'a2', name: 'Rizki Pratama', initials: 'RP', status: 'online' },
-  { id: 'a3', name: 'Nina Kusuma', initials: 'NK', status: 'busy' },
-  { id: 'a4', name: 'Andi Wijaya', initials: 'AW', status: 'offline' },
+  { id: 'a1', name: 'Sari Dewi', initials: 'SD', status: 'online', activeConversationCount: 3 },
+  { id: 'a2', name: 'Rizki Pratama', initials: 'RP', status: 'online', activeConversationCount: 5 },
+  { id: 'a3', name: 'Nina Kusuma', initials: 'NK', status: 'busy', activeConversationCount: 8 },
+  { id: 'a4', name: 'Andi Wijaya', initials: 'AW', status: 'offline', activeConversationCount: 0 },
 ]
 
 const now = new Date()
 const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000).toISOString()
 const hoursAgo = (h: number) => new Date(now.getTime() - h * 3_600_000).toISOString()
 const daysAgo = (d: number) => new Date(now.getTime() - d * 86_400_000).toISOString()
+
+export const MOCK_QUICK_REPLIES: QuickReply[] = [
+  {
+    id: 'qr1',
+    shortcut: '/sapa',
+    name: 'Sapaan Standar',
+    content: 'Halo Kak {nama}! Selamat datang di Acme Learning. Ada yang bisa saya bantu?',
+    category: 'Sapaan',
+  },
+  {
+    id: 'qr2',
+    shortcut: '/harga',
+    name: 'Info Harga',
+    content: 'Untuk informasi harga program kami:\n• Data Science: Rp 4.500.000\n• Full-Stack Web Dev: Rp 5.200.000\n• UX Design: Rp 3.800.000\n\nSemua sudah termasuk materi, project, dan sertifikat.',
+    category: 'Info Program',
+  },
+  {
+    id: 'qr3',
+    shortcut: '/jadwal',
+    name: 'Jadwal Batch',
+    content: 'Batch selanjutnya mulai tanggal 15 Juli 2026. Untuk early bird ada diskon 10% jika mendaftar sebelum 30 Juni.',
+    category: 'Info Program',
+  },
+  {
+    id: 'qr4',
+    shortcut: '/followup',
+    name: 'Follow Up',
+    content: 'Halo Kak {nama}, apa sudah ada keputusan terkait program yang diminati? Kami masih membuka pendaftaran untuk batch Juli.',
+    category: 'Follow Up',
+  },
+  {
+    id: 'qr5',
+    shortcut: '/closing',
+    name: 'Closing',
+    content: 'Baik Kak {nama}! Untuk mendaftar, Kakak bisa langsung klik link berikut: [LINK_DAFTAR]. Jika ada pertanyaan, jangan ragu untuk menghubungi kami.',
+    category: 'Closing',
+  },
+]
+
+export interface QuickReply {
+  id: string
+  shortcut: string
+  name: string
+  content: string
+  category: string
+}
 
 export const MOCK_CONTACTS: Contact[] = [
   {
@@ -97,6 +164,13 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'qualified',
     source: 'whatsapp',
     labels: [LABELS[0], LABELS[2]],
+    activityLog: [
+      { id: 'al1', type: 'message_sent', description: 'Rina mengirim pesan pertama', createdAt: daysAgo(5) },
+      { id: 'al2', type: 'assignment', description: 'Ditugaskan ke Sari Dewi', agentName: 'Sari Dewi', createdAt: daysAgo(5) },
+      { id: 'al3', type: 'label_added', description: 'Label "Minat Data Science" ditambahkan', createdAt: daysAgo(4) },
+      { id: 'al4', type: 'status_change', description: 'Status diubah ke Qualified', createdAt: daysAgo(3) },
+      { id: 'al5', type: 'note_added', description: 'Catatan ditambahkan', agentName: 'Sari Dewi', createdAt: daysAgo(2) },
+    ],
     createdAt: daysAgo(5),
   },
   {
@@ -107,6 +181,11 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'contacted',
     source: 'whatsapp',
     labels: [LABELS[1]],
+    activityLog: [
+      { id: 'al6', type: 'message_sent', description: 'Budi mengirim pesan dari WhatsApp', createdAt: daysAgo(3) },
+      { id: 'al7', type: 'ai_handoff', description: 'AI menyerahkan ke human agent', createdAt: daysAgo(3) },
+      { id: 'al8', type: 'assignment', description: 'Ditugaskan ke Rizki Pratama', agentName: 'Rizki Pratama', createdAt: daysAgo(3) },
+    ],
     createdAt: daysAgo(3),
   },
   {
@@ -117,6 +196,10 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'new_lead',
     source: 'instagram',
     labels: [LABELS[1], LABELS[4]],
+    activityLog: [
+      { id: 'al9', type: 'message_sent', description: 'Maya DM dari Instagram', createdAt: daysAgo(1) },
+      { id: 'al10', type: 'label_added', description: 'Label "Dari IG Ads" ditambahkan', createdAt: daysAgo(1) },
+    ],
     createdAt: daysAgo(1),
   },
   {
@@ -127,6 +210,10 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'new_lead',
     source: 'facebook',
     labels: [LABELS[0]],
+    activityLog: [
+      { id: 'al11', type: 'message_sent', description: 'Ahmad kirim pesan dari Facebook', createdAt: daysAgo(2) },
+      { id: 'al12', type: 'ai_handoff', description: 'AI menyerahkan ke human', createdAt: daysAgo(2) },
+    ],
     createdAt: daysAgo(2),
   },
   {
@@ -138,6 +225,13 @@ export const MOCK_CONTACTS: Contact[] = [
     source: 'whatsapp',
     labels: [LABELS[3], LABELS[5]],
     notes: 'Sudah daftar program Data Science Batch 12. Pembayaran lunas.',
+    activityLog: [
+      { id: 'al13', type: 'message_sent', description: 'Dewi mengirim pesan pertama', createdAt: daysAgo(14) },
+      { id: 'al14', type: 'assignment', description: 'Ditugaskan ke Nina Kusuma', agentName: 'Nina Kusuma', createdAt: daysAgo(14) },
+      { id: 'al15', type: 'status_change', description: 'Status diubah ke Qualified', createdAt: daysAgo(12) },
+      { id: 'al16', type: 'note_added', description: 'Sudah daftar program DS Batch 12', agentName: 'Nina Kusuma', createdAt: daysAgo(10) },
+      { id: 'al17', type: 'status_change', description: 'Status diubah ke Closed Won', createdAt: daysAgo(8) },
+    ],
     createdAt: daysAgo(14),
   },
   {
@@ -148,6 +242,9 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'new_lead',
     source: 'whatsapp',
     labels: [],
+    activityLog: [
+      { id: 'al18', type: 'message_sent', description: 'Fajar mengirim pesan dari WhatsApp', createdAt: daysAgo(1) },
+    ],
     createdAt: daysAgo(1),
   },
   {
@@ -158,6 +255,10 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'new_lead',
     source: 'instagram',
     labels: [LABELS[4]],
+    activityLog: [
+      { id: 'al19', type: 'message_sent', description: 'Sinta DM dari Instagram', createdAt: hoursAgo(4) },
+      { id: 'al20', type: 'label_added', description: 'Label "Dari IG Ads" ditambahkan', createdAt: hoursAgo(4) },
+    ],
     createdAt: hoursAgo(4),
   },
   {
@@ -169,6 +270,12 @@ export const MOCK_CONTACTS: Contact[] = [
     source: 'whatsapp',
     labels: [LABELS[0], LABELS[3]],
     notes: 'Minta penawaran harga program Full-Stack. Sudah kirim brochure.',
+    activityLog: [
+      { id: 'al21', type: 'message_sent', description: 'Hendra mengirim pesan', createdAt: daysAgo(7) },
+      { id: 'al22', type: 'assignment', description: 'Ditugaskan ke Andi Wijaya', agentName: 'Andi Wijaya', createdAt: daysAgo(7) },
+      { id: 'al23', type: 'status_change', description: 'Status diubah ke Proposal Sent', createdAt: daysAgo(5) },
+      { id: 'al24', type: 'note_added', description: 'Sudah kirim brochure', agentName: 'Andi Wijaya', createdAt: daysAgo(5) },
+    ],
     createdAt: daysAgo(7),
   },
   {
@@ -182,6 +289,10 @@ export const MOCK_CONTACTS: Contact[] = [
     pipelineStatus: 'contacted',
     source: 'facebook',
     labels: [LABELS[1], LABELS[2]],
+    activityLog: [
+      { id: 'al25', type: 'message_sent', description: 'Lisa mengirim pesan dari Facebook', createdAt: daysAgo(4) },
+      { id: 'al26', type: 'assignment', description: 'Ditugaskan ke Sari Dewi', agentName: 'Sari Dewi', createdAt: daysAgo(4) },
+    ],
     createdAt: daysAgo(4),
   },
 ]
@@ -197,6 +308,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Kalau program Data Science-nya berapa biayanya ya?',
     lastMessageAt: minutesAgo(2),
     unreadCount: 2,
+    labels: [LABELS[0], LABELS[2]],
+    priority: 'high',
   },
   {
     id: 'conv2',
@@ -209,6 +322,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Baik Kak, saya tunggu info jadwal batch selanjutnya',
     lastMessageAt: minutesAgo(15),
     unreadCount: 0,
+    labels: [LABELS[1]],
+    priority: 'medium',
   },
   {
     id: 'conv3',
@@ -221,6 +336,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Halo kak, mau tanya soal bootcamp UX Design dong',
     lastMessageAt: minutesAgo(45),
     unreadCount: 1,
+    labels: [LABELS[1], LABELS[4]],
+    priority: 'medium',
   },
   {
     id: 'conv4',
@@ -232,6 +349,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Ada diskon ngga kalau daftar rame-rame?',
     lastMessageAt: hoursAgo(1),
     unreadCount: 3,
+    labels: [LABELS[0]],
+    priority: 'high',
   },
   {
     id: 'conv5',
@@ -244,6 +363,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Terima kasih banyak kak, sudah daftar!',
     lastMessageAt: daysAgo(3),
     unreadCount: 0,
+    labels: [LABELS[3], LABELS[5]],
+    priority: 'low',
   },
   {
     id: 'conv6',
@@ -256,6 +377,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Mau tanya program apa saja yang tersedia',
     lastMessageAt: hoursAgo(2),
     unreadCount: 0,
+    labels: [],
+    priority: 'low',
   },
   {
     id: 'conv7',
@@ -267,6 +390,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Kak, ada program UI/UX ngga? Liat dari story kakak',
     lastMessageAt: hoursAgo(4),
     unreadCount: 1,
+    labels: [LABELS[4]],
+    priority: 'medium',
   },
   {
     id: 'conv8',
@@ -279,6 +404,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Oke saya transfer hari ini ya kakddd',
     lastMessageAt: minutesAgo(5),
     unreadCount: 0,
+    labels: [LABELS[0], LABELS[3]],
+    priority: 'urgent',
   },
   {
     id: 'conv9',
@@ -291,6 +418,8 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Nanti saya hubungi lagi minggu depan ya kak',
     lastMessageAt: daysAgo(1),
     unreadCount: 0,
+    labels: [LABELS[1], LABELS[2]],
+    priority: 'low',
   },
 ]
 
@@ -302,6 +431,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Halo kak, saya mau tanya-tanya soal program',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(20),
     },
@@ -313,6 +443,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderName: 'AI Assistant',
       content:
         'Halo Kak Rina! Selamat datang 👋 Ada yang bisa saya bantu? Kami punya beberapa program unggulan, antara lain:\n\n• Data Science (12 minggu)\n• Full-Stack Web Development (16 minggu)\n• UX Design Bootcamp (10 minggu)\n\nProgram mana yang Kakak minati?',
+      contentType: 'text',
       status: 'delivered',
       createdAt: minutesAgo(19),
     },
@@ -322,6 +453,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Wah keren, saya tertarik sama Data Science. Kalo boleh tau detailnya dong',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(15),
     },
@@ -333,6 +465,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderName: 'AI Assistant',
       content:
         'Tentu Kak! Program Data Science kami mencakup:\n\n📚 Materi:\n• Python & Statistics\n• Machine Learning\n• Deep Learning\n• Data Visualization\n• Capstone Project\n\n⏰ Durasi: 12 minggu (3x pertemuan/minggu)\n💰 Investasi: Rp 4.500.000\n\nKakak berlatar belakang apa? Biar saya bisa kasih rekomendasi yang tepat 😊',
+      contentType: 'text',
       status: 'delivered',
       createdAt: minutesAgo(14),
     },
@@ -342,6 +475,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Saya lulusan Teknik Informatika, baru kerja 1 tahun sih',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(10),
     },
@@ -351,10 +485,12 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'outbound',
       senderType: 'ai',
       senderName: 'AI Assistant',
-      content:
-        'Wah pas banget Kak! Dengan background IF, Kakak sudah punya dasar programming yang kuat. Program Data Science ini akan upgrade skill Kakak ke level berikutnya 🚀\n\nBanyak alumni kami yang berhasil pivot karier ke Data Scientist dengan gaji 2x lipat setelah lulus.\n\nKalau program Data Science-nya berapa biayanya ya?',
+      content: 'Ini brosur program Data Science-nya kak 📎',
+      contentType: 'document',
       status: 'delivered',
       createdAt: minutesAgo(8),
+      fileName: 'Brochure-DataScience-2026.pdf',
+      fileSize: '2.4 MB',
     },
     {
       id: 'm7',
@@ -362,6 +498,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Kalau program Data Science-nya berapa biayanya ya?',
+      contentType: 'text',
       status: 'delivered',
       createdAt: minutesAgo(2),
     },
@@ -373,6 +510,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Kak, mau tanya kapan batch selanjutnya mulai?',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(45),
     },
@@ -383,6 +521,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderType: 'agent',
       senderName: 'Sari Dewi',
       content: 'Halo Kak Budi! Batch berikutnya mulai tanggal 15 Juli 2026. Masih ada waktu sekitar 1 bulan lagi.',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(40),
     },
@@ -392,6 +531,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Oh ok, masih ada waktu ya. Ada early bird discount ngga kak?',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(35),
     },
@@ -402,6 +542,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderType: 'agent',
       senderName: 'Sari Dewi',
       content: 'Ada Kak! Early bird diskon 10% kalau daftar sebelum 30 Juni. Mau saya kirim detailnya?',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(30),
     },
@@ -411,6 +552,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Baik Kak, saya tunggu info jadwal batch selanjutnya',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(15),
     },
@@ -422,6 +564,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Halo, saya lihat iklan di Facebook tentang bootcamp programming',
+      contentType: 'text',
       status: 'read',
       createdAt: hoursAgo(3),
     },
@@ -433,6 +576,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderName: 'AI Assistant',
       content:
         'Halo Kak Ahmad! Terima kasih sudah tertarik dengan program kami 🎉\n\nKami punya beberapa program:\n• Data Science — Rp 4.500.000\n• Full-Stack Web Dev — Rp 5.200.000\n• UX Design — Rp 3.800.000\n\nProgram mana yang Kakak minati?',
+      contentType: 'text',
       status: 'read',
       createdAt: hoursAgo(3),
     },
@@ -442,6 +586,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Kalo Full-Stack berapa lama ya programnya?',
+      contentType: 'text',
       status: 'read',
       createdAt: hoursAgo(2),
     },
@@ -453,6 +598,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderName: 'AI Assistant',
       content:
         'Program Full-Stack Web Development berlangsung selama 16 minggu Kak. Materinya mencakup:\n\n• HTML, CSS, JavaScript\n• React & Node.js\n• Database & Deployment\n• Capstone Project\n\nSangat comprehensive untuk yang mau mulai career di web development!',
+      contentType: 'text',
       status: 'read',
       createdAt: hoursAgo(2),
     },
@@ -461,27 +607,41 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       conversationId: 'conv4',
       direction: 'inbound',
       senderType: 'contact',
-      content: 'Harganya segitu udah termasuk semua ya? Ada diskon ngga kalau daftar rame-rame?',
-      status: 'delivered',
+      content: 'Lokasi kampusnya di mana kak?',
+      contentType: 'text',
+      status: 'read',
       createdAt: hoursAgo(1),
     },
     {
       id: 'm45',
+      conversationId: 'conv4',
+      direction: 'inbound',
+      senderType: 'contact',
+      content: '',
+      contentType: 'location',
+      status: 'delivered',
+      createdAt: minutesAgo(58),
+      location: { lat: -6.2088, lng: 106.8456, name: 'Acme Learning Center, Jakarta Selatan' },
+    },
+    {
+      id: 'm46',
       conversationId: 'conv4',
       direction: 'outbound',
       senderType: 'ai',
       senderName: 'AI Assistant',
       content:
         ' Sudah termasuk semua Kak (materi, project, sertifikat). Untuk group discount ada diskon 15% untuk 3+ orang. Mau saya hubungkan dengan tim kami untuk detail lebih lanjut?',
+      contentType: 'text',
       status: 'delivered',
       createdAt: minutesAgo(55),
     },
     {
-      id: 'm46',
+      id: 'm47',
       conversationId: 'conv4',
       direction: 'inbound',
       senderType: 'contact',
       content: 'Ada diskon ngga kalau daftar rame-rame?',
+      contentType: 'text',
       status: 'sent',
       createdAt: minutesAgo(30),
     },
@@ -493,6 +653,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Halo kak, mau tanya soal bootcamp UX Design dong',
+      contentType: 'text',
       status: 'read',
       createdAt: hoursAgo(2),
     },
@@ -503,6 +664,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderType: 'agent',
       senderName: 'Rizki Pratama',
       content: 'Halo Kak Maya! Tentu, ada yang ingin diketahui? 😊',
+      contentType: 'text',
       status: 'read',
       createdAt: hoursAgo(1),
     },
@@ -512,6 +674,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Untuk UX Design-nya itu berapa lama ya kak dan harganya berapa?',
+      contentType: 'text',
       status: 'delivered',
       createdAt: minutesAgo(45),
     },
@@ -523,6 +686,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Kak, saya sudah transfer untuk program Full-Stack',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(30),
     },
@@ -533,6 +697,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderType: 'agent',
       senderName: 'Rizki Pratama',
       content: 'Baik Kak Hendra, saya cek dulu ya. Bisa kirimkan bukti transfernya?',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(25),
     },
@@ -541,9 +706,12 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       conversationId: 'conv8',
       direction: 'inbound',
       senderType: 'contact',
-      content: 'Ini buktinya kak 📎',
+      content: '',
+      contentType: 'image',
       status: 'read',
       createdAt: minutesAgo(20),
+      mediaUrl: 'https://placehold.co/600x400/f5f5f5/888?text=Bukti+Transfer',
+      fileName: 'bukti-transfer.jpg',
     },
     {
       id: 'm83',
@@ -552,6 +720,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       senderType: 'agent',
       senderName: 'Rizki Pratama',
       content: 'Terima kasih Kak! Pembayaran sudah terkonfirmasi ✅\n\nSaya akan kirimkan link registrasi dan jadwal orientasi via email ya. Batch dimulai tanggal 15 Juli.',
+      contentType: 'text',
       status: 'read',
       createdAt: minutesAgo(15),
     },
@@ -561,6 +730,7 @@ export const MOCK_MESSAGES: Record<string, Message[]> = {
       direction: 'inbound',
       senderType: 'contact',
       content: 'Oke saya transfer hari ini ya kakddd',
+      contentType: 'text',
       status: 'delivered',
       createdAt: minutesAgo(5),
     },

@@ -13,7 +13,7 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 
 - [ ] 🟢 Setup repository (monorepo Bun workspaces)
 - [ ] 🟢 Setup Docker Compose (PostgreSQL pgvector, Redis, MinIO)
-- [ ] 🔴 Setup database schema dengan Drizzle ORM
+- [ ] 🟢 Setup database schema dengan Drizzle ORM
 - [ ] 🟡 Setup environment (dev, staging, production) — .env created
 - [ ] 🔴 Setup CI/CD pipeline (GitHub Actions)
 
@@ -22,12 +22,12 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 - [ ] 🔴 Integrasi WhatsApp Business API
 - [ ] 🔴 Integrasi Instagram Messaging API
 - [ ] 🔴 Integrasi Facebook Messenger API
-- [ ] 🔴 Dashboard inbox dasar
-- [ ] 🔴 Assignment percakapan ke agent
+- [ ] 🟢 Dashboard inbox dasar (UI mock selesai, perlu connect ke backend)
+- [ ] 🟢 Assignment percakapan ke agent (UI mock — AssignAgentModal, TransferModal, ActionBar)
 - [ ] 🔴 Notifikasi real-time (WebSocket)
-- [ ] 🔴 Filter & search percakapan
-- [ ] 🔴 Label & tag system
-- [ ] 🔴 Real-time chat panel
+- [ ] 🟢 Filter & search percakapan (UI mock — agent filter, label filter, sort, phone search)
+- [ ] 🟢 Label & tag system (UI mock — CRUD /labels page, assign ke conversations)
+- [ ] 🟢 Real-time chat panel (UI mock — media messages, emoji, quick reply, send)
 
 ### Minggu 7–10: Modul 2 — AI Auto-Reply Engine
 

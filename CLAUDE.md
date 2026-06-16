@@ -162,6 +162,75 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
+# ⛔ MANDATORY DOCUMENTATION UPDATE RULE (NON-NEGOTIABLE)
+
+**Setiap task yang dikerjakan — frontend-only, backend-only, full-stack, atau docs-only — WAJIB diikuti dengan update ke core documentation files di root monorepo. TIDAK ADA PENGEcualian.**
+
+### Files yang WAJIB Dicek & Diupdate
+
+| File | Kapan WAJIB Diupdate |
+|------|----------------------|
+| `STATUS.md` | **SELALU** — pindahkan Open → Done, update state, update timestamp |
+| `PROGRESS.md` | **SELALU** — tambah entry baru di ATAS entry lama |
+| `DECISIONS.md` | **SELALU** — log keputusan arsitektural/teknis baru (jika ada) |
+| `EPICS.md` | **SELALU** — update status fitur 🔴→🟡→🟢 (jika applicable) |
+| `CHANGELOG.md` | Hanya saat user minta |
+
+### Scope Tidak Mempengaruhi Aturan Ini
+
+Aturan ini berlaku **tanpa terkecuali** berdasarkan scope pekerjaan:
+
+| Scope Pekerjaan | WAJIB Update Docs? | Alasan |
+|----------------|---------------------|--------|
+| Frontend-only (React components, pages, UI) | ✅ **YA** | Status fitur berubah, ada file/component baru |
+| Backend-only (API, DB, workers) | ✅ **YA** | Endpoint baru, schema berubah, ada keputusan teknis |
+| Full-stack (FE + BE) | ✅ **YA** | Semua alasan di atas |
+| Bug fix (di mana saja) | ✅ **YA** | Bug ditemukan + di-fix harus tercatat |
+| Config/infra change (Docker, CI/CD, env) | ✅ **YA** | Infra berubah mempengaruhi workflow |
+| Documentation-only (README, md files) | ✅ **YA** | Dokumentasi berubah harus tercatat |
+| Refactoring (tanpa perubahan behavior) | ✅ **YA** | Refactor tercatat untuk konteks session berikutnya |
+
+### Minimum Update Requirements per File
+
+```
+STATUS.md minimum:
+  → Pindahkan minimal 1 item dari Open ke Done
+  → Update "Current State" timestamp
+
+PROGRESS.md minimum:
+  → Tambah entry baru di ATAS (format: ## YYYY-MM-DD — Judul Task)
+  → Isi minimal: "Yang Dikerjakan" + "Yang Berhasil"
+
+DECISIONS.md minimum:
+  → Jika ada keputusan baru → log dengan DEC-XXX
+  → Jika tidak ada keputusan → skip (tidak wajib)
+
+EPICS.md minimum:
+  → Jika ada fitur yang berubah status → update emoji
+  → Jika tidak ada perubahan fitur → skip (tidak wajib)
+```
+
+### Verifikasi Akhir Task
+
+Sebelum mendeklarasikan task selesai, agent WAJIB:
+
+1. Baca ulang `STATUS.md` → pastikan informasi sinkron dengan apa yang baru dikerjakan
+2. Baca ulang `PROGRESS.md` → pastikan entry baru ada dan lengkap
+3. Cek `DECISIONS.md` → pastikan keputusan baru tercatat (jika ada)
+4. Cek `EPICS.md` → pastikan status fitur terupdate (jika applicable)
+5. **Jika ada 1 saja yang belum diupdate → task BELUM selesai**
+
+### ⛔ Anti-Pattern — Yang TIDAK BOLEH
+
+- ❌ "Ini cuma frontend fix, ga perlu update STATUS.md" → **SALAH**, WAJIB update
+- ❌ "Cuma ganti 1 baris di backend, skip docs" → **SALAH**, WAJIB update
+- ❌ "Nanti aja update docsnya" → **SALAH**, WAJIB sekarang juga
+- ❌ "User cuma minta X, bukan minta update docs" → **SALAH**, docs update WAJIB regardless
+- ❌ Update STATUS.md tapi lupa PROGRESS.md → **SALAH**, keduanya WAJIB
+- ❌ Update PROGRESS.md tapi entry-nya kosong/vague → **SALAH**, harus spesifik
+
+---
+
 # SECTION 1: MANDATORY TASK WORKFLOW (5 PHASES)
 
 YOU MUST follow ALL 5 phases for EVERY task. Skipping any phase will produce low-quality output.

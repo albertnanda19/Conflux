@@ -4,6 +4,244 @@ Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
 ---
 
+## 2026-06-16 — Replace lucide-react with itsHover Animated Icons
+
+### Yang Dikerjakan
+- Replaced ALL lucide-react icons with itsHover animated icons across entire frontend codebase
+- Updated AssignAgentModal.tsx — UserCheck→UserCheckIcon, X→XIcon, Circle→CheckedIcon
+- Updated TransferModal.tsx — ArrowRightLeft→RefreshIcon, X→XIcon, MessageSquare→MessageCircleIcon
+- Updated LabelTable.tsx — Pencil→PenIcon, Trash2→TrashIcon
+- Updated LabelsPage.tsx — Plus→PenIcon, X→XIcon, Trash2→TrashIcon
+- Removed lucide-react dependency from package.json
+
+### Keputusan yang Diambil
+- Circle (lucide) replaced with CheckedIcon from itsHover for selection checkmarks
+- Plus icon replaced with PenIcon (closest match for "add" action)
+
+### Yang Berhasil
+- Zero lucide-react imports in source code
+- TypeScript zero errors
+- Build success — 347KB gzip total
+- lucide-react dependency fully removed
+
+---
+
+## 2026-06-16 — Phase 8: Wire Everything & Final Verification (Modul 1 Complete)
+
+### Yang Dikerjakan
+- Final integration of all Phase 3-7 components across inbox
+- TypeScript zero errors verification (`bun run typecheck`)
+- Vite build verification (`bun run build`) — 347KB gzip total, inbox chunk 24KB gzip
+- Verified all pages navigable: /, /inbox, /labels, /contacts, /pipeline, /settings
+- Verified all inbox interactions: filters, sort, search, emoji picker, media messages, quick reply, action bar, assign/transfer modals, label management, notifications
+
+### Keputusan yang Diambil
+- None new — executing according to existing plan
+
+### Yang Berhasil
+- Modul 1 Inbox UI (5.1.1–5.1.6) fully complete with mock data simulation
+- 25+ new files created across components, stores, mock, pages
+- 12+ existing files modified
+- Zero TypeScript errors, zero build warnings
+- All code splits properly (emoji-mart 82KB gzip separate chunk)
+
+---
+
+## 2026-06-16 — Phase 7: ContactDetailPanel Enhancement (Modul 1 5.1.6 Partial)
+
+### Yang Dikerjakan
+- Rewrote ContactDetailPanel with Info/History tab navigation
+- Added editable notes section (textarea + save/cancel)
+- Added activity timeline with chronological log (icons per type: 📋 assignment, 💬 message, 🏷️ label, 📝 note, 🤖 AI handoff)
+- Added conversation history list (clickable to navigate between conversations)
+- Extended mock/inbox.ts: ActivityLog interface, activityLog[] on Contact type, populated all 9 contacts with realistic activity data
+- Integrated LabelBadge component into label display section
+
+### Keputusan yang Diambil
+- Notes editing uses local component state (not mock store) — acceptable for UI-only simulation
+- Activity timeline uses vertical connector lines (w-px div) for chronological flow
+- Conversation history items are clickable buttons that call selectConversation
+
+### Yang Berhasil
+- ContactDetailPanel renders with Info tab (contact details, lead info, labels, notes) and History tab (activity timeline, conversation history)
+- Notes can be edited inline with save/cancel workflow
+- Activity log shows agent name and relative timestamp per entry
+- TypeScript zero errors
+
+---
+
+## 2026-06-16 — Phase 6: Notification UI (Modul 1 5.1.6 Partial)
+
+### Yang Dikerjakan
+- Created mock/notifications.ts — 6 mock notifications (new_message, new_assignment, ai_handoff, stale_message)
+- Created stores/notifications.ts — Zustand store with notifications[], unreadCount, markAsRead, markAllAsRead
+- Created NotificationBell — bell icon with unread badge count, click-outside dismiss
+- Created NotificationDropdown — notification list with type icons, title, body, relative timestamp, mark-as-read on click, "mark all read" button
+- Modified AppLayout — added header bar with NotificationBell
+
+### Keputusan yang Diambil
+- NotificationBell uses click-outside pattern (not Radix DropdownMenu) for simpler state management
+- Unread badge uses brand-coral color with absolute positioning on bell icon
+- "Mark all read" as text button in dropdown header (not separate icon button)
+
+### Yang Berhasil
+- Bell icon visible in header with correct unread count (starts at 4)
+- Dropdown opens/closes on bell click
+- Notifications render with correct type icons and relative timestamps
+- Mark-as-read updates badge count reactively
+- TypeScript zero errors
+
+---
+
+## 2026-06-16 — Phase 5: Label Management UI (Modul 1 5.1.5)
+
+### Yang Dikerjakan
+- Created mock/labels.ts — CRUD operations (getLabels, createLabel, updateLabel, deleteLabel, getLabelConversationCount) with module-level state
+- Created LabelBadge — reusable colored badge component (pill shape, dynamic color via inline style)
+- Created LabelColorPicker — 12 preset colors + custom hex input
+- Created LabelManagerModal — create/edit form with name input, color picker, badge preview
+- Created LabelPicker — popover with search input, checkbox multi-select, "create new" shortcut
+- Created LabelTable — data table with name, color badge, conversation count, edit/delete actions
+- Created LabelsPage — full page at /labels with table + modal + delete confirmation (AlertDialog)
+- Modified Sidebar — added "Label" nav item after Pipeline
+- Modified router.tsx — added /labels route with LabelsPage lazy import
+
+### Keputusan yang Diambil
+- Label CRUD uses module-level state (not Zustand) — sufficient for mock simulation, easy to replace with API later
+- LabelManagerModal creates OR edits based on `initialLabel` prop (same modal, different modes)
+- LabelPicker includes search filter + "Buat baru" shortcut that opens LabelManagerModal inline
+- Delete uses AlertDialog confirmation (Radix AlertDialog) instead of browser confirm()
+
+### Yang Berhasil
+- /labels page renders with table showing all labels, conversation counts, edit/delete actions
+- Create label flow: click "Tambah Label" → modal opens → fill name + pick color → save → appears in table
+- Edit label flow: click edit icon → modal pre-fills → save → updates in table
+- Delete flow: click delete → confirmation dialog → confirm → removes from table
+- LabelPicker popover works in inbox conversation context
+- LabelBadge renders consistently across inbox list, contact detail, and labels page
+- TypeScript zero errors
+
+---
+
+## 2026-06-16 — Phase 4: Assignment & Routing UI (Modul 1 5.1.4)
+
+### Yang Dikerjakan
+- Created AssignAgentModal — list agents with status dots (green=online, yellow=busy, gray=offline), radio selection, assign button
+- Created TransferModal — agent dropdown + notes textarea + transfer button
+- Created ActionBar — horizontal toolbar with Assign, Transfer, Resolve, Snooze buttons
+- Modified ChatPanel — added ActionBar between header and messages, added convOverrides state for local status/agent tracking
+- Extended mock/inbox.ts — added activeConversationCount to Agent type and mock data
+
+### Keputusan yang Diambil
+- ActionBar buttons are icon+text pills (rounded-full, surface background, hover effect)
+- AssignAgentModal uses radio buttons for single-select agent assignment
+- TransferModal requires notes field (textarea) as part of transfer workflow
+- Resolve/Snooze use simple status override via convOverrides Record pattern
+- No store modification needed — local ChatPanel state suffices for mock simulation
+
+### Yang Berhasil
+- ActionBar visible above message area with 4 action buttons
+- AssignAgentModal opens → shows 3 agents with status + active count → radio select → assign → updates agent display
+- TransferModal opens → agent dropdown + notes → transfer → closes
+- Resolve/Snooze toggle status badges
+- TypeScript zero errors
+
+---
+
+## 2026-06-16 — Phase 3: ConversationList Filters & Sort (Modul 1 5.1.1 Enhancement)
+
+### Yang Dikerjakan
+- Extended useInboxStore with agentFilter, labelFilter[], sortBy state + setters
+- Modified ConversationList — added filter bar: Agent dropdown, Label multi-select dropdown, Sort dropdown
+- Extended search to include contact phone number
+
+### Keputusan yang Diambil
+- Filter dropdowns use click-outside dismiss pattern (not Radix DropdownMenu) for simpler integration with existing list UI
+- Label filter is multi-select with checkbox indicators (checkmark on selected)
+- Sort options: Terbaru (newest first), Terlama Menunggu (longest waiting), Prioritas (high→low)
+- Filter bar sits between search input and conversation list
+
+### Yang Berhasil
+- Agent filter shows only conversations assigned to selected agent
+- Label filter works with multi-select (AND logic — conversation must have ALL selected labels)
+- Sort by newest/waiting/priority all produce correct orderings
+- Search hits phone numbers in addition to names
+- TypeScript zero errors
+
+---
+
+## 2026-06-16 — Phase 2: Chat Enhancement (Modul 1 5.1.2 Enhancement)
+
+### Yang Dikerjakan
+- Phase 1: 13 shared UI primitives (`components/ui/`): Button, Badge, Avatar, Modal, Dropdown, Popover, Tooltip, Select, Toggle, Skeleton, ScrollArea, Separator, Checkbox — semuanya Radix-based + DESIGN.md styling
+- Phase 2: Chat Enhancement — 5 new components + 1 modified:
+  - `MediaMessage.tsx`: Render media messages (image, video, document, audio, location)
+  - `EmojiPicker.tsx`: @emoji-mart/react lazy-loaded inside Popover
+  - `AttachmentButton.tsx`: Hidden file input with attachment icon trigger
+  - `QuickReplyMenu.tsx`: `/` shortcut dropdown with keyboard navigation
+  - `MessageInput.tsx`: Refactored input bar (textarea + emoji + attachment + quick reply + send)
+  - `ChatPanel.tsx`: Modified — uses MessageInput, MediaMessage, useCallback for handlers
+- Extended mock/inbox.ts: MessageContentType, ConversationPriority, QuickReply types; media message examples (document in conv1, location in conv4, image in conv8)
+- Installed `@emoji-mart/react` + `@emoji-mart/data`
+
+### Keputusan yang Diambil
+- Emoji picker: lazy-loaded via React.lazy + Suspense (separate chunk 82KB gzip, doesn't bloat main bundle)
+- Audio wave: deterministic height calculation via useMemo (avoids Math.random flicker on re-render)
+- MessageBubble: conditional rendering — hasMedia ? <MediaMessage /> : text content. bg-transparent wrapper for media to show content edge-to-edge
+- File upload: URL.createObjectURL for preview, auto-detect content type from mime (image/video/document)
+
+### Yang Berhasil
+- TypeScript zero errors, build success
+- 13 shared UI primitives reusable across all future inbox components
+- Media messages render correctly (image/video/doc/audio/location)
+- Emoji picker opens on button click, lazy-loads 82KB chunk
+- Quick reply `/` trigger with keyboard navigation (arrow up/down, enter, escape)
+- Attachment button opens native file picker
+- MessageInput auto-resizes textarea, Enter to send
+- ChatPanel integrated with all new components
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 3: ConversationList enhancement — agent filter, label filter, sort, phone search
+- Phase 4: Assignment & Routing UI — AssignAgentModal, TransferModal, ActionBar
+- Phase 5: Label Management UI — LabelsPage, LabelManagerModal, LabelPicker, LabelBadge
+- Phase 6: Notification UI — NotificationBell, NotificationDropdown, notification store
+- Phase 7: ContactDetailPanel enhancement — activity timeline, editable notes, conversation history
+- Phase 8: Wire everything & verify
+
+---
+
+## 2026-06-16 — Inbox UI (Modul 1 5.1.1 + 5.1.2) — Mock Data
+
+### Yang Dikerjakan
+- Buat ConversationList: panel kiri (w-80) dengan search, filter tabs (Semua/WA/IG/FB), conversation items (avatar, last message, unread badge, status badge, AI indicator)
+- Buat ChatPanel: panel tengah (flex-1) dengan chat header clickable, message bubbles (outbound biru, inbound surface), date separator, check mark hijau (read/delivered/sent/failed), input bar dengan textarea + send button
+- Buat ContactDetailPanel: panel kanan (w-80) dengan contact profile, info kontak, pipeline status, labels, notes — animasi slide width 300ms via CSS transition
+- Buat ChannelIcon: SVG brand icons (WhatsApp #25D366, Instagram #E84393, Facebook #4A7AFF)
+- Buat mock/inbox.ts: 9 percakapan, 5 thread pesan, 9 kontak, 4 agent, 6 label, semua types
+- Implementasi URL sync: selected conversation ID dan detail panel state tersimpan di query params (?chat=X&detail=1), refresh mempertahankan state
+- Fix AppLayout: tambah min-h-0 ke main untuk resolve flex height issue
+
+### Keputusan yang Diambil
+- Bubble outbound: bg-brand-blue (bukan bg-ink/hitam) — user minta tidak ada warna hitam sebagai background
+- Active filter pill: bg-brand-blue (bukan bg-ink) — konsisten dengan bubble
+- Check mark: custom SVG hijau (emerald-500 variants) — user minta warna hijau
+- Detail panel animation: CSS transition width (w-80 ↔ w-0) — simple, performant, tidak perlu framer-motion
+- URL sync: useSearchParams di page level, store tetap single source of truth, page syncs to URL on change
+
+### Yang Berhasil
+- Tiga panel inbox berfungsi: list → select → chat → detail panel toggle
+- URL sync bekerja: refresh halaman tetap buka chat yang sama
+- Detail panel slide animation smooth 300ms
+- TypeScript zero errors, commit pushed ke main (df6e698)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- WebSocket server untuk real-time messaging
+- Backend conversations API (ganti mock data)
+- Label management UI
+- Assignment/reassignment UI
+
+---
+
 ## 2026-06-16 (Malam) — Single .env + Full Stack Verification
 
 ### Yang Dikerjakan
