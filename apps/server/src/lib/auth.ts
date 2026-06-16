@@ -1,9 +1,10 @@
+import { SignJWT, jwtVerify } from "jose"
 import { db } from "./db"
 import { users } from "./schema"
 import { eq } from "drizzle-orm"
 import { UnauthorizedError, ForbiddenError } from "./errors"
 
-const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production"
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "change-me-in-production")
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "15m"
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d"
 
@@ -13,20 +14,29 @@ export type JwtPayload = {
   role: string
 }
 
-const jwtApi = (Bun as unknown as { jwt: { sign: (payload: object, secret: string, opts?: Record<string, unknown>) => Promise<string>; verify: (token: string, secret: string) => Record<string, unknown> | null } }).jwt
-
 export async function signAccessToken(payload: JwtPayload): Promise<string> {
-  return jwtApi.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN })
+  return new SignJWT(payload as unknown as Record<string, unknown>)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(JWT_EXPIRES_IN)
+    .sign(JWT_SECRET)
 }
 
 export async function signRefreshToken(payload: JwtPayload): Promise<string> {
-  return jwtApi.sign(payload, JWT_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN })
+  return new SignJWT(payload as unknown as Record<string, unknown>)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(JWT_REFRESH_EXPIRES_IN)
+    .sign(JWT_SECRET)
 }
 
 export async function verifyToken(token: string): Promise<JwtPayload> {
-  const payload = jwtApi.verify(token, JWT_SECRET)
-  if (!payload) throw new UnauthorizedError()
-  return payload as unknown as JwtPayload
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET)
+    return payload as unknown as JwtPayload
+  } catch {
+    throw new UnauthorizedError()
+  }
 }
 
 export async function authenticateUser(email: string, password: string) {
