@@ -1,6 +1,6 @@
 # STATUS.md
 
-**Last updated:** 2026-06-17 (Login Page + Logout Flow Complete)
+**Last updated:** 2026-06-17 (Settings 2-Column Layout — Umum & Akun Complete)
 
 ## Current State
 
@@ -25,6 +25,7 @@
 | **Modul 3 Broadcast & Campaign UI** | 🟢 Complete (Phase 1-6) — Foundation, Campaigns List, Template Library, Segment Builder, Campaign Wizard, Campaign Detail + Report |
 | **Modul 4 CRM & Pipeline Lead UI** | 🟢 Complete (Phase 1-7) — Kanban + Filters + Column Customize + Contacts List + Contact Profile + Segment Management + CSV Import + Integration Polish |
 | **Modul 6 Laporan & Analitik UI** | 🟢 Complete (Phase 1-6) — Overview, Agent Performance, Lead Source, Conversation Trends, Broadcast Report, AI vs Human |
+| **Settings Umum & Akun UI** | 🟢 Complete — 2-column layout (SettingsLayout, SettingsPillTabs, UmumTab 3 sub-tabs, AkunTab 3 sub-tabs: profile/security/notifications, mock data extended, SettingsPage wired) |
 
 ## Open Items
 
@@ -32,6 +33,7 @@
 - [ ] Integrasi WhatsApp Business API
 - [ ] Backend API Modul 1 — conversations, contacts, messages endpoints
 - [ ] Connect inbox UI ke backend API (ganti mock data)
+- [ ] Backend API Settings — CRUD endpoints for org, preferences, notifications, appearance
 
 ## Blocked Items
 
@@ -45,6 +47,8 @@ _(None)_
 
 ## Done Items
 
+- [x] Settings Phase 1: Foundation — 7 new files: toast.tsx (Zustand toast system, 3s auto-dismiss), FormField.tsx (label+input+error/hint wrapper), ToggleRow.tsx (Radix Switch row), mock/general-settings.ts (OrganizationInfo, PlatformPreferences, NotificationSettings, AppearanceSettings types + mock data + option arrays), mock/account-settings.ts (UserProfile, ActiveSession, LoginHistoryEntry, PersonalPreferences types + mock data), stores/general-settings.ts (Zustand: 4 sub-objects + update*/saveAll/resetChanges), stores/account-settings.ts (Zustand: profile/sessions/history/preferences + update*/revoke/save/changePassword), typecheck zero errors, build success
+- [x] Settings Phase 2: 2-Column Layout — 10 new files + 2 modified: SettingsLayout.tsx (2-column flex, sticky right), SettingsPillTabs.tsx (pill sub-tab switcher), UmumTab.tsx (3 sub-tabs: company/location/appearance), 3 wrappers (CompanyProfile, LocationTimezone, Appearance), AkunTab.tsx (3 sub-tabs: profile/security/notifications), MyProfile.tsx (avatar + role badge + form fields + validation), Security.tsx (password strength + sessions + login history table), Notifications.tsx (5 toggles + digest select), mock/account-settings.ts extended (+5 PersonalPreferences fields), SettingsPage.tsx wired, typecheck zero errors, build success
 - [x] Kelola Agent UI Complete (Phase 1-6) — 17 new files + 4 modified: mock/agents.ts (AgentProfile type + 6 agents + CRUD), stores/agents.ts (Zustand), AgentsPage, AgentProfilePage, AgentAvatar, AgentStatusBadge, AgentRoleBadge, AgentFilters, AgentStatsOverview, AgentTable, AgentFormModal, AgentProfileHeader, AgentPerformanceCard, AgentActivityTimeline, AgentConversationList, AgentDeleteConfirm, router.tsx (/agents, /agents/new, /agents/:id), Sidebar.tsx (nav item), mock/inbox.ts (MOCK_AGENTS derives from agents.ts), typecheck zero errors, build success (AgentsPage 11.87kB, AgentProfilePage 9.96kB)
 
 - [x] Modul 6 Phase 5: Conversation Trends — ConversationTrendsTab (3 StatCards: Total Percakapan 30 Hari, Rata-rata/Hari, Jam Sibuk), ConversationVolumeChart (area chart 30 hari + 7-day moving average dashed line), HeatmapChart (7×24 heatmap with visualMap color scale), PeakHoursChart (horizontal bar top 10 jam sibuk, coral→brand-blue gradient), LazyChart updated with 3 new lazy exports, ReportsPage trends tab wired, typecheck zero errors, build success

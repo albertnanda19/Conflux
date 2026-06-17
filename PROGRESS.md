@@ -2,6 +2,67 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-17 — Settings Page 2-Column Layout Redesign (Umum & Akun)
+
+### Yang Dikerjakan
+- Created `components/settings/SettingsLayout.tsx` — 2-column layout wrapper: left (flex-1, scrollable content) + right (w-64, sticky: title, separator, subtitle, actionButton)
+- Created `components/settings/SettingsPillTabs.tsx` — Pill sub-tab switcher: flex gap-2, bg-surface rounded-xl, active: bg-canvas text-ink shadow-sm, inactive: text-steel hover:text-ink
+- Created `components/settings/umum/UmumTab.tsx` — Sub-tab controller: 3 tabs (company/location/appearance), renders SettingsLayout + SettingsPillTabs + content switch
+- Created `components/settings/umum/CompanyProfile.tsx` — Thin wrapper → `<OrganizationInfo />`
+- Created `components/settings/umum/LocationTimezone.tsx` — Thin wrapper → `<PlatformPreferences />`
+- Created `components/settings/umum/Appearance.tsx` — Thin wrapper → `<AppearanceSettings />`
+- Created `components/settings/akun/AkunTab.tsx` — Sub-tab controller: 3 tabs (profile/security/notifications), renders SettingsLayout + SettingsPillTabs + content switch
+- Created `components/settings/akun/MyProfile.tsx` — Avatar (useAuthStore initials) + name/email/phone + role badge (colored per role) + bio + joined date + save button + validation (name min 2, phone regex)
+- Created `components/settings/akun/Security.tsx` — Password change (local useState, strength indicator 4-bar, validation) + active sessions list (revoke button, current badge) + login history table (grid-based, status badge)
+- Created `components/settings/akun/Notifications.tsx` — Personal notification ToggleRow × 5 (email, desktop, sound, new message, assignment) + digest frequency select (none/daily/weekly)
+- Modified `mock/account-settings.ts` — Extended PersonalPreferences: +5 fields (desktopNotifications, notificationSound, notifyOnNewMessage, notifyOnAssignment, digestFrequency)
+- Modified `pages/SettingsPage.tsx` — Replaced old full-width card sections with `<UmumTab />` and `<AkunTab />`, removed old component imports
+
+### Keputusan yang Diambil
+- Reuse existing Phase 2 components (OrganizationInfo, PlatformPreferences, AppearanceSettings) — they render without card wrappers, composable inside SettingsLayout left column
+- Custom pill tabs (SettingsPillTabs) instead of Radix Tabs — design calls for pill toggle buttons in sticky right column
+- Password fields use local `useState` — transient form values should not persist in Zustand (security)
+- `SettingsLayout` is stateless — pill tab state lives in parent (UmumTab/AkunTab)
+- `AkunNotifications` not `Notifications` — avoids name collision with existing NotificationPrefs
+
+### Yang Berhasil
+- 10 new files created, 2 modified, zero TypeScript errors, build success
+- Settings page now renders 2-column layout: content scrolls on left, sticky title/subtitle on right
+- Umum tab: 3 sub-tabs (Profil Perusahaan, Lokasi & Zona Waktu, Tampilan)
+- Akun tab: 3 sub-tabs (Profil Saya, Keamanan, Notifikasi)
+- Security: password strength indicator, session management, login history table
+- Notifications: 5 toggle triggers + digest frequency
+- PersonalPreferences type extended with 10 fields total
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Backend API Settings — CRUD endpoints for org, preferences, notifications, appearance
+- Connect Settings UI ke backend API (ganti mock data)
+- WebSocket — Real-time messaging foundation
+
+## 2026-06-17 — Settings Page Phase 1: Foundation (Umum & Akun Tabs)
+
+### Yang Dikerjakan
+- Created `components/settings/toast.tsx` — Minimal toast system: Zustand store (addToast/dismissToast), ToastContainer renders fixed bottom-right, auto-dismiss 3s, 3 variants (success/error/info) with colored borders, slideUp animation
+- Created `components/settings/FormField.tsx` — Reusable form field wrapper: label + required marker + children slot (input/select/textarea) + error text (red) + hint text (stone)
+- Created `components/settings/ToggleRow.tsx` — Reusable toggle row: label + description + Radix SwitchPrimitive.Root toggle, styled with bg-canvas border-hairline-soft, checked=brand-blue-deep
+- Created `mock/general-settings.ts` — Types: OrganizationInfo (7 fields), PlatformPreferences (6 fields), NotificationSettings (7 fields), AppearanceSettings (4 fields). Mock data: Acme Learning Indonesia, WIB timezone, IDR currency. Option arrays: TIMEZONE_OPTIONS, LANGUAGE_OPTIONS, DATE_FORMAT_OPTIONS, CURRENCY_OPTIONS, TIME_FORMAT_OPTIONS, WEEK_START_OPTIONS, INDUSTRY_OPTIONS, ACCENT_COLORS
+- Created `mock/account-settings.ts` — Types: UserProfile (8 fields), ActiveSession (6 fields), LoginHistoryEntry (7 fields), PersonalPreferences (5 fields). Mock data: Admin Utama, 3 sessions, 5 login history entries, AUTO_LOGOUT_OPTIONS
+- Created `stores/general-settings.ts` — Zustand store: 4 sub-objects (organization, preferences, notifications, appearance) + _hasChanges flag + update* methods + saveAll() with toast + resetChanges()
+- Created `stores/account-settings.ts` — Zustand store: profile, sessions[], loginHistory[], personalPreferences + _hasChanges flag + update*/revoke/save methods + changePassword() (mock: validates against 'password')
+
+### Keputusan yang Diambil
+- No new dependencies — toast built in (~50 lines), ToggleRow wraps existing Radix SwitchPrimitive
+- Native `<select>` for dropdowns (matches PersonaConfig/WorkingHours pattern)
+- Mock changePassword accepts 'password' as current password for demo purposes
+
+### Yang Berhasil
+- All 7 files created, zero TypeScript errors, build success
+- Toast system: addToast auto-dismisses after 3s, ToastContainer renders at fixed bottom-right
+- FormField handles all states: label, required marker, error text, hint text
+- ToggleRow renders with label + description + Radix toggle switch
+- Both stores initialize from mock data, update methods set _hasChanges flag
+- SettingsPage unchanged — phases 2+ will wire components in
+
 ## 2026-06-17 — Kelola Agent UI: Phase 1-6 Complete (FULL)
 
 ### Yang Dikerjakan

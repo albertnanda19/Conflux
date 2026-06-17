@@ -6,6 +6,9 @@ import { WorkingHours } from '@/components/settings/WorkingHours'
 import { HandoffConfig } from '@/components/settings/HandoffConfig'
 import { PersonaConfig } from '@/components/settings/PersonaConfig'
 import { AIChatPreview } from '@/components/ai/AIChatPreview'
+import { ToastContainer } from '@/components/settings/toast'
+import { UmumTab } from '@/components/settings/umum/UmumTab'
+import { AkunTab } from '@/components/settings/akun/AkunTab'
 
 export function SettingsPage() {
   const { aiEnabled, toggleAiEnabled } = useAISettingsStore()
@@ -100,17 +103,15 @@ export function SettingsPage() {
         </TabContent>
 
         <TabContent value="general">
-          <div className="card-base text-center py-12">
-            <p className="text-sm text-steel">Coming soon.</p>
-          </div>
+          <UmumTab />
         </TabContent>
 
         <TabContent value="account">
-          <div className="card-base text-center py-12">
-            <p className="text-sm text-steel">Coming soon.</p>
-          </div>
+          <AkunTab />
         </TabContent>
       </Tabs>
+
+      <ToastContainer />
 
       {chatPreviewOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
