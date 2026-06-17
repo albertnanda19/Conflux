@@ -248,7 +248,7 @@ export function ContactsPage() {
         onDelete={() => {}}
       />
 
-      <div className="flex-1 overflow-hidden mt-3">
+      <div className="flex-1 min-h-0 overflow-auto mt-3">
         {paginatedContacts.length === 0 ? (
           <div className="card-base text-center py-12">
             <p className="text-sm text-steel">Tidak ada kontak yang cocok dengan filter.</p>
