@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MOCK_CRM_CONTACTS } from '@/mock/crm'
+import { MOCK_CRM_CONTACTS, DEFAULT_PIPELINE_COLUMNS } from '@/mock/crm'
+import { getAgents, type AgentProfile } from '@/mock/agents'
+import { LABELS, type Label } from '@/mock/inbox'
 import { ContactFilters } from '@/components/contacts/ContactFilters'
 import { ContactTable } from '@/components/contacts/ContactTable'
 import { BulkActionBar } from '@/components/contacts/BulkActionBar'
@@ -39,6 +41,11 @@ export function ContactsPage() {
   const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [contacts, setContacts] = useState(MOCK_CRM_CONTACTS)
+
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false)
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false)
+  const [bulkLabelOpen, setBulkLabelOpen] = useState(false)
+  const [pendingLabelIds, setPendingLabelIds] = useState<Set<string>>(new Set())
 
   const hasActiveFilters = search || statusFilter || sourceFilter || agentFilter
 
@@ -172,6 +179,46 @@ export function ContactsPage() {
 
   const handleClearSelection = () => setSelectedIds(new Set())
 
+  const handleBulkDelete = () => {
+    setContacts((prev) => prev.filter((c) => !selectedIds.has(c.id)))
+    handleClearSelection()
+  }
+
+  const handleBulkChangeStatus = (newStatus: string) => {
+    setContacts((prev) =>
+      prev.map((c) =>
+        selectedIds.has(c.id) ? { ...c, pipelineStatus: newStatus as typeof c.pipelineStatus } : c,
+      ),
+    )
+    setBulkStatusOpen(false)
+    handleClearSelection()
+  }
+
+  const handleBulkAssign = (agent: AgentProfile | null) => {
+    setContacts((prev) =>
+      prev.map((c) =>
+        selectedIds.has(c.id) ? { ...c, assignedAgentId: agent ? agent.id : null } : c,
+      ),
+    )
+    setBulkAssignOpen(false)
+    handleClearSelection()
+  }
+
+  const handleBulkAddLabel = () => {
+    const labelsToAdd = LABELS.filter((l) => pendingLabelIds.has(l.id))
+    setContacts((prev) =>
+      prev.map((c) => {
+        if (!selectedIds.has(c.id)) return c
+        const existingIds = new Set(c.labels.map((l: Label) => l.id))
+        const merged = [...c.labels, ...labelsToAdd.filter((l) => !existingIds.has(l.id))]
+        return { ...c, labels: merged }
+      }),
+    )
+    setBulkLabelOpen(false)
+    setPendingLabelIds(new Set())
+    handleClearSelection()
+  }
+
   return (
     <div className="p-8 h-full flex flex-col">
       <div className="mb-6 flex-shrink-0">
@@ -242,10 +289,10 @@ export function ContactsPage() {
       <BulkActionBar
         selectedCount={selectedIds.size}
         onClearSelection={handleClearSelection}
-        onAssign={() => {}}
-        onChangeStatus={() => {}}
-        onAddLabel={() => {}}
-        onDelete={() => {}}
+        onAssign={() => setBulkAssignOpen(true)}
+        onChangeStatus={() => setBulkStatusOpen(true)}
+        onAddLabel={() => { setPendingLabelIds(new Set()); setBulkLabelOpen(true) }}
+        onDelete={handleBulkDelete}
       />
 
       <div className="flex-1 min-h-0 overflow-auto mt-3">
@@ -316,6 +363,125 @@ export function ContactsPage() {
         onClose={() => setImportModalOpen(false)}
         onImport={handleImport}
       />
+
+      {bulkStatusOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setBulkStatusOpen(false)} />
+          <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-xs mx-4 border border-hairline p-5 animate-in zoom-in-95 fade-in duration-200">
+            <h3 className="text-sm font-semibold text-ink mb-1">Ubah Status</h3>
+            <p className="text-xs text-steel mb-4">{selectedIds.size} kontak dipilih</p>
+            <div className="space-y-1.5">
+              {DEFAULT_PIPELINE_COLUMNS.map((col) => (
+                <button
+                  key={col.id}
+                  onClick={() => handleBulkChangeStatus(col.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-surface transition-colors"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
+                  <span className="text-sm text-ink">{col.name}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setBulkStatusOpen(false)}
+              className="mt-4 w-full h-8 text-xs font-medium text-steel hover:text-ink rounded-lg hover:bg-surface transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkAssignOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setBulkAssignOpen(false)} />
+          <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-xs mx-4 border border-hairline p-5 animate-in zoom-in-95 fade-in duration-200">
+            <h3 className="text-sm font-semibold text-ink mb-1">Assign ke Agent</h3>
+            <p className="text-xs text-steel mb-4">{selectedIds.size} kontak dipilih</p>
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              <button
+                onClick={() => handleBulkAssign(null)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-surface transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-hairline flex items-center justify-center text-xs font-semibold text-steel flex-shrink-0">—</div>
+                <span className="text-sm text-steel">Lepas Assignment</span>
+              </button>
+              {getAgents().map((agent) => (
+                <button
+                  key={agent.id}
+                  onClick={() => handleBulkAssign(agent)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-surface transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                    {agent.initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-ink truncate">{agent.name}</p>
+                    <p className="text-xs text-steel capitalize">{agent.role}</p>
+                  </div>
+                  <span className={`ml-auto w-2 h-2 rounded-full flex-shrink-0 ${agent.status === 'online' ? 'bg-emerald-500' : agent.status === 'busy' ? 'bg-amber-500' : 'bg-hairline'}`} />
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setBulkAssignOpen(false)}
+              className="mt-4 w-full h-8 text-xs font-medium text-steel hover:text-ink rounded-lg hover:bg-surface transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkLabelOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setBulkLabelOpen(false)} />
+          <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-xs mx-4 border border-hairline p-5 animate-in zoom-in-95 fade-in duration-200">
+            <h3 className="text-sm font-semibold text-ink mb-1">Tambah Label</h3>
+            <p className="text-xs text-steel mb-4">{selectedIds.size} kontak dipilih</p>
+            <div className="space-y-1.5">
+              {LABELS.map((label) => {
+                const selected = pendingLabelIds.has(label.id)
+                return (
+                  <button
+                    key={label.id}
+                    onClick={() => setPendingLabelIds((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(label.id)) next.delete(label.id)
+                      else next.add(label.id)
+                      return next
+                    })}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${selected ? 'bg-brand-blue-50' : 'hover:bg-surface'}`}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: label.color }} />
+                    <span className="text-sm text-ink flex-1">{label.name}</span>
+                    {selected && (
+                      <svg className="w-4 h-4 text-brand-blue-deep flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                onClick={() => setBulkLabelOpen(false)}
+                className="flex-1 h-8 text-xs font-medium text-steel hover:text-ink rounded-lg hover:bg-surface transition-colors border border-hairline"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleBulkAddLabel}
+                disabled={pendingLabelIds.size === 0}
+                className="flex-1 h-8 text-xs font-semibold text-white bg-brand-blue-deep rounded-lg hover:bg-brand-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Tambahkan ({pendingLabelIds.size})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

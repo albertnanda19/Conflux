@@ -1,112 +1,36 @@
 import { useState, useMemo } from 'react'
+import { useCampaignStore } from '@/stores/campaign'
 import { TemplateCategoryFilter } from '@/components/broadcast/TemplateCategoryFilter'
 import { TemplateCard } from '@/components/broadcast/TemplateCard'
 import { TemplateCreateModal } from '@/components/broadcast/TemplateCreateModal'
+import { TemplateEditModal } from '@/components/broadcast/TemplateEditModal'
 import { TemplatePreviewModal } from '@/components/broadcast/TemplatePreviewModal'
 import { Button } from '@/components/ui/button'
 import { MagnifierIcon } from '@/icons'
+import type { Template } from '@/mock/campaign'
 
-interface TemplateData {
-  id: string
+type CategoryFilterValue = 'all' | 'sapaan' | 'promo' | 'undangan' | 'follow_up' | 'reminder' | 'closing'
+
+interface PreviewTemplate {
   name: string
   category: string
   type: string
   content: string
-  variables: string[]
   buttonText?: string
-  isActive: boolean
-  createdBy: string
-  createdAt: string
-  updatedAt: string
 }
 
-const MOCK_TEMPLATES: TemplateData[] = [
-  {
-    id: 't1',
-    name: 'Sapaan Program',
-    category: 'sapaan',
-    type: 'text',
-    content: 'Halo {nama}! 👋\n\nTerima kasih sudah menghubungi Acme Learning. Ada yang bisa kami bantu mengenai program {program}?',
-    variables: ['nama', 'program'],
-    isActive: true,
-    createdBy: 'Admin User',
-    createdAt: '2026-05-20T00:00:00.000Z',
-    updatedAt: '2026-06-01T00:00:00.000Z',
-  },
-  {
-    id: 't2',
-    name: 'Promo Harga',
-    category: 'promo',
-    type: 'text_image',
-    content: 'Halo {nama}! 🎉\n\nSpesial untuk kamu, program {program} lagi ada diskon spesial!\n\n💰 Harga normal: Rp 6.000.000\n🏷 Harga promo: {harga}\n\nBerlaku sampai akhir bulan. Jangan sampai kehabisan!',
-    variables: ['nama', 'program', 'harga'],
-    isActive: true,
-    createdBy: 'Admin User',
-    createdAt: '2026-05-22T00:00:00.000Z',
-    updatedAt: '2026-06-05T00:00:00.000Z',
-  },
-  {
-    id: 't3',
-    name: 'Undangan Webinar',
-    category: 'undangan',
-    type: 'interactive_button',
-    content: 'Halo {nama}! 📣\n\nAcme Learning mengundang kamu ke webinar gratis:\n\n📌 "Kenalan sama Dunia {program}"\n📅 {tanggal_batch}\n⏰ 19:00 - 21:00 WIB\n\nDaftar sekarang dan dapatkan bonus materi eksklusif!',
-    variables: ['nama', 'program', 'tanggal_batch'],
-    buttonText: 'Daftar Sekarang',
-    isActive: true,
-    createdBy: 'Admin User',
-    createdAt: '2026-05-27T00:00:00.000Z',
-    updatedAt: '2026-06-13T00:00:00.000Z',
-  },
-  {
-    id: 't4',
-    name: 'Follow Up H+3',
-    category: 'follow_up',
-    type: 'text',
-    content: 'Halo {nama}! 👋\n\nBeberapa hari lalu kamu sudah bicara dengan {agent_nama} tentang program {program}. Apakah ada pertanyaan lagi yang bisa kami bantu?',
-    variables: ['nama', 'agent_nama', 'program'],
-    isActive: true,
-    createdBy: 'Admin User',
-    createdAt: '2026-05-25T00:00:00.000Z',
-    updatedAt: '2026-06-10T00:00:00.000Z',
-  },
-  {
-    id: 't5',
-    name: 'Reminder Jadwal',
-    category: 'reminder',
-    type: 'text_image',
-    content: 'Halo {nama}! ⏰\n\nIni pengingat untuk kamu:\n\n📅 {tanggal_batch}\n⏰ 19:00 WIB\n💻 Via Zoom\n\nJangan sampai terlewat ya!',
-    variables: ['nama', 'tanggal_batch'],
-    isActive: false,
-    createdBy: 'Admin User',
-    createdAt: '2026-05-30T00:00:00.000Z',
-    updatedAt: '2026-06-08T00:00:00.000Z',
-  },
-  {
-    id: 't6',
-    name: 'Closing Daftar',
-    category: 'closing',
-    type: 'interactive_button',
-    content: 'Halo {nama}! 🎯\n\nSetelah ngobrol sama {agent_nama}, apakah kamu sudah yakin untuk daftar {program}?\n\nJangan lewatkan kesempatan ini!',
-    variables: ['nama', 'agent_nama', 'program'],
-    buttonText: 'Ya, Daftar Sekarang!',
-    isActive: true,
-    createdBy: 'Admin User',
-    createdAt: '2026-06-01T00:00:00.000Z',
-    updatedAt: '2026-06-12T00:00:00.000Z',
-  },
-]
-
-type CategoryFilterValue = 'all' | 'sapaan' | 'promo' | 'undangan' | 'follow_up' | 'reminder' | 'closing'
-
 export function TemplatesPage() {
+  const templates = useCampaignStore((s) => s.templates)
+  const toggleTemplateActive = useCampaignStore((s) => s.toggleTemplateActive)
+  const deleteTemplate = useCampaignStore((s) => s.deleteTemplate)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilterValue>('all')
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [previewTemplate, setPreviewTemplate] = useState<TemplateData | null>(null)
+  const [previewTemplate, setPreviewTemplate] = useState<PreviewTemplate | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
 
   const filtered = useMemo(() => {
-    let result = MOCK_TEMPLATES
+    let result = templates
 
     if (categoryFilter !== 'all') {
       result = result.filter((t) => t.category === categoryFilter)
@@ -122,7 +46,7 @@ export function TemplatesPage() {
     }
 
     return result
-  }, [categoryFilter, search])
+  }, [templates, categoryFilter, search])
 
   return (
     <div className="p-8 h-full">
@@ -166,7 +90,10 @@ export function TemplatesPage() {
             <TemplateCard
               key={template.id}
               template={template}
+              onToggleActive={(id) => toggleTemplateActive(id)}
               onPreview={(t) => setPreviewTemplate(t)}
+              onEdit={(t) => setEditingTemplate(t as unknown as Template)}
+              onDelete={(id) => deleteTemplate(id)}
             />
           ))
         )}
@@ -185,6 +112,14 @@ export function TemplatesPage() {
             buttonText: previewTemplate.buttonText,
           }}
           onClose={() => setPreviewTemplate(null)}
+        />
+      )}
+
+      {editingTemplate && (
+        <TemplateEditModal
+          open={!!editingTemplate}
+          template={editingTemplate}
+          onClose={() => setEditingTemplate(null)}
         />
       )}
     </div>

@@ -9,7 +9,7 @@ const Checkbox = forwardRef<HTMLButtonElement, React.ComponentProps<typeof Check
         ref={ref}
         className={cn(
           'peer h-4 w-4 shrink-0 rounded-sm border border-hairline bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue-deep focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-          'data-[state=checked]:bg-ink data-[state=checked]:border-ink data-[state=checked]:text-white',
+          'data-[state=checked]:bg-brand-blue-deep data-[state=checked]:border-brand-blue-deep data-[state=checked]:text-white',
           className,
         )}
         {...props}

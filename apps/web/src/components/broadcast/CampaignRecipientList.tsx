@@ -79,7 +79,7 @@ export function CampaignRecipientList({ recipients = MOCK_RECIPIENTS }: Campaign
               onClick={() => { setStatusFilter(s); setPage(1) }}
               className={`px-2 py-1 text-[10px] font-medium rounded-full border transition-colors ${
                 statusFilter === s
-                  ? 'bg-ink text-white border-ink'
+                  ? 'bg-brand-blue-deep text-white border-brand-blue-deep'
                   : 'bg-canvas text-steel border-hairline hover:text-ink'
               }`}
             >

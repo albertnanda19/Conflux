@@ -2,6 +2,58 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-18 — Frontend UI Enhancements (Dashboard charts, Template Edit, Dark bg fixes)
+
+### Yang Dikerjakan
+- `DashboardPage.tsx` — Rewrite: 4 charts (LeadTrendChart, ChannelDistributionChart, ConversionByProgramChart, TopAgentChart) + rich StatCard dengan AnimatedNumber + icon + change%, semua reuse komponen dari `src/components/reports/`, zero komponen baru
+- `TemplateEditModal.tsx` — Komponen baru: form pre-filled dari Template, variable extraction, preview inline, calls `updateTemplate` on save, bg-brand-blue-deep save button
+- `TemplatesPage.tsx` — Wire `onEdit` ke TemplateCard, tambah `editingTemplate` state, render TemplateEditModal
+- `index.css` — `.pill-button-primary`: `bg-ink hover:bg-charcoal` → `bg-brand-blue-deep hover:bg-brand-blue-700`; `.pill-button-secondary`: `border-ink text-ink` → `border-brand-blue-deep text-brand-blue-deep hover:bg-brand-blue-50`
+- `checkbox.tsx` — checked state: `bg-ink border-ink` → `bg-brand-blue-deep border-brand-blue-deep`
+- `tooltip.tsx` — `text-on-dark` (undefined class) → `text-white`
+- `CampaignWizard.tsx` — step indicator active + Next/Send buttons: `bg-ink` → `bg-brand-blue-deep hover:bg-brand-blue-700`
+- `CampaignRecipientList.tsx` — active tab filter: `bg-ink border-ink` → `bg-brand-blue-deep border-brand-blue-deep`
+- `TemplateCreateModal.tsx` — save button: `bg-ink` → `bg-brand-blue-deep hover:bg-brand-blue-700`
+- `SegmentBuilder.tsx` — Tambah button: `bg-ink` → `bg-brand-blue-deep hover:bg-brand-blue-700`
+- `ContactDetailPanel.tsx` — Save Notes button: `bg-ink hover:bg-charcoal` → `bg-brand-blue-deep hover:bg-brand-blue-700`; active tab underline: `bg-ink` → `bg-brand-blue-deep`
+
+### Keputusan yang Diambil
+- DashboardPage reuse komponen reports/ langsung — zero new components, surgical approach
+- TemplateEditModal terpisah dari TemplateCreateModal — tidak modify create modal, pisah concern
+
+### Yang Berhasil
+- TypeScript typecheck zero errors
+- 1 file baru (TemplateEditModal), 10 file dimodifikasi
+- Semua bg-ink pada elemen interaktif terganti brand-blue-deep
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Backend API integration (ganti mock data dengan real API)
+- WebSocket real-time messaging
+
+## 2026-06-18 — Frontend UI Bug Fixes (6 fixes, mock data wiring)
+
+### Yang Dikerjakan
+- `DashboardPage.tsx` — Import MOCK_ANALYTICS_OVERVIEW, wire 6 StatCards (totalLeads, conversionRate, avgResponseTime, activeConversations, agentsOnline, aiHandledPercent) dengan format angka dan change indicators
+- `CampaignsPage.tsx` — Hapus inline MOCK_CAMPAIGNS + local CampaignData type, gunakan useCampaignStore, hitung campaignStats dinamis dari store
+- `TemplatesPage.tsx` — Hapus inline MOCK_TEMPLATES + local TemplateData type, gunakan useCampaignStore, wire toggleTemplateActive + deleteTemplate ke TemplateCard
+- `CampaignDetailPage.tsx` — Dynamic campaign lookup dari useParams id + useCampaignStore, tambah not-found state, wire cancelCampaign + deleteCampaign (inline confirm modal), wire CampaignReportStats + CampaignProgressBar + CampaignTimeline dari campaignStats, tambah GOAL_LABELS + buildSegmentSummary helper
+- `ContactsPage.tsx` — Implementasi 4 BulkActionBar handlers: handleBulkDelete (filter state), handleBulkChangeStatus (modal dengan DEFAULT_PIPELINE_COLUMNS), handleBulkAssign (modal dengan getAgents()), handleBulkAddLabel (modal multi-select dengan LABELS dari @/mock/inbox)
+- `Sidebar.tsx` — Ganti 12 emoji icons dengan inline NavIcon SVG stroke component (w=20 h=20, strokeWidth=1.5, currentColor)
+
+### Keputusan yang Diambil
+- Tidak ada perubahan backend, mock data, atau stores
+- BulkActionBar modals adalah inline di ContactsPage mengikuti pola AIAssistantsPage delete confirm
+- NavIcon sebagai inline component di Sidebar, tidak sebagai file terpisah — single-use, surgical change
+
+### Yang Berhasil
+- TypeScript typecheck zero errors setelah semua 6 fixes
+- Semua mock data terhubung ke komponen yang tepat
+- Semua handler BulkActionBar berfungsi dengan state lokal
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Backend API integration (ganti mock data dengan real API)
+- WebSocket real-time messaging
+
 ## 2026-06-18 — Docker Compose Simplified: Local DB & Redis
 
 ### Yang Dikerjakan

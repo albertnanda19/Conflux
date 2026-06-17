@@ -1,19 +1,13 @@
-import { useState } from 'react'
-import { XIcon, UploadIcon } from '@/icons'
+import { useState, useEffect } from 'react'
+import { useCampaignStore } from '@/stores/campaign'
+import { XIcon } from '@/icons'
 import { TemplatePreviewModal } from './TemplatePreviewModal'
+import type { Template } from '@/mock/campaign'
 
-interface TemplateCreateModalProps {
+interface TemplateEditModalProps {
   open: boolean
+  template: Template
   onClose: () => void
-  onSave?: (template: TemplateFormData) => void
-}
-
-interface TemplateFormData {
-  name: string
-  category: string
-  type: string
-  content: string
-  buttonText: string
 }
 
 const CATEGORIES = [
@@ -46,26 +40,35 @@ function extractVariables(content: string): string[] {
   return [...new Set(matches.map((m) => m.replace(/[{}]/g, '')))]
 }
 
-export function TemplateCreateModal({ open, onClose, onSave }: TemplateCreateModalProps) {
-  const [name, setName] = useState('')
-  const [category, setCategory] = useState('sapaan')
-  const [type, setType] = useState('text')
-  const [content, setContent] = useState('')
-  const [buttonText, setButtonText] = useState('')
+export function TemplateEditModal({ open, template, onClose }: TemplateEditModalProps) {
+  const updateTemplate = useCampaignStore((s) => s.updateTemplate)
+  const [name, setName] = useState(template.name)
+  const [category, setCategory] = useState(template.category)
+  const [type, setType] = useState(template.type)
+  const [content, setContent] = useState(template.content)
+  const [buttonText, setButtonText] = useState(template.buttonText ?? '')
   const [showPreview, setShowPreview] = useState(false)
+
+  useEffect(() => {
+    setName(template.name)
+    setCategory(template.category)
+    setType(template.type)
+    setContent(template.content)
+    setButtonText(template.buttonText ?? '')
+  }, [template.id])
 
   const variables = extractVariables(content)
   const isInteractive = type === 'interactive_button'
 
-  function handleSave(asDraft: boolean) {
-    onSave?.({ name, category, type, content, buttonText: isInteractive ? buttonText : '' })
-    if (!asDraft) {
-      setName('')
-      setCategory('sapaan')
-      setType('text')
-      setContent('')
-      setButtonText('')
-    }
+  function handleSave() {
+    updateTemplate(template.id, {
+      name,
+      category: category as Template['category'],
+      type: type as Template['type'],
+      content,
+      variables,
+      buttonText: isInteractive ? buttonText : undefined,
+    })
     onClose()
   }
 
@@ -81,7 +84,7 @@ export function TemplateCreateModal({ open, onClose, onSave }: TemplateCreateMod
         <div className="absolute inset-0 bg-black/40" onClick={onClose} />
         <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-2xl mx-4 border border-hairline overflow-hidden max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-hairline-soft shrink-0">
-            <h3 className="text-base font-semibold text-ink">Buat Template Baru</h3>
+            <h3 className="text-base font-semibold text-ink">Edit Template</h3>
             <button onClick={onClose} className="p-1.5 rounded-lg text-steel hover:text-ink hover:bg-surface-soft transition-colors">
               <XIcon size={18} />
             </button>
@@ -105,7 +108,7 @@ export function TemplateCreateModal({ open, onClose, onSave }: TemplateCreateMod
                   <label className="block text-xs font-medium text-ink mb-1.5">Kategori</label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => setCategory(e.target.value as Template['category'])}
                     className="w-full h-10 px-3 rounded-xl border border-hairline bg-canvas text-sm text-ink focus:outline-none focus:border-brand-blue-deep"
                   >
                     {CATEGORIES.map((c) => (
@@ -119,7 +122,7 @@ export function TemplateCreateModal({ open, onClose, onSave }: TemplateCreateMod
                     {TYPES.map((t) => (
                       <button
                         key={t.value}
-                        onClick={() => setType(t.value)}
+                        onClick={() => setType(t.value as Template['type'])}
                         className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                           type === t.value
                             ? 'bg-brand-blue text-white border-brand-blue'
@@ -182,16 +185,6 @@ export function TemplateCreateModal({ open, onClose, onSave }: TemplateCreateMod
                   />
                 </div>
               )}
-
-              {(type === 'text_image' || type === 'text_document') && (
-                <div className="border-2 border-dashed border-hairline rounded-xl p-6 text-center">
-                  <UploadIcon size={24} className="mx-auto mb-2 text-steel" />
-                  <p className="text-xs text-steel">Klik atau seret file ke sini</p>
-                  <p className="text-[10px] text-stone mt-1">
-                    {type === 'text_image' ? 'JPG, PNG, GIF (maks 5MB)' : 'PDF, DOC, DOCX (maks 10MB)'}
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="mt-5 pt-4 border-t border-hairline-soft">
@@ -212,16 +205,11 @@ export function TemplateCreateModal({ open, onClose, onSave }: TemplateCreateMod
               Batal
             </button>
             <button
-              onClick={() => handleSave(true)}
-              className="px-4 py-2 text-xs font-medium text-ink rounded-full border border-hairline bg-canvas hover:bg-surface-soft transition-colors"
+              onClick={handleSave}
+              disabled={!name.trim() || !content.trim()}
+              className="px-4 py-2 text-xs font-medium text-white rounded-full bg-brand-blue-deep hover:bg-brand-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Simpan Draft
-            </button>
-            <button
-              onClick={() => handleSave(false)}
-              className="px-4 py-2 text-xs font-medium text-white rounded-full bg-brand-blue-deep hover:bg-brand-blue-700 transition-colors"
-            >
-              Simpan & Aktifkan
+              Simpan Perubahan
             </button>
           </div>
         </div>

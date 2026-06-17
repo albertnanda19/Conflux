@@ -55,11 +55,11 @@
   }
 
   .pill-button-primary {
-    @apply pill-button bg-ink text-white hover:bg-charcoal;
+    @apply pill-button bg-brand-blue-deep text-white hover:bg-brand-blue-700;
   }
 
   .pill-button-secondary {
-    @apply pill-button bg-transparent text-ink border border-ink hover:bg-surface;
+    @apply pill-button bg-transparent text-brand-blue-deep border border-brand-blue-deep hover:bg-brand-blue-50;
   }
 
   .pill-button-tertiary {

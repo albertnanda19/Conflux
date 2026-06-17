@@ -96,7 +96,7 @@ export function CampaignWizard({ onFinish, onCancel }: CampaignWizardProps) {
             <div key={step.key} className="flex items-center flex-1 last:flex-initial">
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold border transition-colors ${
-                  isActive ? 'bg-ink text-white border-ink'
+                  isActive ? 'bg-brand-blue-deep text-white border-brand-blue-deep'
                     : isCompleted ? 'bg-emerald-500 text-white border-emerald-500'
                       : 'bg-surface text-steel border-hairline'
                 }`}>
@@ -151,14 +151,14 @@ export function CampaignWizard({ onFinish, onCancel }: CampaignWizardProps) {
           {isLastStep ? (
             <button
               onClick={handleFinish}
-              className="px-4 py-2 text-xs font-medium text-white rounded-full bg-ink hover:bg-ink/90 transition-colors"
+              className="px-4 py-2 text-xs font-medium text-white rounded-full bg-brand-blue-deep hover:bg-brand-blue-700 transition-colors"
             >
               {scheduleMode === 'now' ? '🚀 Kirim Sekarang' : '⏰ Jadwalkan'}
             </button>
           ) : (
             <button
               onClick={handleNext}
-              className="px-4 py-2 text-xs font-medium text-white rounded-full bg-ink hover:bg-ink/90 transition-colors"
+              className="px-4 py-2 text-xs font-medium text-white rounded-full bg-brand-blue-deep hover:bg-brand-blue-700 transition-colors"
             >
               Selanjutnya →
             </button>

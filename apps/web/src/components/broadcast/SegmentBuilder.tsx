@@ -173,7 +173,7 @@ export function SegmentBuilder({ initialFilters = [] }: SegmentBuilderProps) {
             <button
               onClick={handleAddFilter}
               disabled={!isDateOrBool && !newFilterValue}
-              className="h-9 px-4 rounded-full bg-ink text-white text-xs font-medium hover:bg-ink/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-9 px-4 rounded-full bg-brand-blue-deep text-white text-xs font-medium hover:bg-brand-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Tambah
             </button>

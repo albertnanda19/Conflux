@@ -1,6 +1,6 @@
 # STATUS.md
 
-**Last updated:** 2026-06-18 (Docker Compose Simplified — Local DB & Redis)
+**Last updated:** 2026-06-18 (Frontend UI — Dashboard charts + Template Edit Modal + Dark background fixes)
 
 ## Current State
 
@@ -50,6 +50,9 @@ _(None)_
 4. **Connect frontend ke backend API** — ganti mock data
 
 ## Done Items
+
+- [x] Frontend UI Enhancements (3 fixes) — DashboardPage: rewrote with 4 charts (LeadTrendChart, ChannelDistributionChart, ConversionByProgramChart, TopAgentChart) + rich StatCard (AnimatedNumber + icon + change%) reusing reports/ components. TemplateEditModal: new component pre-filled from Template, calls updateTemplate on save, wired via onEdit in TemplatesPage. Dark background: pill-button-primary/secondary → brand-blue-deep/700, checkbox checked state → brand-blue-deep, tooltip text-on-dark → text-white, CampaignWizard step indicator + Next button, CampaignRecipientList active tab, TemplateCreateModal save button, SegmentBuilder Tambah button, ContactDetailPanel Save Notes + active underline. typecheck zero errors.
+- [x] Frontend UI Bug Fixes (6 fixes) — DashboardPage: wired MOCK_ANALYTICS_OVERVIEW → 6 StatCards with change indicators. CampaignsPage: replaced inline MOCK_CAMPAIGNS with useCampaignStore, stats computed dynamically. TemplatesPage: replaced inline MOCK_TEMPLATES with useCampaignStore, wired toggleTemplateActive + deleteTemplate. CampaignDetailPage: dynamic campaign lookup by route params, not-found state, cancel/delete actions wired to store, stats/progress/timeline wired from campaignStats. ContactsPage: all 4 BulkActionBar handlers implemented (delete, status picker modal, agent picker modal, label picker modal). Sidebar: emoji icons replaced with inline SVG stroke icons (12 icons). typecheck zero errors.
 
 - [x] Settings Phase 1: Foundation — 7 new files: toast.tsx (Zustand toast system, 3s auto-dismiss), FormField.tsx (label+input+error/hint wrapper), ToggleRow.tsx (Radix Switch row), mock/general-settings.ts (OrganizationInfo, PlatformPreferences, NotificationSettings, AppearanceSettings types + mock data + option arrays), mock/account-settings.ts (UserProfile, ActiveSession, LoginHistoryEntry, PersonalPreferences types + mock data), stores/general-settings.ts (Zustand: 4 sub-objects + update*/saveAll/resetChanges), stores/account-settings.ts (Zustand: profile/sessions/history/preferences + update*/revoke/save/changePassword), typecheck zero errors, build success
 - [x] AI Assistant Engine Phase 1-2 Complete — 8 new files + 4 modified: mock/ai-assistants.ts (AIAssistant type + 4 assistants + CRUD), stores/ai-assistants.ts (Zustand: search+filter+CRUD), AIAssistantStats (animated counters), AIAssistantCard (avatar+status+agent+persona), AIAssistantFormModal (create/edit), AssignAgentModal (select agent), AIAssistantKBSelector (global/custom toggle), AIAssistantAssignmentCard (profile card), AIAssistantsPage (/ai-assistants), AIAssistantDetailPage (/ai-assistants/:id with 6 config sections), router.tsx + Sidebar.tsx updated, mock/ai-settings.ts (aiAssistantId added to KBDocument), mock/agents.ts (aiAssistantId added to AgentProfile), typecheck zero errors, build success

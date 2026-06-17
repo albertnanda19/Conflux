@@ -145,7 +145,7 @@ function TabButton({
     >
       {children}
       {active && (
-        <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-ink rounded-full" />
+        <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-blue-deep rounded-full" />
       )}
     </button>
   )
@@ -269,7 +269,7 @@ function InfoTab({
             <div className="flex gap-1.5">
               <button
                 onClick={onSaveNotes}
-                className="px-3 py-1 text-[11px] font-medium bg-ink text-white rounded-full hover:bg-charcoal transition-colors"
+                className="px-3 py-1 text-[11px] font-medium bg-brand-blue-deep text-white rounded-full hover:bg-brand-blue-700 transition-colors"
               >
                 Simpan
               </button>
