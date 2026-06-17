@@ -1,6 +1,6 @@
 # STATUS.md
 
-**Last updated:** 2026-06-17 (AI Assistant Engine — Phase 3 Modify Existing Pages Complete)
+**Last updated:** 2026-06-18 (Docker Compose Simplified — Local DB & Redis)
 
 ## Current State
 
@@ -15,7 +15,7 @@
 | **Skills Installed** | ✅ 6/6 (shadcn, frontend-design, vercel-react-best-practices, tdd, sentry-cli, webapp-testing) |
 | **Core Docs** | ✅ Created (CLAUDE.md, STATUS.md, PROGRESS.md, DECISIONS.md, EPICS.md, CHANGELOG.md) |
 | **Project Setup** | ✅ Monorepo with Bun workspaces |
-| **Docker Compose** | ✅ PostgreSQL pgvector (port 5433), Redis, MinIO |
+| **Docker Compose** | ✅ MinIO only (PostgreSQL & Redis → local) |
 | **Frontend Boilerplate** | ✅ Vite + React + Tailwind + shadcn/ui + Router + Zustand + TanStack Query |
 | **Backend Boilerplate** | ✅ Elysia + Drizzle ORM + BullMQ + Auth (JWT) + Vercel AI SDK |
 | **Database Schema** | ✅ Drizzle ORM schema (12 tables), seeded |
@@ -110,7 +110,7 @@ _(None)_
 - [x] Drizzle config — drizzle.config.ts for migrations
 - [x] Server build verified — TypeScript zero errors
 - [x] Monorepo root — package.json (Bun workspaces), docker-compose.yml, .env
-- [x] Docker Compose — PostgreSQL pgvector:pg16, Redis 7 Alpine, MinIO
+- [x] Docker Compose — MinIO only (PostgreSQL & Redis use local installations)
 - [x] Frontend scaffold — Vite + React 19 + TypeScript 6
 - [x] Tailwind CSS 3 + postcss + autoprefixer + tailwindcss-animate
 - [x] shadcn/ui Radix dependencies — 17 primitives installed

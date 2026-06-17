@@ -1,34 +1,4 @@
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: dbb-psc-postgres
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_DB: dbb_psc
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dbb_psc"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: dbb-psc-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   minio:
     image: minio/minio
     container_name: dbb-psc-minio
@@ -43,6 +13,4 @@ services:
       - minio_data:/data
 
 volumes:
-  postgres_data:
-  redis_data:
   minio_data:

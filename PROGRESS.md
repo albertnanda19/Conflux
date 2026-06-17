@@ -2,6 +2,26 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-18 — Docker Compose Simplified: Local DB & Redis
+
+### Yang Dikerjakan
+- Modified `docker-compose.yml` — Removed PostgreSQL (pgvector:pg16) and Redis 7 Alpine services, removed their volumes. Docker Compose now only runs MinIO for file storage.
+- Modified `.env` — Updated DATABASE_URL: port 5433 → 5432 (local PG), password `postgres` → `password` (local credentials)
+
+### Keputusan yang Diambil
+- PostgreSQL and Redis now run locally instead of in Docker containers — reduces resource usage and simplifies dev setup
+- MinIO kept in Docker — not commonly pre-installed, Docker is simplest way to run it
+- No source code changes needed — all connection libs already read from env vars
+
+### Yang Berhasil
+- docker-compose.yml reduced from 3 services to 1 (MinIO only)
+- .env updated to point at local PostgreSQL with correct credentials
+- Zero code changes required — all connection configs are env-var driven
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Pastikan database `dbb_psc` dan pgvector extension terinstall di local PostgreSQL
+- Jalankan Drizzle migration ke local DB: `cd apps/server && bun run db:migrate`
+
 ## 2026-06-17 — AI Assistant Engine Phase 3: Modify Existing Pages
 
 ### Yang Dikerjakan
