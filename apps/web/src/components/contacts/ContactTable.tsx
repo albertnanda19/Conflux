@@ -42,7 +42,7 @@ export function ContactTable({
   const allChecked = contacts.length > 0 && contacts.every((c) => selectedIds.has(c.id))
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-hairline">
+    <div className="overflow-auto rounded-xl border border-hairline">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-hairline bg-surface">
