@@ -1,12 +1,12 @@
 # STATUS.md
 
-**Last updated:** 2026-06-16 (Modul 3 — Phase 6: Campaign Detail + Broadcast Report)
+**Last updated:** 2026-06-17 (Pipeline Column Management Phase 4: Hapus Kolom)
 
 ## Current State
 
 | Category | Status |
 |----------|--------|
-| **Project Phase** | 🔨 Foundation — Modul 3 Broadcast & Campaign UI COMPLETE (Phase 1-6) |
+| **Project Phase** | 🔨 Foundation — Ready for Modul 5 |
 | **PRD** | ✅ Final (v1.2) — Document Extraction + Feature-Based Architecture |
 | **Tech Stack** | ✅ Finalized (Bun + Elysia + Drizzle + Vercel AI SDK) |
 | **Backend Architecture** | ✅ Feature-based (DEC-010) — 14 modules + 4 workers + shared lib |
@@ -23,6 +23,7 @@
 | **Modul 1 Inbox UI** | ✅ Complete (Phase 1-8) — All 5.1.1–5.1.6 with mock data |
 | **Modul 2 AI Auto-Reply UI** | ✅ Complete (Phase 1-8) — Settings + Knowledge Base + AI Chat Preview |
 | **Modul 3 Broadcast & Campaign UI** | 🟢 Complete (Phase 1-6) — Foundation, Campaigns List, Template Library, Segment Builder, Campaign Wizard, Campaign Detail + Report |
+| **Modul 4 CRM & Pipeline Lead UI** | 🟢 Complete (Phase 1-7) — Kanban + Filters + Column Customize + Contacts List + Contact Profile + Segment Management + CSV Import + Integration Polish |
 
 ## Open Items
 
@@ -37,12 +38,24 @@ _(None)_
 
 ## Next Best Actions
 
-1. **WebSocket** — Real-time messaging foundation
-2. **Backend conversations API** — CRUD conversations + messages
-3. **Connect frontend ke backend API** — ganti mock data
+1. **Modul 5** — Template & Quick Reply
+2. **WebSocket** — Real-time messaging foundation
+3. **WebSocket** — Real-time messaging foundation
+4. **Backend conversations API** — CRUD conversations + messages
+5. **Connect frontend ke backend API** — ganti mock data
 
 ## Done Items
 
+- [x] Pipeline Column Management Phase 4: Hapus Kolom — DeleteColumnConfirm (validation: contacts in column blocks delete, last column blocks delete, warning message with contact count), KanbanColumnHeader wired "Hapus Kolom" menu item, ColumnCustomizeModal delete already wired to store, typecheck zero errors, build success
+- [x] Pipeline Column Management Phase 3: Tambah Kolom — AddColumnModal (name input + color picker with 8 presets + live preview + Enter to submit + dispatch addColumn), KanbanColumnHeader wired "Tambah Kolom" menu item to open modal, typecheck zero errors, build success
+- [x] Pipeline Column Management Phase 2: Ubah Nama Kolom — KanbanColumnHeader inline rename (editing state, input field, Enter/Escape/blur handlers, renameColumn dispatch), KanbanBoard pass columnId prop, ColumnCustomizeModal wired to store (was disconnected local state), typecheck zero errors, build success
+- [x] Pipeline Column Management Phase 1: Dynamic Column State — Added PipelineColumn type + DEFAULT_PIPELINE_COLUMNS to mock/crm.ts, added columns state + renameColumn/addColumn/removeColumn actions to stores/crm.ts, rewire 5 consumers (KanbanBoard, ContactTable, ContactFilters, ContactEditModal, ContactInfoCard, ContactProfileHeader) from hardcoded PIPELINE_COLUMNS to store.columns, typecheck zero errors, build success
+- [x] Modul 4 Phase 7: Integration + Polish + Verification — KanbanCard now navigates to /contacts/:id profile page (replaced Zustand selectContact with useNavigate), ContactProfilePage fixed dead setContacts state (now tracks single contact with useState), Removed dead selectedContactId + selectContact from crm.ts store, All 18 CRM files verified (2104 lines total), typecheck zero errors, build success
+- [x] Modul 4 Phase 6: Segment Management + CSV Import — SegmentManager (saved filter presets dropdown, click-outside-to-close, active segment highlight, delete segment), SegmentSaveModal (name + save current filters, filter summary display), ImportContactsModal (CSV drag-drop upload, auto-detect header, validation: name + phone/email required, preview table 50 rows, valid/invalid counts), ContactsPage integrated (segment state, import modal, export as CSV, "Simpan sebagai Segmen" button when filters active, segment select loads filters)
+- [x] Modul 4 Phase 5: Contact Profile Page — ContactProfileHeader (avatar, name, status badge, created date, back button, edit button), ContactInfoCard (2-column grid: phone, email, channel, identifiers, status, program, value, agent, labels, notes), ContactActivityTimeline (sorted activity log with type icons + relative time + agent name), ContactEditModal (name, phone, email, status, program, agent, notes — save to local state), ContactProfilePage (grid layout, 404 handling), ContactsPage wired to navigate(/contacts/:id), /contacts/:id route added
+- [x] Modul 4 Phase 4: Contacts List Page — ContactTable (11-column table: checkbox, avatar+name, phone, email, channel icon, status badge, labels, agent, value, date, actions), ContactFilters (search + status/source/agent filters), BulkActionBar (selected count + bulk actions), ContactsPage rewrite (pagination, filter logic, Import/Export buttons)
+- [x] Modul 4 Phase 2: Kanban Column Header + Drag Feedback — KanbanColumnHeader (color dot, name, count, total value, 3-dot column menu with edit/add/delete actions), KanbanBoard ref-based drag highlight (ring-2 + bg-brand-blue-50, zero re-render), KanbanCard draggable with opacity feedback, empty column dashed border
+- [x] Modul 4 Phase 1: CRM Pipeline Kanban Foundation — mock/crm.ts (18 leads, 3 programs, agents), stores/crm.ts (filter + moveContact), KanbanBoard (6 columns, drag-drop ready, total value), KanbanCard (name, channel, program, agent, labels, time), PipelinePage rewrite
 - [x] Modul 2 Phase 8: Final Integration + Verification — Typecheck zero errors, Vite build success (all chunks verified), all pages navigable, all components verified present
 - [x] Modul 3 Phase 6: Campaign Detail + Broadcast Report — CampaignDetailPage (/campaigns/:id route), CampaignReportStats (4 stat cards with percentages), CampaignProgressBar (stacked horizontal bar), CampaignTimeline (vertical event timeline), CampaignRecipientList (searchable/filterable table with pagination)
 - [x] Modul 3 Phase 5: Campaign Creation Wizard — CampaignWizard (4-step wizard), WizardStepBasic (name/desc/goal/channel), WizardStepSegment (reuses SegmentBuilder), WizardStepTemplate (template card grid + preview), WizardStepSchedule (now/scheduled picker + WIB timezone), WizardStepReview (full summary), CreateCampaignPage (/campaigns/new route)

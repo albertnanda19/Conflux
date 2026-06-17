@@ -41,9 +41,10 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 ### Minggu 11–12: Modul 4 — CRM Dasar
 
 - [ ] 🔴 Auto-create kontak dari pesan masuk
-- [ ] 🔴 Profil kontak dasar
-- [ ] 🔴 Pipeline Kanban sederhana (6 kolom default)
-- [ ] 🔴 Import kontak CSV/Excel
+- [ ] 🟢 Profil kontak dasar — UI Phase 5 done (profile page, info card, activity timeline, edit modal)
+- [ ] 🟢 Pipeline Kanban sederhana (6 kolom default) — UI Phase 1-7 done + Column Management Phase 1-4 done (KanbanBoard, drag-drop, filters, column customize, rename/add/delete columns)
+- [ ] 🟢 Daftar kontak (tabel, search, bulk actions) — UI Phase 4 done (ContactTable, ContactFilters, BulkActionBar, pagination)
+- [ ] 🟢 Import kontak CSV/Excel — UI Phase 6 done (ImportContactsModal, drag-drop, validation, preview)
 - [ ] 🔴 Deduplikasi kontak cross-channel
 
 ---

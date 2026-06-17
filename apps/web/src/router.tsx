@@ -11,6 +11,9 @@ const InboxPage = lazy(() =>
 const ContactsPage = lazy(() =>
   import("./pages/ContactsPage").then((m) => ({ default: m.ContactsPage })),
 )
+const ContactProfilePage = lazy(() =>
+  import("./pages/ContactProfilePage").then((m) => ({ default: m.ContactProfilePage })),
+)
 const PipelinePage = lazy(() =>
   import("./pages/PipelinePage").then((m) => ({ default: m.PipelinePage })),
 )
@@ -73,6 +76,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <ContactsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "contacts/:id",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ContactProfilePage />
           </Suspense>
         ),
       },

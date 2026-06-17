@@ -286,4 +286,29 @@ Log keputusan arsitektural & teknis. Setiap keputusan diberi kode DEC-XXX.
 - `.env` hanya di root monorepo
 - `apps/server/package.json` dev/start script pakai `--env-file=../../.env`
 - `.gitignore` root harus include `.env`
+
+---
+
+## DEC-012: Pipeline Columns — Dynamic State in Zustand
+
+**Status:** Final
+**Tanggal:** 2026-06-17
+
+**Keputusan:** Pipeline columns diubah dari hardcoded constant (`PIPELINE_COLUMNS` di `lib/constants.ts`) menjadi dynamic state di Zustand store (`useCrmStore.columns`). `DEFAULT_PIPELINE_COLUMNS` di `mock/crm.ts` sebagai source of truth untuk initial value.
+
+**Alternatives:**
+- Dynamic Zustand state (dipilih) — columns bisa ditambah/diubah/dihapus runtime
+- Local component state — tidak bisa share across KanbanBoard + ContactsList + Profile
+- React Context — overkill untuk ini, Zustand sudah ada
+
+**Alasan:**
+- Kolom harus bisa diubah user (Phase 2-4: rename, add, delete)
+- 5 consumer components perlu baca columns dari satu source
+- Zustand sudah dipakai untuk CRM state (contacts, filters)
+- `DEFAULT_PIPELINE_COLUMNS` tetap di `mock/crm.ts` sebagai initial value + type `PipelineColumn` di sana juga
+
+**Impact:**
+- `lib/constants.ts PIPELINE_COLUMNS` tidak lagi dipakai oleh CRM components
+- Semua consumer component (KanbanBoard, ContactTable, ContactFilters, ContactEditModal, ContactInfoCard, ContactProfileHeader) baca dari store
+- Phase 2-4 tinggal tambah UI + dispatch store actions (renameColumn, addColumn, removeColumn)
 - `apps/web/` (Vite) baca `VITE_*` dari root `.env` via Vite's built-in support

@@ -4,6 +4,261 @@ Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
 ---
 
+## 2026-06-17 — Pipeline Column Management Phase 4: Hapus Kolom
+
+### Yang Dikerjakan
+- Created `DeleteColumnConfirm` confirmation dialog — red warning icon, column name display, contact count validation, last-column validation
+- Wired "Hapus Kolom" menu item in `KanbanColumnHeader` to open `DeleteColumnConfirm`
+- Delete validation: blocks if contacts exist in column (shows count), blocks if last column remaining
+- Store `removeColumn(columnId)` returns boolean — false on validation failure, true on success
+- Added `deleteOpen` state + import `DeleteColumnConfirm` to KanbanColumnHeader
+
+### Keputusan yang Diambil
+- DeleteColumnConfirm shows validation errors BEFORE user clicks Hapus — prevents dead-end UX
+- "Hapus" button disabled when validation fails (contacts in column or last column)
+- ColumnCustomizeModal delete already wired to store from Phase 2 — no changes needed there
+- Validation happens in the confirm dialog (not in store) — store's removeColumn has the same validation as a safety net
+
+### Yang Berhasil
+- "Hapus Kolom" menu item opens DeleteColumnConfirm
+- Delete blocked when column has contacts — shows warning with count
+- Delete blocked when only 1 column remains — shows warning
+- Delete succeeds when column is empty and not last — column removed from KanbanBoard + all consumers
+- Pipeline Column Management 4/4 phases COMPLETE
+- typecheck zero errors, build success (776 modules, 688ms)
+
+---
+
+## 2026-06-17 — Pipeline Column Management Phase 3: Tambah Kolom
+
+### Yang Dikerjakan
+- Created `AddColumnModal` component — name input + color picker (8 presets) + live preview + Enter to submit
+- Wired "Tambah Kolom" menu item in `KanbanColumnHeader` to open `AddColumnModal`
+- Modal dispatches `addColumn(name, color)` to Zustand store, closes on success
+- ColumnCustomizeModal already wired to store (renamed from local state to store in Phase 2)
+
+### Keputusan yang Diambil
+- AddColumnModal is a standalone modal component (not inline in KanbanColumnHeader) — follows existing pattern (ColumnCustomizeModal, ImportContactsModal, SegmentSaveModal)
+- Modal closes automatically after successful add — no need for success feedback
+- Enter key triggers add — matches UX pattern from rename (Phase 2)
+
+### Yang Berhasil
+- "Tambah Kolom" menu item opens AddColumnModal
+- New column appears in KanbanBoard after modal submit
+- New column available in ContactFilters status dropdown
+- typecheck zero errors, build success (775 modules, 753ms)
+
+---
+
+## 2026-06-17 — Pipeline Column Management Phase 1: Dynamic Column State
+
+### Yang Dikerjakan
+- Added `PipelineColumn` type and `DEFAULT_PIPELINE_COLUMNS` to `mock/crm.ts` — defines `{ id, name, color }` structure
+- Extended `stores/crm.ts` with `columns: PipelineColumn[]` state (initialized from defaults) + `renameColumn(columnId, newName)`, `addColumn(name, color)`, `removeColumn(columnId) → boolean` actions with validation (min 1 column, no contacts in column)
+- Rewired `KanbanBoard.tsx` — reads `columns` from store instead of hardcoded `PIPELINE_COLUMNS`
+- Rewired `ContactFilters.tsx` — status dropdown reads from store `columns`
+- Rewired `ContactTable.tsx` — `StatusBadge` receives `columns` as prop, reads from store
+- Rewired `ContactEditModal.tsx` — status select reads from store `columns`
+- Rewired `ContactInfoCard.tsx` — status badge lookup from store `columns`
+- Rewired `ContactProfileHeader.tsx` — status badge lookup from store `columns`
+- Hardcoded `PIPELINE_COLUMNS` from `lib/constants.ts` no longer used by any CRM consumer
+
+### Keputusan yang Diambil
+- `PipelineColumn` type lives in `mock/crm.ts` (not `constants.ts`) because it's tightly coupled to CRM domain
+- `DEFAULT_PIPELINE_COLUMNS` exported from `mock/crm.ts` as source of truth for initial store state
+- `removeColumn` returns `boolean` — `false` if validation fails (min 1 column or column not empty), `true` if success
+- Store action `renameColumn` only updates name (not id/color) — simple and safe
+- Column state is dynamic (Zustand store) — enables Phase 2-4 (rename/add/delete) to just wire UI
+
+### Yang Berhasil
+- KanbanBoard renders 6 columns from store (same visual result as before)
+- ContactFilters status dropdown shows dynamic column names
+- ContactTable, ContactEditModal, ContactInfoCard, ContactProfileHeader all read from store
+- Typecheck zero errors, Vite build success (759ms)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 2: Ubah Nama Kolom (inline edit in KanbanColumnHeader)
+- Phase 3: Tambah Kolom (AddColumnModal)
+- Phase 4: Hapus Kolom (confirmation + validation)
+
+---
+
+## 2026-06-17 — Modul 4 Phase 6: Segment Management + CSV Import
+
+### Yang Dikerjakan
+- Created `components/contacts/SegmentManager.tsx` — Saved filter presets dropdown with click-outside-to-close (useRef), active segment highlight, "Tampilkan Semua" to clear, delete segment on hover-reveal X button, dropdown lists saved segments with name and select/delete
+- Created `components/contacts/SegmentSaveModal.tsx` — Modal to name + save current filters as a segment, shows active filter summary (search, status, source, agent), disabled save when name empty, Enter key submits
+- Created `components/contacts/ImportContactsModal.tsx` — CSV upload with drag-drop zone, client-side CSV parsing (auto-detects header row by looking for 'nama'/'name'/'phone'/'email'), validation (name required, phone or email required), preview table (50 rows max), valid/invalid counts, "Pilih Ulang" to re-upload, import button shows count
+- Rewrote `pages/ContactsPage.tsx` — Integrated Phase 6 components: segment state (savedSegments + activeSegmentId), import modal state, save modal state, handleSaveSegment (creates SavedSegment from current filters), handleSelectSegment (loads segment filters into state), handleDeleteSegment, handleExport (exports filtered contacts as CSV download), handleImport (adds imported contacts to front of list with defaults), filter change handlers clear activeSegmentId, SegmentManager + "Simpan sebagai Segmen" button above filters, SegmentSaveModal + ImportContactsModal at end of JSX
+
+### Keputusan yang Diambil
+- SegmentManager uses useRef click-outside pattern (not Radix Dropdown) for simplicity — consistent with dropdown patterns elsewhere
+- SegmentSaveModal shows filter summary as a read-only preview so user knows what they're saving
+- ImportContactsModal handles CSV parsing client-side — no backend needed for mock data phase
+- Export generates CSV from current filtered contacts (not all contacts) — respects active filters
+- handleImport prepends imported contacts to front of list with default values (new_lead status, whatsapp source, no agent, no labels)
+- Filter change handlers clear activeSegmentId so manually changing a filter deselects the active segment
+- SegmentManager appears to the left of "Simpan Segmen" button for logical grouping
+
+### Yang Berhasil
+- SegmentManager dropdown shows saved segments with active highlight
+- Selecting a segment loads its filters into the filter state
+- "Tampilkan Semua" clears all filters and deselects segment
+- Delete segment removes from list, clears if active
+- "Simpan sebagai Segmen" button appears when filters active + no segment selected
+- Saving a segment adds it to the list and marks it active
+- Import CSV button opens modal, drag-drop or click to upload
+- CSV parsed with auto-detect header, validated, preview shown
+- Import adds valid rows to contacts list
+- Export downloads filtered contacts as CSV file
+- All previous phase functionality preserved (filters, table, pagination, profile navigation)
+- Typecheck zero errors, Vite build success
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 7: Integration + Polish + Verification
+
+---
+
+## 2026-06-17 — Modul 4 Phase 5: Contact Profile Page
+
+### Yang Dikerjakan
+- Created `components/contacts/ContactProfileHeader.tsx` — Back button, avatar initials, name, pipeline status badge, created date, Edit button, navigate to /contacts
+- Created `components/contacts/ContactInfoCard.tsx` — 2-column grid info card: phone, email, channel, channel identifiers, pipeline status, program interest, value, agent (with avatar), labels (LabelBadge), notes section
+- Created `components/contacts/ContactActivityTimeline.tsx` — Sorted activity log (newest first) with type-specific emoji icons, relative timestamps, agent attribution, vertical timeline line
+- Created `components/contacts/ContactEditModal.tsx` — Full edit modal: name, phone, email, pipeline status (select), program interest, agent (select from MOCK_AGENTS), notes (textarea), save/cancel. Uses local useState initialized from contact props.
+- Created `pages/ContactProfilePage.tsx` — Profile page: finds contact by useParams id, renders ContactProfileHeader + 2-column grid (ContactInfoCard left, ContactActivityTimeline right), ContactEditModal, 404 fallback with back-to-contacts button
+- Modified `pages/ContactsPage.tsx` — Added useNavigate, wired onSelectContact to navigate(`/contacts/${id}`)
+- Modified `router.tsx` — Added /contacts/:id route with lazy-loaded ContactProfilePage
+
+### Keputusan yang Diambil
+- ContactProfilePage manages edit state locally (useState for modal open/close)
+- ContactEditModal initializes form state from props (not controlled by parent) — each open resets to current values
+- Profile layout uses 2-column grid: info card (1fr) + timeline (340px fixed)
+- Activity timeline sorts by createdAt descending (newest first)
+- 404 handling built into profile page (returns centered message with back button)
+- No Zustand store needed — page is self-contained with mock data lookup
+
+### Yang Berhasil
+- `/contacts/crm1` shows full profile with back button, avatar, name, status badge
+- Info card displays all contact fields in 2-column grid
+- Labels render as colored badges
+- Activity timeline shows all events with icons, timestamps, agent names
+- Edit button opens modal, can change all fields, save updates local state
+- Back button navigates to /contacts list
+- Clicking a row in ContactsPage table navigates to /contacts/:id
+- 404 handling for invalid IDs
+- Typecheck zero errors, Vite build success
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 6: Segment Management + CSV Import
+
+---
+
+## 2026-06-17 — Modul 4 Phase 4: Contacts List Page
+
+### Yang Dikerjakan
+- Created `components/contacts/ContactTable.tsx` — 11-column table (checkbox, avatar+name, phone, email, channel icon, status badge, labels, agent, value, date, actions dropdown), reusable StatusBadge with PIPELINE_COLUMNS color
+- Created `components/contacts/ContactFilters.tsx` — Search bar + 3 filter dropdowns (Status, Source, Agent) + result count, reads from MOCK_AGENTS and SOURCE_OPTIONS
+- Created `components/contacts/BulkActionBar.tsx` — Appears when contacts selected: count badge + bulk action buttons (Ubah Agent, Ubah Status, Tambah Label, Hapus) + clear selection
+- Rewrote `pages/ContactsPage.tsx` — Full contacts list page: ContactFilters + ContactTable + BulkActionBar + pagination (PAGE_SIZE=10) + Import CSV / Export buttons, local filter state with useMemo
+- Removed duplicate channelFilter prop (was redundant with sourceFilter), fixed LabelBadge props to match existing component signature (name+color instead of label object)
+
+### Keputusan yang Diambil
+- ContactFilters uses native `<select>` elements (same pattern as PipelineFilters)
+- ContactTable uses Radix Checkbox for row selection + Radix Dropdown for row actions
+- Pagination is client-side (PAGE_SIZE=10) since all data is mock; server-side pagination comes with backend
+- ContactsPage manages all filter/selection state locally (not via Zustand) — each filter is independent state
+- Bulk action buttons are placeholder (no-op handlers) — actual bulk operations come with backend
+
+### Yang Berhasil
+- `/contacts` shows full table with 18 CRM contacts
+- Search filters by name, phone, email
+- Status, Source, Agent dropdowns filter correctly
+- Checkbox select all/one works, BulkActionBar appears with correct count
+- Pagination renders correctly (10 per page, page 2 shows remaining 8)
+- Row click navigates to detail (placeholder)
+- Import CSV and Export buttons present in header
+- Typecheck zero errors, Vite build success
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 5: Contact Profile Page (/contacts/:id)
+
+---
+
+## 2026-06-17 — Modul 4 Phase 3: Pipeline Filters + Column Customization
+
+### Yang Dikerjakan
+- Created `components/contacts/PipelineFilters.tsx` — Filter bar with 3 select dropdowns (Agent, Program, Source) + active filter indicator + reset button
+- Created `components/contacts/ColumnCustomizeModal.tsx` — Modal: list all columns with rename input, add new column (name + color picker with 8 presets), delete column, inline edit via pencil icon
+- Updated `pages/PipelinePage.tsx` — Integrated PipelineFilters + "Kustomisasi Kolom" button in header + ColumnCustomizeModal
+- All Phase 1 + Phase 2 components remain untouched
+
+### Keputusan yang Diambil
+- PipelineFilters reads/writes filters via useCrmStore (agentFilter, programFilter, sourceFilter)
+- ColumnCustomizeModal uses local state for column list (not persisted — mock UI, persistence comes with backend)
+- Modal uses 8 preset colors for simplicity
+- PipelineFilters sits between page header and KanbanBoard
+
+### Yang Berhasil
+- `/pipeline` shows filter bar with Agent/Program/Source selects
+- Filter applies to kanban board — only matching contacts shown per column
+- Reset button clears all filters
+- "Kustomisasi Kolom" button opens modal with column list
+- Can rename, add (with color), delete columns in modal
+- Typecheck zero errors, Vite build success (PipelinePage chunk 29.07KB)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 4: Contacts List Page (table, search, bulk actions)
+
+---
+
+## 2026-06-17 — Modul 4 Phase 2: Kanban Column Header + Drag Feedback
+
+### Yang Dikerjakan
+- Created `components/contacts/KanbanColumnHeader.tsx` — Column header with color dot + name + count badge + total value + 3-dot menu (Ubah Nama, Tambah Kolom, Hapus Kolom)
+- Updated `components/contacts/KanbanBoard.tsx` — Ref-based drag highlight (ring-2 + bg-brand-blue-50, zero re-render), id attributes on columns, empty column dashed border
+
+### Keputusan yang Diambil
+- KanbanColumnHeader uses click-outside-to-close pattern via useRef + mousedown listener
+- Drag highlight uses DOM manipulation via refs (not state) to avoid unnecessary re-renders during drag
+- Empty columns show dashed border for visual distinction
+
+### Yang Berhasil
+- Column headers show color dot, name, count, total value
+- 3-dot menu opens with 3 column actions
+- Drag-drop highlights target column with ring + background
+- No re-render flicker during drag operations
+- Typecheck zero errors, Vite build success (PipelinePage chunk 18.93KB)
+
+---
+
+## 2026-06-17 — Modul 4 Phase 1: CRM Pipeline Kanban Foundation
+
+### Yang Dikerjakan
+- Created `mock/crm.ts` — 18 mock leads (CrmContact type extending Contact with programInterest, assignedAgentId, programValue), 3 program options, 3 source options, helper functions (getAgentById, getContactsByStatus, getContactCountByStatus, getTotalValueByStatus, formatCurrency)
+- Created `stores/crm.ts` — Zustand store: contacts, selectedContactId, agentFilter, programFilter, sourceFilter, moveContact (pipeline status change), getFilteredContacts
+- Created `components/contacts/KanbanCard.tsx` — Lead card with avatar initials, name, source channel icon, program + value, label pills (max 2 + overflow), assigned agent avatar, time ago, draggable
+- Created `components/contacts/KanbanBoard.tsx` — 6-column horizontal scrollable kanban board, each column with color dot + name + count badge + total value, drag-drop between columns with visual feedback (bg-blue highlight on dragover), empty state per column
+- Rewrote `pages/PipelinePage.tsx` — replaced placeholder with KanbanBoard integration, page header + description
+
+### Keputusan yang Diambil
+- CrmContact extends existing Contact type from inbox.ts (not separate type) for maximum reuse
+- Store getFilteredContacts() as getter function (not derived state) — call pattern: `const contacts = getFilteredContacts()`
+- KanbanCard uses HTML5 native drag-and-drop (no library) for MVP simplicity
+
+### Yang Berhasil
+- `/pipeline` renders 6 kanban columns with 18 lead cards distributed across statuses
+- Drag-drop between columns works with visual feedback
+- Each column shows lead count and total program value
+- Cards show name, channel icon, program, agent, labels, time
+- Typecheck zero errors, Vite build success (PipelinePage chunk 15.78KB)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 2: Kanban drag & drop enhancement + KanbanColumnHeader extraction
+- Phase 3: Pipeline filters + column customization
+
+---
+
 ## 2026-06-16 — Modul 3 Phase 6: Campaign Detail + Broadcast Report
 
 ### Yang Dikerjakan
