@@ -20,6 +20,18 @@ const SettingsPage = lazy(() =>
 const LabelsPage = lazy(() =>
   import("./pages/LabelsPage").then((m) => ({ default: m.LabelsPage })),
 )
+const CampaignsPage = lazy(() =>
+  import("./pages/CampaignsPage").then((m) => ({ default: m.CampaignsPage })),
+)
+const CampaignDetailPage = lazy(() =>
+  import("./pages/CampaignDetailPage").then((m) => ({ default: m.CampaignDetailPage })),
+)
+const CreateCampaignPage = lazy(() =>
+  import("./pages/CreateCampaignPage").then((m) => ({ default: m.CreateCampaignPage })),
+)
+const TemplatesPage = lazy(() =>
+  import("./pages/TemplatesPage").then((m) => ({ default: m.TemplatesPage })),
+)
 const KnowledgeBasePage = lazy(() =>
   import("./pages/KnowledgeBasePage").then((m) => ({ default: m.KnowledgeBasePage })),
 )
@@ -89,10 +101,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "campaigns/new",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CreateCampaignPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "campaigns/:id",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CampaignDetailPage />
+          </Suspense>
+        ),
+      },
+      {
         path: "campaigns",
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ContactsPage />
+            <CampaignsPage />
           </Suspense>
         ),
       },
@@ -100,7 +128,7 @@ export const router = createBrowserRouter([
         path: "templates",
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ContactsPage />
+            <TemplatesPage />
           </Suspense>
         ),
       },

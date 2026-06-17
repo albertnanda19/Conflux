@@ -4,6 +4,130 @@ Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
 ---
 
+## 2026-06-16 — Modul 3 Phase 6: Campaign Detail + Broadcast Report
+
+### Yang Dikerjakan
+- Created CampaignProgressBar.tsx — stacked horizontal bar showing delivered/read/replied/failed proportions with color-coded legend and percentage labels
+- Created CampaignReportStats.tsx — 4 stat cards (Terkirim, Dibaca, Dibalas, Gagal) with icons, large numbers, percentages, and distinct background colors
+- Created CampaignTimeline.tsx — vertical event timeline with auto-detected icons per event type, timestamps formatted in Indonesian locale, batch count badges
+- Created CampaignRecipientList.tsx — searchable/filterable recipient table with 5 status filter tabs, name/phone search, 12 mock recipients, 10-per-page pagination, failed reason display
+- Created CampaignDetailPage.tsx — full detail page composing all 4 components above, plus campaign info cards (channel, template, goal, segment summary, dates), back navigation, status badge
+- Updated router.tsx — added CampaignDetailPage lazy import, wired /campaigns/:id route (between /campaigns/new and /campaigns for correct matching)
+- Typecheck verification — zero errors after fixing unused useParams destructuring
+- Build verification — Vite build success, CampaignDetailPage chunk 15KB lazy-loaded, all prior phase chunks intact
+
+### Keputusan yang Diambil
+- CampaignRecipientList manages its own filter/search/pagination state internally (self-contained pattern)
+- CampaignDetailPage uses `params.id` from useParams instead of destructuring to avoid unused variable error
+- Timeline event icons use helper function getEventIcon with lookup table + fallback
+- Report stats use distinct bgColor per stat type for visual differentiation
+
+### Yang Berhasil
+- /campaigns/:id route fully functional with 4 report components
+- CampaignProgressBar renders stacked bar with correct proportions
+- CampaignReportStats shows 4 stat cards with large numbers and percentages
+- CampaignTimeline displays 5 events with icons and batch counts
+- CampaignRecipientList supports filtering, search, and pagination across 12 recipients
+- CampaignDetailPage composes all components with campaign info header
+- All 5 Phase 6 components independently compilable with self-contained mock data
+- All prior phase files (Phase 1-5) remain untouched and functional
+- **MODUL 3 Broadcast & Campaign UI fully complete (Phase 1-6)**
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Next module or feature per EPICS.md priority
+
+---
+
+## 2026-06-16 — Modul 3 Phase 3: Template Library Page
+
+### Yang Dikerjakan
+- Created TemplateCategoryFilter.tsx — self-contained category filter pills with mock data (7 categories with counts)
+- Created TemplateCard.tsx — self-contained template card component with toggle, edit/preview/delete actions, content preview, variable chips
+- Created TemplateCreateModal.tsx — full create/edit template form modal with Nama, Kategori select, Tipe radio pills, Content textarea, Variable insertion buttons, CTA config (for interactive type), file upload area, preview link, and save actions (Draft / Simpan & Aktifkan)
+- Created TemplatePreviewModal.tsx — phone-frame WhatsApp-style template preview mockup with variable replacement, CTA button rendering, and responsive phone frame
+- Created TemplatesPage.tsx — main page composing TemplateCategoryFilter + TemplateCard in 2-column grid, search, category filter, create button, 6 mock templates with all categories represented
+- Updated router.tsx — added TemplatesPage lazy import, wired /templates route to TemplatesPage (replaced ContactsPage placeholder)
+- Typecheck verification — zero errors across all new files
+- Build verification — Vite build success, TemplatesPage chunk 19KB, all prior phase files intact
+
+### Keputusan yang Diambil
+- TemplatePreviewModal uses explicit TemplatePreviewData interface (not typeof MOCK_TEMPLATE) to allow optional buttonText from callers
+- TemplateCreateModal uses internal state for form fields (not controlled by parent) — saves via callback
+- Category filter pills use the same pill-button pattern as Phase 2's CampaignStatusFilter for visual consistency
+
+### Yang Berhasil
+- /templates route fully functional with 6 mock templates across all categories
+- TemplateCreateModal includes live variable extraction from content (regex-based {xxx} detection)
+- TemplatePreviewModal renders WhatsApp phone-frame with variable substitution using placeholder values
+- All Phase 3 components independently compilable with self-contained mock data
+- All prior phase files (Phase 1-2) remain untouched and functional
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 4: Segment Builder Component (SegmentBuilder, SegmentFilterChips, SegmentPreview)
+
+---
+
+## 2026-06-16 — Modul 3 Phase 4: Segment Builder Component
+
+### Yang Dikerjakan
+- Created SegmentFilterChips.tsx — self-contained removable pill chips for active segment filters, with XIcon remove buttons and "Hapus semua" clear-all action
+- Created SegmentPreview.tsx — self-contained segment preview card with total count display, per-channel breakdown bars, per-pipeline stats, and 5 sample contacts with avatars/status badges
+- Created SegmentBuilder.tsx — full segment builder component with dynamic filter row add/remove, dropdown selects for 6 filter types (Program, Sumber Lead, Status Pipeline, Label, Rentang Tanggal, Belum Dibalas), date range picker for date filters, integration with SegmentFilterChips and SegmentPreview
+- Typecheck verification — zero errors after fixing PIPELINE_COLORS unquoted object keys
+- Build verification — Vite build success, all prior phase files untouched
+
+### Keputusan yang Diambil
+- PIPELINE_COLORS object keys with spaces require quotes: `'New Lead'`, `'Contacted'`, `'Proposal Sent'`
+- Removed unused `getLabelForType` function (labels are computed inline in handleAddFilter)
+- SegmentBuilder uses local state for filter management (not Zustand store) per self-contained pattern
+
+### Yang Berhasil
+- SegmentBuilder supports 6 filter types with appropriate input controls
+- SegmentFilterChips renders active filters as removable blue pills
+- SegmentPreview shows mock breakdown data with progress bars and sample contacts
+- All 3 Phase 4 components independently compilable with self-contained mock data
+- All prior phase files (Phase 1-3) remain untouched and functional
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 5: Campaign Creation Wizard (CampaignWizard, 5 wizard step components)
+
+---
+
+## 2026-06-16 — Modul 3 Phase 5: Campaign Creation Wizard
+
+### Yang Dikerjakan
+- Created WizardStepBasic.tsx — step 1 form with Nama, Deskripsi, Tujuan (select), Channel (WhatsApp pre-selected/disabled)
+- Created WizardStepSegment.tsx — step 2 composing SegmentBuilder from Phase 4 + estimated contact count display
+- Created WizardStepTemplate.tsx — step 3 template selection with 6 mock template cards, click-to-select, "Buat Template Baru" link to TemplateCreateModal, EyeIcon preview per template
+- Created WizardStepSchedule.tsx — step 4 schedule mode toggle (Kirim Sekarang / Jadwalkan), date/time pickers, WIB timezone badge, confirmation message
+- Created WizardStepReview.tsx — review summary showing all selections (name, description, goal, channel, template, estimated count, schedule) with zero-count warning
+- Created CampaignWizard.tsx — orchestrator with 4-step horizontal indicator (checked/completed/active/inactive), state management across steps, navigation (Prev/Next/Simpan Draft/Finish), StepKey type removed (unused)
+- Created CreateCampaignPage.tsx — page wrapper with header, CampaignWizard composition, navigate-to-campaigns on finish/cancel
+- Updated router.tsx — added CreateCampaignPage lazy import, wired /campaigns/new route (before /campaigns for correct matching)
+- Typecheck verification — zero errors after fixing WizardBasicData export and removing unused StepKey
+- Build verification — Vite build success, CreateCampaignPage chunk 27KB lazy-loaded, all prior phase chunks intact
+
+### Keputusan yang Diambil
+- WizardStepBasic uses exported WizardBasicData interface so CampaignWizard can import and manage state
+- CampaignWizard manages all wizard state locally (not Zustand) — passes data down to steps via props
+- Step 4 combines Schedule + Review in same step panel (plan said "Jadwal & Review" as one step)
+- TemplateStep has "Buat Template Baru" button that opens TemplateCreateModal inline (no navigation away)
+- CampaignWizard shows "Simpan Draft" on every step (bottom-right), "Selanjutnya" for non-final steps, "Kirim Sekarang" / "Jadwalkan" for final step
+
+### Yang Berhasil
+- Full 4-step wizard with step indicator, progress tracking, and back/forward navigation
+- Template selection with card grid, live preview via TemplatePreviewModal, and "create new" flow
+- Schedule mode toggle with date/time pickers and WIB timezone confirmation
+- Review step shows complete campaign summary with warning if estimated count is zero
+- /campaigns/new route functional, navigable from CampaignsPage "+ Buat Campaign" button
+- All 7 Phase 5 files independently compilable with proper type exports
+- All prior phase files (Phase 1-4) remain untouched and functional
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 6: Campaign Detail Page + Broadcast Report (CampaignDetailPage, CampaignProgressBar, CampaignReportStats, CampaignTimeline, CampaignRecipientList)
+
+---
+
 ## 2026-06-16 — Phase 8: Final Integration + Verification (Modul 2 Complete)
 
 ### Yang Dikerjakan

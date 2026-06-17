@@ -39,3 +39,34 @@ export const CONVERSATION_STATUSES = {
   resolved: "resolved",
   snoozed: "snoozed",
 } as const
+
+export const CAMPAIGN_STATUSES = {
+  draft: "draft",
+  scheduled: "scheduled",
+  running: "running",
+  completed: "completed",
+  cancelled: "cancelled",
+} as const
+
+export const CAMPAIGN_GOALS = {
+  promotion: "Promosi Program",
+  follow_up: "Follow Up",
+  event_invitation: "Undangan Event",
+  re_engagement: "Re-engagement",
+} as const
+
+export const TEMPLATE_TYPES = {
+  text: "Teks",
+  text_image: "Teks + Gambar",
+  text_document: "Teks + Dokumen",
+  interactive_button: "Interaktif (Button)",
+} as const
+
+export const TEMPLATE_CATEGORIES = {
+  sapaan: "Sapaan",
+  promo: "Promo",
+  undangan: "Undangan",
+  follow_up: "Follow Up",
+  reminder: "Reminder",
+  closing: "Closing",
+} as const

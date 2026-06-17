@@ -54,11 +54,11 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 
 ### Bulan 4: Modul 3 — Broadcast & Campaign
 
-- [ ] 🔴 Pembuatan campaign
-- [ ] 🔴 Segmentasi kontak
-- [ ] 🔴 Template pesan broadcast (WhatsApp template message)
-- [ ] 🔴 Penjadwalan broadcast
-- [ ] 🔴 Laporan broadcast
+- [ ] 🟢 Pembuatan campaign — UI mock selesai (Phase 1-6: foundation + list + wizard + template + segment + detail)
+- [ ] 🟢 Segmentasi kontak — UI mock selesai (Phase 4: SegmentBuilder + SegmentFilterChips + SegmentPreview)
+- [ ] 🟢 Template pesan broadcast (WhatsApp template message) — UI mock selesai (Phase 1+3: foundation + template library page)
+- [ ] 🟢 Penjadwalan broadcast — UI mock selesai (Phase 5: WizardStepSchedule with date/time pickers)
+- [ ] 🟢 Laporan broadcast — UI mock selesai (Phase 6: CampaignDetailPage + ReportStats + ProgressBar + Timeline + RecipientList)
 
 ### Bulan 5: Modul 5 — Template & Quick Reply
 

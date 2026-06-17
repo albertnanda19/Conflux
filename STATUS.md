@@ -1,12 +1,12 @@
 # STATUS.md
 
-**Last updated:** 2026-06-16 (Phase 8: Modul 2 — Final Integration + Verification)
+**Last updated:** 2026-06-16 (Modul 3 — Phase 6: Campaign Detail + Broadcast Report)
 
 ## Current State
 
 | Category | Status |
 |----------|--------|
-| **Project Phase** | 🔨 Foundation — Modul 2 AI Auto-Reply UI COMPLETE (Phase 1-8) |
+| **Project Phase** | 🔨 Foundation — Modul 3 Broadcast & Campaign UI COMPLETE (Phase 1-6) |
 | **PRD** | ✅ Final (v1.2) — Document Extraction + Feature-Based Architecture |
 | **Tech Stack** | ✅ Finalized (Bun + Elysia + Drizzle + Vercel AI SDK) |
 | **Backend Architecture** | ✅ Feature-based (DEC-010) — 14 modules + 4 workers + shared lib |
@@ -22,6 +22,7 @@
 | **Testing** | ✅ Vitest (backend+frontend) + Playwright (E2E config) |
 | **Modul 1 Inbox UI** | ✅ Complete (Phase 1-8) — All 5.1.1–5.1.6 with mock data |
 | **Modul 2 AI Auto-Reply UI** | ✅ Complete (Phase 1-8) — Settings + Knowledge Base + AI Chat Preview |
+| **Modul 3 Broadcast & Campaign UI** | 🟢 Complete (Phase 1-6) — Foundation, Campaigns List, Template Library, Segment Builder, Campaign Wizard, Campaign Detail + Report |
 
 ## Open Items
 
@@ -43,6 +44,10 @@ _(None)_
 ## Done Items
 
 - [x] Modul 2 Phase 8: Final Integration + Verification — Typecheck zero errors, Vite build success (all chunks verified), all pages navigable, all components verified present
+- [x] Modul 3 Phase 6: Campaign Detail + Broadcast Report — CampaignDetailPage (/campaigns/:id route), CampaignReportStats (4 stat cards with percentages), CampaignProgressBar (stacked horizontal bar), CampaignTimeline (vertical event timeline), CampaignRecipientList (searchable/filterable table with pagination)
+- [x] Modul 3 Phase 5: Campaign Creation Wizard — CampaignWizard (4-step wizard), WizardStepBasic (name/desc/goal/channel), WizardStepSegment (reuses SegmentBuilder), WizardStepTemplate (template card grid + preview), WizardStepSchedule (now/scheduled picker + WIB timezone), WizardStepReview (full summary), CreateCampaignPage (/campaigns/new route)
+- [x] Modul 3 Phase 4: Segment Builder — SegmentBuilder (dynamic filter add/remove), SegmentFilterChips (removable pills), SegmentPreview (channel/pipeline breakdown + sample contacts)
+- [x] Modul 3 Phase 3: Template Library Page — TemplatesPage, TemplateCategoryFilter, TemplateCard, TemplateCreateModal (full CRUD form with variable insertion), TemplatePreviewModal (phone-frame WhatsApp mockup), /templates route wired
 - [x] Modul 2 Phase 7: AI Chat Preview + Persona Config UI — PersonaConfig (name, language, tone selector, system prompt), AIChatPreview (chat simulator with mock responses), "Test AI" button in Persona section
 - [x] Modul 2 Phase 6: Handoff Configuration UI — HandoffConfig component with trigger keywords (add/remove chips), conversion signal toggles, handoff message editor, max AI messages input, priority notification toggle
 - [x] Modul 2 Phase 5: Working Hours Configuration UI — WorkingHours component with per-day toggles, time pickers, timezone display, OOO message textarea
