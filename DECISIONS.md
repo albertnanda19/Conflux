@@ -312,3 +312,28 @@ Log keputusan arsitektural & teknis. Setiap keputusan diberi kode DEC-XXX.
 - Semua consumer component (KanbanBoard, ContactTable, ContactFilters, ContactEditModal, ContactInfoCard, ContactProfileHeader) baca dari store
 - Phase 2-4 tinggal tambah UI + dispatch store actions (renameColumn, addColumn, removeColumn)
 - `apps/web/` (Vite) baca `VITE_*` dari root `.env` via Vite's built-in support
+
+---
+
+## DEC-013: Cross-Module Agent Data Bridge
+
+**Status:** Final
+**Tanggal:** 2026-06-17
+
+**Keputusan:** `mock/inbox.ts` mendeclare `MOCK_AGENTS` sebagai derived data dari `mock/agents.ts` via `getAgents()`, bukan hardcoded array terpisah.
+
+**Alternatives:**
+- Derived data via getAgents() (dipilih) — single source of truth, perubahan di Kelola Agent otomatis terreflect ke Inbox/CRM
+- Hardcoded array terpisah di mock/inbox.ts — simple tapi data duplikat, risk drift
+- Shared Zustand store — overkill untuk mock data, couples modules unnaturally
+
+**Alasan:**
+- Agent data harus konsisten di seluruh modul (Inbox agent filter, CRM contact assignment, ContactProfile agent display)
+- `getAgents()` adalah stable reference — setiap call return snapshot terkini
+- Tidak perlu import AgentProfile type ke inbox.ts — cukup map ke Agent[] subset (id, name, initials, status, activeConversationCount)
+- Zero coupling antar module — agents.ts tidak tahu inbox.ts exist
+
+**Impact:**
+- Perubahan agent (tambah/edit/hapus/status) di Kelola Agent langsung terreflect di Inbox agent filter dan CRM assignment dropdown
+- `mock/inbox.ts` import `getAgents` dari `mock/agents.ts` — satu import baru
+- `MOCK_AGENTS` di inbox.ts menjadi `const` yang di-initialize dari getAgents() (module-level)

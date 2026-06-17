@@ -28,6 +28,7 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 - [ ] 🟢 Filter & search percakapan (UI mock — agent filter, label filter, sort, phone search)
 - [ ] 🟢 Label & tag system (UI mock — CRUD /labels page, assign ke conversations)
 - [ ] 🟢 Real-time chat panel (UI mock — media messages, emoji, quick reply, send)
+- [ ] 🟢 Kelola Agent (UI mock — CRUD, role management, profile page, performance stats, cross-module sync)
 
 ### Minggu 7–10: Modul 2 — AI Auto-Reply Engine
 

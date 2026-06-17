@@ -19,7 +19,8 @@ class ApiError extends Error {
 }
 
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("access_token")
+  const match = document.cookie.match(/(^| )access_token=([^;]+)/)
+  const token = match ? decodeURIComponent(match[2]) : null
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

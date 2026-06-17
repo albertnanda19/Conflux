@@ -1,12 +1,12 @@
 # STATUS.md
 
-**Last updated:** 2026-06-17 (Modul 6 Analytics — Phase 6 Complete, All 6 Tabs Done)
+**Last updated:** 2026-06-17 (Login Page + Logout Flow Complete)
 
 ## Current State
 
 | Category | Status |
 |----------|--------|
-| **Project Phase** | 🟢 Modul 6 Analytics Complete — All 6 tabs ready |
+| **Project Phase** | 🟢 Login + Auth + Agent UI Complete |
 | **PRD** | ✅ Final (v1.2) — Document Extraction + Feature-Based Architecture |
 | **Tech Stack** | ✅ Finalized (Bun + Elysia + Drizzle + Vercel AI SDK) |
 | **Backend Architecture** | ✅ Feature-based (DEC-010) — 14 modules + 4 workers + shared lib |
@@ -44,6 +44,8 @@ _(None)_
 3. **Connect frontend ke backend API** — ganti mock data
 
 ## Done Items
+
+- [x] Kelola Agent UI Complete (Phase 1-6) — 17 new files + 4 modified: mock/agents.ts (AgentProfile type + 6 agents + CRUD), stores/agents.ts (Zustand), AgentsPage, AgentProfilePage, AgentAvatar, AgentStatusBadge, AgentRoleBadge, AgentFilters, AgentStatsOverview, AgentTable, AgentFormModal, AgentProfileHeader, AgentPerformanceCard, AgentActivityTimeline, AgentConversationList, AgentDeleteConfirm, router.tsx (/agents, /agents/new, /agents/:id), Sidebar.tsx (nav item), mock/inbox.ts (MOCK_AGENTS derives from agents.ts), typecheck zero errors, build success (AgentsPage 11.87kB, AgentProfilePage 9.96kB)
 
 - [x] Modul 6 Phase 5: Conversation Trends — ConversationTrendsTab (3 StatCards: Total Percakapan 30 Hari, Rata-rata/Hari, Jam Sibuk), ConversationVolumeChart (area chart 30 hari + 7-day moving average dashed line), HeatmapChart (7×24 heatmap with visualMap color scale), PeakHoursChart (horizontal bar top 10 jam sibuk, coral→brand-blue gradient), LazyChart updated with 3 new lazy exports, ReportsPage trends tab wired, typecheck zero errors, build success
 

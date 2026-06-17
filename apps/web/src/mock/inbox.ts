@@ -97,12 +97,15 @@ export const LABELS: Label[] = [
   { id: 'l6', name: 'Dari WA Organik', color: '#25D366' },
 ]
 
-export const MOCK_AGENTS: Agent[] = [
-  { id: 'a1', name: 'Sari Dewi', initials: 'SD', status: 'online', activeConversationCount: 3 },
-  { id: 'a2', name: 'Rizki Pratama', initials: 'RP', status: 'online', activeConversationCount: 5 },
-  { id: 'a3', name: 'Nina Kusuma', initials: 'NK', status: 'busy', activeConversationCount: 8 },
-  { id: 'a4', name: 'Andi Wijaya', initials: 'AW', status: 'offline', activeConversationCount: 0 },
-]
+import { getAgents } from './agents'
+
+export const MOCK_AGENTS: Agent[] = getAgents().map((a) => ({
+  id: a.id,
+  name: a.name,
+  initials: a.initials,
+  status: a.status,
+  activeConversationCount: a.activeConversationCount,
+}))
 
 const now = new Date()
 const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000).toISOString()

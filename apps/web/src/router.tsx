@@ -1,7 +1,11 @@
 import { createBrowserRouter } from "react-router-dom"
 import { lazy, Suspense } from "react"
 import { AppLayout } from "./components/layout/AppLayout"
+import { RequireAuth } from "./components/auth/RequireAuth"
 
+const LoginPage = lazy(() =>
+  import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })),
+)
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 )
@@ -41,6 +45,12 @@ const KnowledgeBasePage = lazy(() =>
 const ReportsPage = lazy(() =>
   import("./pages/ReportsPage").then((m) => ({ default: m.ReportsPage })),
 )
+const AgentsPage = lazy(() =>
+  import("./pages/AgentsPage").then((m) => ({ default: m.AgentsPage })),
+)
+const AgentProfilePage = lazy(() =>
+  import("./pages/AgentProfilePage").then((m) => ({ default: m.AgentProfilePage })),
+)
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 )
@@ -53,122 +63,95 @@ function PageLoader() {
   )
 }
 
+function SuspenseWrap({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>
+}
+
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <AppLayout />,
+    path: "/login",
+    element: (
+      <SuspenseWrap>
+        <LoginPage />
+      </SuspenseWrap>
+    ),
+  },
+  {
+    element: <RequireAuth />,
     children: [
       {
-        index: true,
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <DashboardPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "inbox",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <InboxPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "contacts",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ContactsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "contacts/:id",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ContactProfilePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "pipeline",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <PipelinePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "labels",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <LabelsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <SettingsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "campaigns/new",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <CreateCampaignPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "campaigns/:id",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <CampaignDetailPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "campaigns",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <CampaignsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "templates",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <TemplatesPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "knowledge-base",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <KnowledgeBasePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "reports",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ReportsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "*",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <NotFoundPage />
-          </Suspense>
-        ),
+        path: "/",
+        element: <AppLayout />,
+        children: [
+          {
+            index: true,
+            element: <SuspenseWrap><DashboardPage /></SuspenseWrap>,
+          },
+          {
+            path: "inbox",
+            element: <SuspenseWrap><InboxPage /></SuspenseWrap>,
+          },
+          {
+            path: "contacts",
+            element: <SuspenseWrap><ContactsPage /></SuspenseWrap>,
+          },
+          {
+            path: "contacts/:id",
+            element: <SuspenseWrap><ContactProfilePage /></SuspenseWrap>,
+          },
+          {
+            path: "pipeline",
+            element: <SuspenseWrap><PipelinePage /></SuspenseWrap>,
+          },
+          {
+            path: "labels",
+            element: <SuspenseWrap><LabelsPage /></SuspenseWrap>,
+          },
+          {
+            path: "settings",
+            element: <SuspenseWrap><SettingsPage /></SuspenseWrap>,
+          },
+          {
+            path: "campaigns/new",
+            element: <SuspenseWrap><CreateCampaignPage /></SuspenseWrap>,
+          },
+          {
+            path: "campaigns/:id",
+            element: <SuspenseWrap><CampaignDetailPage /></SuspenseWrap>,
+          },
+          {
+            path: "campaigns",
+            element: <SuspenseWrap><CampaignsPage /></SuspenseWrap>,
+          },
+          {
+            path: "templates",
+            element: <SuspenseWrap><TemplatesPage /></SuspenseWrap>,
+          },
+          {
+            path: "knowledge-base",
+            element: <SuspenseWrap><KnowledgeBasePage /></SuspenseWrap>,
+          },
+          {
+            path: "reports",
+            element: <SuspenseWrap><ReportsPage /></SuspenseWrap>,
+          },
+          {
+            path: "agents/new",
+            element: <SuspenseWrap><AgentsPage /></SuspenseWrap>,
+          },
+          {
+            path: "agents/:id",
+            element: <SuspenseWrap><AgentProfilePage /></SuspenseWrap>,
+          },
+          {
+            path: "agents",
+            element: <SuspenseWrap><AgentsPage /></SuspenseWrap>,
+          },
+          {
+            path: "*",
+            element: <SuspenseWrap><NotFoundPage /></SuspenseWrap>,
+          },
+        ],
       },
     ],
   },

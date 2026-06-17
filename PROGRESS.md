@@ -2,6 +2,62 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-17 — Kelola Agent UI: Phase 1-6 Complete (FULL)
+
+### Yang Dikerjakan
+- Created `mock/agents.ts` — AgentProfile type (17 fields), 6 mock agents with realistic data, CRUD functions (getAgents, getAgentById, createAgent, updateAgent, deleteAgent, toggleAgentStatus)
+- Created `stores/agents.ts` — Zustand store: agents[], searchQuery, roleFilter, statusFilter, sortBy, actions (setSearchQuery, setRoleFilter, setStatusFilter, setSortBy, addAgent, editAgent, removeAgent, cycleStatus)
+- Created `AgentAvatar.tsx` — Circle initials with 6-brand-color rotation, status dot (emerald pulse for online, amber for busy, gray for offline), 3 sizes (sm/md/lg), group-hover:scale-105
+- Created `AgentStatusBadge.tsx` — Online (emerald), Busy (amber), Offline (gray) with animated pulse dot on online, 2 sizes
+- Created `AgentRoleBadge.tsx` — Super Admin (coral), Admin (blue), Supervisor (purple), Agent (gray)
+- Created `AgentFilters.tsx` — Search bar + Role dropdown + Status dropdown + Sort dropdown, reads/writes Zustand store directly
+- Created `AgentStatsOverview.tsx` — 4 StatCards (Total Agent, Online Saat Ini, Avg Response Time, Avg Konversi), reuses StatCard from reports module
+- Created `AgentTable.tsx` — Full table (avatar+name+email, role badge, status badge, capacity active/max, conversion %, Edit/Hapus actions), row click navigates to /agents/:id
+- Created `AgentFormModal.tsx` — Single modal for create+edit, 8 form fields, live avatar preview, initials auto-generate from name, validation (name min 2, email format+uniqueness, maxConversations 1-50)
+- Created `AgentProfilePage.tsx` — Profile page: finds agent by useParams id, 2-column grid (PerformanceCard + ActivityTimeline), ConversationList below, 404 handling, toggle status, edit button
+- Created `AgentProfileHeader.tsx` — Back button → /agents, large avatar, name, role badge, status badge, join date, "Ganti Status" + "Edit" buttons
+- Created `AgentPerformanceCard.tsx` — 2×2 grid with AnimatedNumber (Total Percakapan, Diselesaikan, Avg Response Time, Conversion Rate), staggered 50ms animation
+- Created `AgentActivityTimeline.tsx` — 6 mock activities, vertical timeline with colored icons, relative timestamps, staggered 80ms animation
+- Created `AgentConversationList.tsx` — 5 mock conversations with contact name, channel badge, last message, status, relative time
+- Created `AgentDeleteConfirm.tsx` — Backdrop blur + warning icon + active conversation blocking (Hapus disabled when activeConversationCount > 0)
+- Created `AgentPage.tsx` (evolved) — Composes StatsOverview + Filters + Table + FormModal + DeleteConfirm, empty state when no agents match
+- Modified `router.tsx` — Added /agents/new → AgentsPage, /agents/:id → AgentProfilePage, /agents → AgentsPage (lazy-loaded)
+- Modified `Sidebar.tsx` — Added "Kelola Agent" nav item (👥) after "Kontak"
+- Modified `mock/inbox.ts` — MOCK_AGENTS now derives from mock/agents.ts via getAgents() for cross-module data sync
+
+### Keputusan yang Diambil
+- AgentProfile type is NEW — does NOT replace existing Agent type in mock/inbox.ts
+- Cross-module data sync: mock/inbox.ts derives MOCK_AGENTS from mock/agents.ts via getAgents() — Inbox/CRM/Contact modules auto-reflect agent changes
+- Single modal for create+edit (same pattern as LabelManagerModal) — editingAgent prop determines mode
+- Form uses local useState (not react-hook-form) — consistent with LabelManagerModal and ContactEditModal patterns
+- Profile page uses agents.find() instead of getAgent() for proper Zustand reactivity (getAgent is stable ref, wouldn't trigger re-render)
+- Route ordering: /agents/new before /agents/:id before /agents (same pattern as /campaigns)
+- AgentAvatar uses brand colors rotation (6 colors), matching existing brand palette
+- Delete blocked when agent has active conversations (same pattern as DeleteColumnConfirm)
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success — AgentsPage 11.87 kB, AgentProfilePage 9.96 kB (both under 15KB target)
+- 6 agents render in table with correct avatars, badges, data
+- Search filters by name/email, role filter, status filter, sort all work
+- StatCards show correct aggregated data
+- "Tambah Agent" button opens modal in create mode
+- Edit button opens modal in edit mode with pre-filled data
+- Save creates new agent / updates existing agent
+- Row click navigates to /agents/:id
+- Profile page shows performance card, activity timeline, conversation list
+- Toggle Status cycles online→busy→offline with visual feedback
+- Delete confirmation with active conversation blocking
+- Empty state when no agents match filters
+- Cross-module sync: changes in Kelola Agent reflected in Inbox agent filter
+- All routes verified: /agents, /agents/new, /agents/:id
+- All animations smooth: staggered fade-in, animate-pulse on online dots, hover scale on avatars, backdrop blur on delete confirm
+
+### Yang Perlu Dikerjakan Selanjutnya
+- WebSocket real-time messaging foundation
+- Backend conversations API (CRUD conversations + messages)
+- Connect frontend ke backend API (ganti mock data)
+
 ---
 
 ## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 6 Broadcast + AI vs Human (FINAL)
