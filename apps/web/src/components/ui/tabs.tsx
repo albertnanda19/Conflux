@@ -15,13 +15,23 @@ function useTabsContext() {
 }
 
 interface TabsProps {
-  defaultValue: string
+  defaultValue?: string
+  value?: string
+  onValueChange?: (value: string) => void
   children: React.ReactNode
   className?: string
 }
 
-export function Tabs({ defaultValue, children, className }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultValue)
+export function Tabs({ defaultValue, value, onValueChange, children, className }: TabsProps) {
+  const [internalTab, setInternalTab] = useState(defaultValue ?? '')
+  const isControlled = value !== undefined
+  const activeTab = isControlled ? value : internalTab
+
+  const setActiveTab = (v: string) => {
+    if (!isControlled) setInternalTab(v)
+    onValueChange?.(v)
+  }
+
   return (
     <TabsContext.Provider value={{ activeTab, setActiveTab }}>
       <div className={className}>{children}</div>

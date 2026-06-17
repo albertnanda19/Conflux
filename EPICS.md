@@ -70,11 +70,13 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 
 ### Bulan 6: Modul 6 — Laporan & Analitik
 
-- [ ] 🔴 Dashboard ringkasan (lead, conversion, response time)
-- [ ] 🔴 Laporan performa agent
-- [ ] 🔴 Laporan sumber lead (per channel, per sumber)
-- [ ] 🔴 Tren percakapan (harian/mingguan/bulanan)
-- [ ] 🔴 Heatmap jam sibuk (Apache ECharts)
+- [ ] 🟢 Dashboard ringkasan (lead, conversion, response time) — Phase 1-2 done (OverviewTab with 6 StatCards + 4 ECharts)
+- [ ] 🟢 Laporan performa agent — Phase 3 done (sortable table + comparison chart)
+- [ ] 🟢 Laporan sumber lead (per channel, per sumber) — Phase 4 done (LeadSourceTab with 4 charts: SourceBreakdown, OriginDistribution, ConversionByChannel, MultiChannelTrend)
+- [ ] 🟢 Tren percakapan (harian/mingguan/bulanan) — Phase 5 done (VolumeChart with moving average, 30 hari)
+- [ ] 🟢 Heatmap jam sibuk (Apache ECharts) — Phase 5 done (7×24 heatmap + peak hours top 10)
+- [ ] 🟢 Laporan broadcast — Phase 6 done (BroadcastTab: 4 StatCards + CampaignFunnelChart + campaign table with status badges)
+- [ ] 🟢 AI vs Human report — Phase 6 done (AiVsHumanTab: donut chart + topic chart + KB gaps list)
 - [ ] 🔴 Export laporan
 
 ---

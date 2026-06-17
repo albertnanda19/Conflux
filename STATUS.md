@@ -1,12 +1,12 @@
 # STATUS.md
 
-**Last updated:** 2026-06-17 (Pipeline Column Management Phase 4: Hapus Kolom)
+**Last updated:** 2026-06-17 (Modul 6 Analytics — Phase 6 Complete, All 6 Tabs Done)
 
 ## Current State
 
 | Category | Status |
 |----------|--------|
-| **Project Phase** | 🔨 Foundation — Ready for Modul 5 |
+| **Project Phase** | 🟢 Modul 6 Analytics Complete — All 6 tabs ready |
 | **PRD** | ✅ Final (v1.2) — Document Extraction + Feature-Based Architecture |
 | **Tech Stack** | ✅ Finalized (Bun + Elysia + Drizzle + Vercel AI SDK) |
 | **Backend Architecture** | ✅ Feature-based (DEC-010) — 14 modules + 4 workers + shared lib |
@@ -24,6 +24,7 @@
 | **Modul 2 AI Auto-Reply UI** | ✅ Complete (Phase 1-8) — Settings + Knowledge Base + AI Chat Preview |
 | **Modul 3 Broadcast & Campaign UI** | 🟢 Complete (Phase 1-6) — Foundation, Campaigns List, Template Library, Segment Builder, Campaign Wizard, Campaign Detail + Report |
 | **Modul 4 CRM & Pipeline Lead UI** | 🟢 Complete (Phase 1-7) — Kanban + Filters + Column Customize + Contacts List + Contact Profile + Segment Management + CSV Import + Integration Polish |
+| **Modul 6 Laporan & Analitik UI** | 🟢 Complete (Phase 1-6) — Overview, Agent Performance, Lead Source, Conversation Trends, Broadcast Report, AI vs Human |
 
 ## Open Items
 
@@ -38,13 +39,21 @@ _(None)_
 
 ## Next Best Actions
 
-1. **Modul 5** — Template & Quick Reply
-2. **WebSocket** — Real-time messaging foundation
-3. **WebSocket** — Real-time messaging foundation
-4. **Backend conversations API** — CRUD conversations + messages
-5. **Connect frontend ke backend API** — ganti mock data
+1. **WebSocket** — Real-time messaging foundation
+2. **Backend conversations API** — CRUD conversations + messages
+3. **Connect frontend ke backend API** — ganti mock data
 
 ## Done Items
+
+- [x] Modul 6 Phase 5: Conversation Trends — ConversationTrendsTab (3 StatCards: Total Percakapan 30 Hari, Rata-rata/Hari, Jam Sibuk), ConversationVolumeChart (area chart 30 hari + 7-day moving average dashed line), HeatmapChart (7×24 heatmap with visualMap color scale), PeakHoursChart (horizontal bar top 10 jam sibuk, coral→brand-blue gradient), LazyChart updated with 3 new lazy exports, ReportsPage trends tab wired, typecheck zero errors, build success
+
+- [x] Modul 6 Phase 4: Lead Source Report — LeadSourceTab (3 summary StatCards: Total Lead, Total Converted, Avg Conversion Rate), SourceBreakdownChart (horizontal grouped bar: Total Lead vs Converted per channel), OriginDistributionChart (donut: 6 lead origins), ConversionByProgramChart (reused from Phase 2: programs × channels), MultiChannelTrendChart (stacked area: 6 months × 3 channels with gradient fills), LazyChart updated with 3 new lazy exports, ReportsPage leads tab wired, typecheck zero errors, build success
+
+- [x] Modul 6 Phase 3: Agent Performance Report — AgentPerformanceTab (3 summary StatCards: Total Agent, Avg Response Time, Avg Conversion Rate), sortable agent table (6 columns: Agent/Ditangani/Diselesaikan/Response Time/Conversion/Online, click header to sort asc/desc), AgentRow (colored avatar, data display, color-coded response time badge, expandable detail row with resolve rate/weekly hours/total), AgentComparisonChart (ECharts horizontal grouped bar: Ditangani/Diselesaikan/Conversion), LazyChart updated with AgentComparisonChart, ReportsPage agent tab wired, typecheck zero errors, build success
+
+- [x] Modul 6 Phase 2: Overview Dashboard — ReportsPage (header + ReportFilters + 6-tab nav), OverviewTab (6 stat cards + 4 ECharts charts), LazyChart (code-split ECharts: ReportsPage 1,058 kB → 9 kB), LeadTrendChart (area), ChannelDistributionChart (donut), ConversionByProgramChart (grouped bar), TopAgentChart (horizontal bar), router /reports wired, typecheck zero errors, build success
+
+- [x] Modul 6 Phase 1: Foundation — mock/analytics.ts (overview, agent performance, lead sources, conversation trends, heatmap, broadcast campaigns, AI vs human stats), stores/reports.ts (Zustand: dateRangePreset, dateRange, selectedAgent, selectedChannel), 6 shared components (StatCard, AnimatedNumber, ChartCard, DateRangePicker, ReportFilters, EmptyState), typecheck zero errors, build success
 
 - [x] Pipeline Column Management Phase 4: Hapus Kolom — DeleteColumnConfirm (validation: contacts in column blocks delete, last column blocks delete, warning message with contact count), KanbanColumnHeader wired "Hapus Kolom" menu item, ColumnCustomizeModal delete already wired to store, typecheck zero errors, build success
 - [x] Pipeline Column Management Phase 3: Tambah Kolom — AddColumnModal (name input + color picker with 8 presets + live preview + Enter to submit + dispatch addColumn), KanbanColumnHeader wired "Tambah Kolom" menu item to open modal, typecheck zero errors, build success

@@ -38,6 +38,9 @@ const TemplatesPage = lazy(() =>
 const KnowledgeBasePage = lazy(() =>
   import("./pages/KnowledgeBasePage").then((m) => ({ default: m.KnowledgeBasePage })),
 )
+const ReportsPage = lazy(() =>
+  import("./pages/ReportsPage").then((m) => ({ default: m.ReportsPage })),
+)
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 )
@@ -155,7 +158,7 @@ export const router = createBrowserRouter([
         path: "reports",
         element: (
           <Suspense fallback={<PageLoader />}>
-            <ContactsPage />
+            <ReportsPage />
           </Suspense>
         ),
       },

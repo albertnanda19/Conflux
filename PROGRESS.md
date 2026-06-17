@@ -4,6 +4,170 @@ Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
 ---
 
+## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 6 Broadcast + AI vs Human (FINAL)
+
+### Yang Dikerjakan
+- Created `components/reports/charts/CampaignFunnelChart.tsx` — ECharts funnel chart: sent → delivered → read → replied with gradient colors (brand-blue → cyan → purple → coral)
+- Created `components/reports/charts/AiVsHumanDonutChart.tsx` — ECharts donut chart: AI 62.3% (cyan), Human 24.8% (blue), Handoff 12.9% (coral), center label shows AI %
+- Created `components/reports/charts/AiTopicChart.tsx` — horizontal bar chart: top 6 AI topics by count, gradient cyan→blue bars, satisfaction rate in tooltip
+- Created `components/reports/BroadcastTab.tsx` — 4 StatCards (Total Terkirim, Dibaca, Avg Reply Rate, Avg Conversion), CampaignFunnelChart, campaign table with 7 rows, color-coded status badges (draft/scheduled/running/completed/cancelled)
+- Created `components/reports/AiVsHumanTab.tsx` — 3 StatCards (AI Handled, Human Handled, Avg AI Confidence), 2-col chart grid, KnowledgeBaseGaps list with unanswered count and suggested actions
+- Updated `components/reports/LazyChart.tsx` — added 3 lazy exports (CampaignFunnelChart, AiVsHumanDonutChart, AiTopicChart)
+- Updated `pages/ReportsPage.tsx` — replaced both "Coming in Phase 6" placeholders with BroadcastTab and AiVsHumanTab
+- Updated `mock/analytics.ts` — added CampaignFunnel interface for type safety
+
+### Keputusan yang Diambil
+- AiVsHumanDonutChart reuses OriginDistributionChart donut pattern (center label, bottom legend, padAngle)
+- Broadcast tab table uses inline status badge with dot + colored background matching each status
+- KnowledgeBaseGaps section uses simple card list instead of chart — data is text-heavy, better as list
+- CampaignFunnelChart uses ECharts funnel type (built-in) rather than custom implementation
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success (877ms)
+- ReportsPage chunk: 25.20 kB (gzip 5.57 kB)
+- 3 new chart chunks lazy-loaded
+- All 6 tabs now complete and wired
+- All Phase 1-5 changes preserved intact
+- Modul 6 Laporan & Analitik UI — COMPLETE
+
+### Yang Perlu Dikerjakan Selanjutnya
+- WebSocket real-time messaging foundation
+- Backend conversations API (CRUD conversations + messages)
+- Connect frontend ke backend API (ganti mock data)
+
+---
+
+## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 5 Conversation Trends
+
+### Yang Dikerjakan
+- Created `components/reports/charts/ConversationVolumeChart.tsx` — area chart (30 hari) + 7-day moving average dashed line overlay
+- Created `components/reports/charts/HeatmapChart.tsx` — ECharts heatmap 7 days × 24 hours with visualMap color scale
+- Created `components/reports/charts/PeakHoursChart.tsx` — horizontal bar top 10 jam sibuk, coral→brand-blue gradient
+- Created `components/reports/ConversationTrendsTab.tsx` — 3 StatCards + VolumeChart + Heatmap/PeakHours 3-col grid
+- Updated `components/reports/LazyChart.tsx` — added 3 lazy exports (ConversationVolumeChart, HeatmapChart, PeakHoursChart)
+- Updated `pages/ReportsPage.tsx` — replaced "Coming in Phase 5" placeholder with ConversationTrendsTab
+
+### Keputusan yang Diambil
+- HeatmapChart uses ECharts visualMap (show: false) for color mapping without visible legend
+- ConversationVolumeChart computes 7-day moving average inline, returns null for first 6 days
+- PeakHoursChart data aggregated from MOCK_HEATMAP_DATA by hour, sorted descending, take top 10, re-sorted by hour
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success (871ms)
+- All Phase 1-4 changes preserved intact
+
+---
+
+## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 4 Lead Source Report
+
+### Yang Dikerjakan
+- Created `components/reports/charts/SourceBreakdownChart.tsx` — horizontal grouped bar chart comparing Total Lead vs Converted per channel (WA/IG/FB)
+- Created `components/reports/charts/OriginDistributionChart.tsx` — donut chart showing 6 lead origins with center label total
+- Created `components/reports/charts/ConversionByChannelChart.tsx` — vertical grouped bar chart (programs × channels)
+- Created `components/reports/charts/MultiChannelTrendChart.tsx` — stacked area chart (6 months × 3 channels with gradient fills)
+- Created `components/reports/LeadSourceTab.tsx` — tab component with 3 summary stat cards + 4 lazy-loaded charts in 2×2 grid
+- Updated `components/reports/LazyChart.tsx` — added 3 new lazy exports (SourceBreakdownChart, OriginDistributionChart, MultiChannelTrendChart)
+- Updated `pages/ReportsPage.tsx` — replaced "Coming in Phase 4" placeholder with LeadSourceTab
+
+### Keputusan yang Diambil
+- Reused existing `ConversionByProgramChart` instead of creating duplicate `ConversionByChannelChart` — same data, same chart type
+- SourceBreakdownChart uses per-item color via `itemStyle.color` on each data point (avoids ECharts callback type issues)
+- OriginDistributionChart uses 6-color palette (brand-blue, magenta, purple, coral, cyan, emerald) matching brand aesthetic
+- MultiChannelTrendChart gradient fills use hex + alpha suffix (`#FF6B5A40`) instead of rgba for simpler code
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success (930ms)
+- ReportsPage chunk: 17.56 kB (gzip 4.18 kB)
+- 3 new chart chunks lazy-loaded (SourceBreakdown 1.35 kB, OriginDistribution 1.39 kB, MultiChannelTrend 1.39 kB)
+- All Phase 1-3 changes preserved intact
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 5: Conversation Trends & Heatmap (VolumeChart, HeatmapChart, PeakHoursChart)
+
+---
+
+## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 3 Agent Performance Report
+
+### Yang Dikerjakan
+- Created `components/reports/AgentPerformanceTab.tsx` — main tab component with 3 summary stat cards (Total Agent, Avg Response Time, Avg Conversion Rate), sortable agent table (6 columns: Agent, Ditangani, Diselesaikan, Response Time, Conversion, Online), expandable agent row detail, and comparison chart
+- Created `components/reports/AgentRow.tsx` — table row component with colored avatar, agent name, conversation counts, color-coded response time badge, conversion rate, online hours, expandable detail row
+- Created `components/reports/charts/AgentComparisonChart.tsx` — ECharts horizontal grouped bar chart comparing 6 agents across 3 metrics
+- Updated `components/reports/LazyChart.tsx` — added AgentComparisonChart lazy export
+- Updated `pages/ReportsPage.tsx` — replaced Phase 3 placeholder with AgentPerformanceTab
+
+### Keputusan yang Diambil
+- SortIcon defined as inline component inside AgentPerformanceTab (↗/↘ arrows)
+- Expandable row shows: Resolve Rate, Online Minggu Ini, Total Ditangani in 3-column grid
+- Agent comparison chart uses 3 distinct colors: brand-blue (Ditangani), brand-cyan (Diselesaikan), emerald (Conversion %)
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success
+- ReportsPage chunk: 15.79 kB (gzip 3.93 kB)
+- AgentComparisonChart lazy-loaded (1.44 kB gzip 0.67 kB)
+- All Phase 1 + 2 changes preserved intact
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 4: Lead Source Report (ChannelBreakdownChart, SourceAnalysisChart, ConversionByChannelChart, MultiChannelTrendChart)
+
+---
+
+## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 2 Analytics Overview Dashboard
+
+### Yang Dikerjakan
+- Created `pages/ReportsPage.tsx` — main analytics page with header, ReportFilters bar, 6-tab navigation (Ringkasan, Performa Agent, Sumber Lead, Tren Percakapan, Broadcast, AI vs Human)
+- Created `components/reports/OverviewTab.tsx` — 6 StatCards (total leads, conversion rate, response time, active conversations, agents online, AI handle rate) + 4 ECharts charts in 2×2 grid
+- Created `components/reports/LazyChart.tsx` — ChartSuspense wrapper + lazy re-exports for all 4 chart components (code-split ECharts)
+- Created `components/reports/charts/LeadTrendChart.tsx` — ECharts area/line chart (30-day lead trend, smooth curve, brand-blue gradient fill)
+- Created `components/reports/charts/ChannelDistributionChart.tsx` — ECharts donut chart (WA/IG/FB distribution, channel colors, center label total)
+- Created `components/reports/charts/ConversionByProgramChart.tsx` — ECharts grouped bar chart (programs × channels, color-coded bars)
+- Created `components/reports/charts/TopAgentChart.tsx` — ECharts horizontal bar chart (agent rankings, gradient bars)
+- Updated `router.tsx` — `/reports` route now points to `ReportsPage` (was placeholder `ContactsPage`)
+
+### Keputusan yang Diambil
+- ECharts code-split via `React.lazy` + `ChartSuspense` — ReportsPage chunk 1,058 kB → 9.16 kB, ECharts core lazy-loaded only on first chart render
+- Tab navigation uses existing `Tabs`/`TabList`/`TabTrigger`/`TabContent` from `components/ui/tabs.tsx` (underline-style, consistent with SettingsPage)
+- Placeholder tabs for Phase 3-6 show "Coming in Phase X" message
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success (806ms)
+- ReportsPage chunk: 9.16 kB (gzip 2.74 kB)
+- ECharts lazy chunk: 1,042 kB (gzip 341 kB) — only loaded on first chart render
+- All 4 charts render with brand colors (no black backgrounds)
+- SVG renderer for crisp rendering
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 3: Agent Performance Report (sortable table + comparison chart)
+
+## 2026-06-17 — Modul 6 Laporan & Analitik: Phase 1 Foundation
+
+### Yang Dikerjakan
+- Created `mock/analytics.ts` — 11 interfaces + 12 mock data exports (AnalyticsOverview, AgentPerformance[], LeadSourceChannel[], LeadSourceOrigin[], LeadSourceByProgram[], LeadSourceMonthlyTrend[], ConversationTrendDay[], HeatmapCell[], BroadcastCampaignRow[], AiVsHumanStats, CampaignFunnel)
+- Created `stores/reports.ts` — Zustand store with dateRangePreset (7d/30d/90d), dateRange, selectedAgent, selectedChannel, setter actions
+- Created `components/reports/AnimatedNumber.tsx` — requestAnimationFrame-based counter with easing, locale formatting
+- Created `components/reports/StatCard.tsx` — stat card with icon, animated number, change % indicator, uses animate-fade-in
+- Created `components/reports/ChartCard.tsx` — chart wrapper card with title, subtitle, actions slot, card-base styling
+- Created `components/reports/DateRangePicker.tsx` — pill-style preset selector (7/30/90 Hari) with ink active state
+- Created `components/reports/ReportFilters.tsx` — combined filter bar (DateRangePicker + agent dropdown + channel dropdown)
+- Created `components/reports/EmptyState.tsx` — empty data placeholder with icon + message
+
+### Keputusan yang Diambil
+- Heatmap data: 7×24 matrix with randomized but realistic peak patterns (weekday mornings/evenings high, weekends low)
+- Conversation trends: 30-day array with weekend/weekday variance
+- No ECharts in Phase 1 — chart components come in Phase 2+
+
+### Yang Berhasil
+- Typecheck zero errors
+- Vite build success (678ms)
+- All mock data structured for easy backend replacement later
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 2: Analytics Overview Dashboard (ReportsPage + OverviewTab + 4 ECharts components)
+
 ## 2026-06-17 — Pipeline Column Management Phase 4: Hapus Kolom
 
 ### Yang Dikerjakan

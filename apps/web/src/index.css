@@ -71,7 +71,7 @@
   }
 
   .pill-tab-active {
-    @apply pill-tab bg-ink text-white border-ink;
+    @apply pill-tab bg-brand-blue text-white border-brand-blue;
   }
 
   .card-base {
