@@ -38,7 +38,7 @@
 
 Membangun platform internal yang:
 1. Menyatukan semua channel komunikasi dalam satu inbox (omnichannel)
-2. Menggunakan AI sebagai "agent pertama" yang merespons otomatis 24/7
+2. Menggunakan AI Assistant yang bisa dikustomisasi per agent sebagai "penjaga" saat agent offline
 3. Memungkinkan agent manusia fokus hanya pada lead yang sudah siap konversi
 4. Menyediakan tools CRM ringan untuk tracking pipeline lead
 5. Memberikan laporan dan analitik untuk pengambilan keputusan
@@ -73,7 +73,8 @@ Super Admin (IT / Manajemen)
 **Super Admin**
 - Akses penuh ke seluruh sistem
 - Manajemen integrasi channel (WhatsApp, IG, FB)
-- Konfigurasi AI (model, knowledge base, persona)
+- Manajemen AI Assistant (buat, edit, hapus, assign ke agent)
+- Konfigurasi global AI (provider, fallback chain, model defaults)
 - Manajemen user dan role
 - Akses semua laporan
 
@@ -122,10 +123,15 @@ Sistem cek: apakah ada agent yang sedang handle kontak ini?
         ▼
 Sistem cek: apakah ada agent online & available?
     ├── ADA → Auto-assign ke agent (round-robin) + notifikasi
-    └── TIDAK ADA → AI auto-reply aktif
+    └── TIDAK ADA → Lanjut ke AI Assistant routing
         │
         ▼
-AI membalas berdasarkan knowledge base
+Sistem mencari AI Assistant yang di-assign ke agent yang handle
+    ├── ADA → Route ke AI Assistant spesifik agent tersebut
+    └── TIDAK ADA → Route ke AI Assistant default (system-wide)
+        │
+        ▼
+AI Assistant membalas berdasarkan persona + knowledge base yang dikonfigurasi
         │
         ▼
 AI mendeteksi sinyal konversi (lead siap beli)?
@@ -250,26 +256,101 @@ Laporan performa campaign tersedia real-time
 
 ---
 
-### MODUL 2 — AI Auto-Reply Engine
+### MODUL 2 — AI Assistant Engine
 
-**Tujuan:** Memastikan setiap pesan masuk direspons secara otomatis oleh AI ketika tidak ada agent yang available, sehingga tidak ada lead yang dibiarkan tanpa respons.
+**Tujuan:** Memastikan setiap pesan masuk direspons secara otomatis oleh AI Assistant yang sudah dikustomisasi per agent, sehingga tidak ada lead yang dibiarkan tanpa respons — bahkan saat agent manusia offline.
 
-#### 5.2.1 Kondisi Aktivasi AI
+#### 5.2.1 AI Assistant — Konsep & Terminology
 
-AI aktif secara otomatis ketika:
-- Semua agent berstatus busy atau offline
-- Di luar jam kerja yang dikonfigurasi
-- Volume chat melebihi kapasitas agent yang available
-- Percakapan baru masuk dan belum ada agent yang di-assign
+Istilah dalam modul ini:
+- **Agent** = Manusia (sales/marketing staff) — pengguna platform
+- **AI Assistant** = Bot AI yang dikonfigurasi dan di-assign ke agent tertentu
 
-AI tidak aktif / agent override AI ketika:
-- Agent secara manual take over percakapan
-- Agent klik tombol "Take Over from AI"
-- Percakapan sudah di-assign ke agent tertentu yang sedang online
+Setiap AI Assistant adalah entitas mandiri dengan konfigurasi tersendiri:
+- Nama dan deskripsi
+- Persona & tone
+- Knowledge base yang terpisah
+- Handoff rules yang bisa berbeda
+- Working hours yang bisa berbeda
 
-#### 5.2.2 Knowledge Base Kustom
+#### 5.2.2 Manajemen AI Assistant
 
-- Upload dokumen pengetahuan: PDF, DOCX, TXT (info program, harga, jadwal, FAQ)
+**Fitur CRUD (Create, Read, Update, Delete):**
+
+Admin (ke atas) bisa membuat dan mengelola AI Assistant:
+- **Nama AI Assistant** — contoh: "Asisten Sari", "Asisten Closing", "Asisten Support"
+- **Deskripsi** — penjelasan singkat tentang kegunaan AI Assistant ini
+- **Avatar** — foto atau ikon untuk identifikasi visual
+- **Status** — active / inactive
+
+**Konfigurasi per AI Assistant:**
+
+| Section | Config | Penjelasan |
+|---|---|---|
+| Persona | Nama, tone, bahasa, system prompt | Karakter AI saat berbicara dengan lead |
+| Knowledge Base | Dokumen & Q&A yang terkait | Apa yang AI ketahui untuk menjawab |
+| Working Hours | Jam aktif per hari | Kapan AI Assistant ini aktif |
+| Handoff Rules | Keyword triggers, sinyal konversi | Kapan AI menyerahkan ke human agent |
+| Fallback Behavior | Pesan fallback jika AI tidak bisa jawab | Apa yang dikatakan AI saat buntu |
+
+**Template AI Assistant:**
+
+Admin bisa membuat AI Assistant dari template:
+- "Asisten Ramah" — tone santai, general knowledge, cocok untuk lead baru
+- "Asisten Teknis" — tone profesional, pengetahuan mendalam tentang program
+- "Asisten Closing" — agresif tapi sopan, fokus ke konversi
+- "Asisten 24/7" — selalu aktif, jawaban umum, handoff ke agent saat agent online
+
+Admin juga bisa membuat AI Assistant dari nol (custom template).
+
+#### 5.2.3 Assignment — AI Assistant ke Agent
+
+Admin meng-assign AI Assistant ke agent menggunakan UI **AssignAgentModal** di halaman `/agents`:
+
+- Buka profil agent → klik "Assign AI Assistant"
+- Pilih AI Assistant dari dropdown (yang sudah dibuat sebelumnya)
+- **1 agent = 1 AI Assistant** — setiap agent hanya punya satu AI Assistant
+- Bisa diganti kapan saja oleh admin
+- Jika agent belum di-assign AI Assistant, menggunakan **AI Assistant Default** (system-wide)
+
+**Alur Assignment:**
+
+```
+Admin buat AI Assistant "Asisten Ramah"
+    │
+    ▼
+Admin assign "Asisten Ramah" ke Agent Sari
+    │
+    ▼
+Agent Sari sedang OFFLINE
+    │
+    ▼
+Pesan masuk untuk Sari
+    │
+    ▼
+Sistem cek: Sari punya AI Assistant?
+    ├── YA → "Asisten Ramah" handle chat Sari
+    └── TIDAK ADA → AI Assistant Default handle
+```
+
+#### 5.2.4 Knowledge Base Kustom
+
+Knowledge base bisa dibagi per AI Assistant:
+
+**Level 1: Global Knowledge Base (system-wide)**
+- Berlaku untuk semua AI Assistant
+- Info umum: profil perusahaan, FAQ umum, kontak support
+- Diupload oleh Super Admin di Settings → Knowledge Base
+
+**Level 2: Per-AI Assistant Knowledge Base (opsional)**
+- Khusus untuk AI Assistant tertentu
+- Contoh: "Asisten Closing" punya KB khusus tentang harga, promo, cara bayar
+- Diupload saat konfigurasi AI Assistant
+
+**Prioritas:** KB per-AI Assistant > KB global. Jika per-AI Assistant punya jawaban, gunakan itu. Jika tidak, fallback ke KB global.
+
+**Fitur Knowledge Base:**
+- Upload dokumen: PDF, DOCX, TXT, CSV → async extraction
 - Input manual via rich text editor (Q&A format)
 - Organisasi knowledge base per kategori (Program, Harga, Jadwal, Syarat, dll)
 - Update knowledge base tanpa perlu restart sistem
@@ -280,29 +361,52 @@ AI tidak aktif / agent override AI ketika:
   - Max file size: 10MB, worker-based processing (BullMQ)
   - Status tracking: pending → processing → completed/failed
 
-#### 5.2.3 Handoff Otomatis ke Human Agent
+#### 5.2.5 Kondisi Aktivasi AI Assistant
 
-AI mendeteksi sinyal berikut sebagai tanda lead siap konversi dan trigger handoff:
+AI Assistant aktif secara otomatis ketika:
+- Agent yang di-assign berstatus busy atau offline
+- Di luar jam kerja AI Assistant yang dikonfigurasi
+- Volume chat melebihi kapasitas agent yang available
+
+AI Assistant tidak aktif / di-override ketika:
+- Agent manusia secara manual take over percakapan
+- Agent klik tombol "Take Over from AI"
+- Percakapan sudah di-assign ke agent tertentu yang sedang online
+
+#### 5.2.6 Handoff Otomatis ke Human Agent
+
+AI Assistant mendeteksi sinyal berikut sebagai tanda lead siap konversi dan trigger handoff:
 - Kata kunci konversi: "daftar", "bayar", "mau beli", "berapa cara daftar", "transfer ke mana"
 - Lead menyebut budget atau meminta nomor rekening
 - Lead meminta jadwal demo / konsultasi
 - Sentimen positif yang kuat + pertanyaan spesifik tentang enrollment
 
 Saat handoff terjadi:
-- Notifikasi priority dikirim ke agent yang available
-- AI memberi pesan transisi kepada user: "Saya akan hubungkan Anda dengan tim kami sebentar lagi"
-- Percakapan auto-assign ke agent dengan load terendah
+- Notifikasi priority dikirim ke **agent yang di-assign AI Assistant tersebut** (bukan random agent)
+- AI Assistant memberi pesan transisi kepada user: "Saya akan hubungkan Anda dengan tim kami sebentar lagi"
+- Percakapan auto-assign ke agent yang di-assign ke AI Assistant tersebut
 - Ringkasan percakapan AI disiapkan untuk agent (konteks cepat)
 
-#### 5.2.4 Pengaturan Jam Aktif
+**Handoff Rules Bisa Dibedakan per AI Assistant:**
+- "Asisten Ramah" — handoff hanya saat lead menyebut "daftar" atau "bayar"
+- "Asisten Closing" — handoff lebih sensitif, termasuk saat lead bertanya harga
 
-- Konfigurasi jam kerja per hari (Senin–Minggu)
-- AI aktif otomatis di luar jam kerja
+#### 5.2.7 Pengaturan Jam Aktif
+
+**Per-AI Assistant (bisa berbeda):**
+- Konfigurasi jam kerja per hari (Senin–Minggu) — setiap AI Assistant bisa punya jam berbeda
+- AI Assistant aktif otomatis di luar jam kerja yang dikonfigurasi
 - Pesan OOO (Out of Office) kustom saat di luar jam kerja
-- Override manual: aktifkan/nonaktifkan AI kapan saja
+
+**Global:**
+- Override manual: aktifkan/nonaktifkan AI Assistant kapan saja
 - Timezone: WIB (UTC+7) sebagai default
 
-#### 5.2.5 Provider AI (Multi-Provider Fallback)
+**Contoh:**
+- "Asisten Sari" aktif: Senin–Jumat 09.00–18.00 WIB
+- "Asisten 24/7" aktif: 24 jam, 7 hari
+
+#### 5.2.8 Provider AI (Multi-Provider Fallback)
 
 Sistem mendukung **multi-provider fallback** menggunakan Vercel AI SDK. Jika provider utama gagal, sistem otomatis beralih ke provider berikutnya tanpa intervensi manual.
 
@@ -326,9 +430,9 @@ Sistem mendukung **multi-provider fallback** menggunakan Vercel AI SDK. Jika pro
 - **Reliability** — Jika satu provider down, tetap ada respons
 - **Flexibility** — Bisa ganti/gabung provider tanpa ubah core logic
 
-#### 5.2.6 Kualifikasi Lead oleh AI (Nice to Have)
+#### 5.2.9 Kualifikasi Lead oleh AI (Nice to Have)
 
-AI secara proaktif menggali informasi berikut dari lead:
+AI Assistant secara proaktif menggali informasi berikut dari lead:
 - Program apa yang diminati?
 - Background pendidikan/pekerjaan saat ini?
 - Target waktu mulai belajar?
@@ -336,13 +440,12 @@ AI secara proaktif menggali informasi berikut dari lead:
 
 Data kualifikasi ini otomatis tersimpan di profil kontak.
 
-#### 5.2.7 Tone & Persona AI (Nice to Have)
+#### 5.2.10 Training & Koreksi AI (Nice to Have)
 
-- Nama AI bisa dikustomisasi (contoh: "Asisten PSC")
-- Gaya bahasa: formal / semi-formal / santai
-- Bahasa utama: Bahasa Indonesia
-- Bisa tambahkan kata-kata khas / sapaan khas perusahaan
-- Prompt sistem bisa diedit langsung oleh Super Admin
+- Agent bisa flag percakapan AI Assistant yang jawabannya salah/kurang tepat
+- Dari flagged conversation, admin bisa tambahkan ke knowledge base
+- Review queue: daftar percakapan yang perlu dikoreksi
+- Tracking: berapa banyak koreksi per AI Assistant per bulan (indikator kualitas)
 
 #### 5.2.8 Training & Koreksi AI (Nice to Have)
 
@@ -1005,7 +1108,7 @@ Document Worker
 ```sql
 -- Users (Agent, Admin, dll)
 users
-  id, email, password_hash, full_name, role, 
+  id, email, password_hash, full_name, role,
   status (online/busy/offline), avatar_url,
   created_at, updated_at
 
@@ -1030,6 +1133,7 @@ contact_channels
 -- Conversations (satu thread percakapan)
 conversations
   id, contact_id, channel_id, agent_id,
+  ai_assistant_id (opsional — siapa yang handle saat AI aktif),
   status (open/pending/resolved/snoozed),
   is_ai_handling (boolean),
   last_message_at, created_at, updated_at
@@ -1050,10 +1154,30 @@ labels
 conversation_labels
   conversation_id, label_id, created_at
 
--- AI Knowledge Base Documents
+-- AI Assistants (konfigurasi per agent)
+ai_assistants
+  id, name, description, avatar_url, status (active/inactive),
+  persona_name, persona_tone (formal/semi-formal/santai),
+  persona_language, system_prompt (text),
+  handoff_keywords (JSONB array), handoff_max_ai_messages (int),
+  handoff_priority_notification (boolean),
+  working_hours (JSONB — per-day config),
+  ooo_message (text),
+  created_by, created_at, updated_at
+
+-- Agent–AI Assignment (satu agent = satu AI Assistant)
+agent_ai_assignments
+  id, user_id (FK → users), ai_assistant_id (FK → ai_assistants),
+  assigned_by, assigned_at,
+  UNIQUE(user_id) — satu agent hanya bisa punya satu AI Assistant
+
+-- AI Knowledge Base Documents (extends kb_documents)
+-- Level 1: Global — ai_assistant_id = NULL
+-- Level 2: Per-AI Assistant — ai_assistant_id = id AI Assistant
 kb_documents
   id, title, category, content (text),
   embedding (vector), is_active,
+  ai_assistant_id (opsional — NULL = global),
   original_file_url, file_type,
   chunk_index, source_document_id,
   processing_status (pending/processing/completed/failed),
@@ -1075,6 +1199,8 @@ templates
 pipeline_columns
   id, name, order_index, color, created_at
 ```
+
+> **Catatan:** Tabel `ai_assistants` dan `agent_ai_assignments` adalah tambahan baru untuk mendukung multiple AI Assistants. Kolom `ai_assistant_id` di `conversations` dan `kb_documents` juga baru.
 
 ---
 
@@ -1227,12 +1353,13 @@ Minggu 3–6: Modul 1 — Omnichannel Inbox
 - Assignment percakapan ke agent
 - Notifikasi real-time
 
-Minggu 7–10: Modul 2 — AI Auto-Reply Engine
-- Knowledge base management
+Minggu 7–10: Modul 2 — AI Assistant Engine
+- Manajemen AI Assistant (CRUD, assignment ke agent)
+- Knowledge base management (global + per-AI Assistant)
 - Integrasi AI provider (mulai dengan Gemini Flash)
-- Logika aktivasi/deaktivasi AI
+- Logika aktivasi/deaktivasi AI Assistant
 - Handoff ke human agent
-- Pengaturan jam kerja
+- Pengaturan jam kerja per AI Assistant
 
 Minggu 11–12: Modul 4 — CRM Dasar
 - Auto-create kontak
@@ -1263,8 +1390,7 @@ Bulan 6:
 - Integrasi Telegram
 - Sequence / drip message
 - A/B testing template
-- AI lead qualification
-- AI persona kustomisasi
+- AI lead qualification (proaktif menggali data lead)
 - Training AI dari flagged conversations
 - Integrasi LMS perusahaan
 
@@ -1274,10 +1400,11 @@ Bulan 6:
 
 | Term | Definisi |
 |---|---|
-| **Agent** | Anggota tim sales atau marketing yang menggunakan platform |
+| **Agent** | Manusia — anggota tim sales atau marketing yang menggunakan platform |
+| **AI Assistant** | Bot AI yang dikustomisasi dan di-assign ke agent tertentu. Berfungsi sebagai "penjaga" saat agent offline. |
 | **Lead** | Calon peserta didik / calon klien perusahaan |
-| **Handoff** | Proses serah terima percakapan dari AI ke human agent |
-| **Knowledge Base** | Kumpulan dokumen dan FAQ yang digunakan AI untuk menjawab pertanyaan |
+| **Handoff** | Proses serah terima percakapan dari AI Assistant ke human agent |
+| **Knowledge Base** | Kumpulan dokumen dan FAQ yang digunakan AI Assistant untuk menjawab pertanyaan |
 | **Channel** | Platform komunikasi yang terhubung (WA, IG, FB, dll) |
 | **Conversation** | Satu thread percakapan antara satu kontak dengan platform |
 | **Message** | Satu pesan dalam sebuah conversation |
@@ -1293,4 +1420,4 @@ Bulan 6:
 
 ---
 
-*Dokumen ini dibuat untuk internal perusahaan. Versi: 1.0. Terakhir diperbarui: Juni 2026.*
+*Dokumen ini dibuat untuk internal perusahaan. Versi: 1.3. Terakhir diperbarui: Juni 2026.*

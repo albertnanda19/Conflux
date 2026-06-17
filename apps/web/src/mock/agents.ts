@@ -18,6 +18,7 @@ export interface AgentProfile {
   createdAt: string
   maxConversations: number
   timezone: string
+  aiAssistantId?: string | null
 }
 
 const now = new Date()
@@ -32,6 +33,7 @@ let localAgents: AgentProfile[] = [
     activeConversationCount: 3, totalConversations: 142, resolvedConversations: 128,
     avgResponseTime: '1m 23s', conversionRate: 34, lastActiveAt: now.toISOString(),
     createdAt: daysAgo(90), maxConversations: 15, timezone: 'WIB (UTC+7)',
+    aiAssistantId: 'ai-1',
   },
   {
     id: 'a2', name: 'Rizki Pratama', email: 'rizki.pratama@example.com', phone: '081234567802',
@@ -39,6 +41,7 @@ let localAgents: AgentProfile[] = [
     activeConversationCount: 5, totalConversations: 203, resolvedConversations: 187,
     avgResponseTime: '0m 58s', conversionRate: 41, lastActiveAt: hoursAgo(0.5),
     createdAt: daysAgo(120), maxConversations: 20, timezone: 'WIB (UTC+7)',
+    aiAssistantId: null,
   },
   {
     id: 'a3', name: 'Nina Kusuma', email: 'nina.kusuma@example.com', phone: '081234567803',
@@ -46,6 +49,7 @@ let localAgents: AgentProfile[] = [
     activeConversationCount: 8, totalConversations: 176, resolvedConversations: 161,
     avgResponseTime: '2m 05s', conversionRate: 28, lastActiveAt: hoursAgo(1),
     createdAt: daysAgo(65), maxConversations: 10, timezone: 'WIB (UTC+7)',
+    aiAssistantId: 'ai-2',
   },
   {
     id: 'a4', name: 'Andi Wijaya', email: 'andi.wijaya@example.com', phone: '081234567804',
@@ -53,6 +57,7 @@ let localAgents: AgentProfile[] = [
     activeConversationCount: 0, totalConversations: 95, resolvedConversations: 88,
     avgResponseTime: '1m 45s', conversionRate: 22, lastActiveAt: daysAgo(1),
     createdAt: daysAgo(45), maxConversations: 10, timezone: 'WIB (UTC+7)',
+    aiAssistantId: null,
   },
   {
     id: 'a5', name: 'Maya Putri', email: 'maya.putri@example.com', phone: '081234567805',
@@ -60,6 +65,7 @@ let localAgents: AgentProfile[] = [
     activeConversationCount: 1, totalConversations: 312, resolvedConversations: 298,
     avgResponseTime: '0m 42s', conversionRate: 52, lastActiveAt: now.toISOString(),
     createdAt: daysAgo(180), maxConversations: 20, timezone: 'WIB (UTC+7)',
+    aiAssistantId: null,
   },
   {
     id: 'a6', name: 'Dimas Ramadhan', email: 'dimas.ramadhan@example.com', phone: '081234567806',
@@ -67,6 +73,7 @@ let localAgents: AgentProfile[] = [
     activeConversationCount: 4, totalConversations: 67, resolvedConversations: 59,
     avgResponseTime: '1m 12s', conversionRate: 19, lastActiveAt: now.toISOString(),
     createdAt: daysAgo(30), maxConversations: 10, timezone: 'WIB (UTC+7)',
+    aiAssistantId: null,
   },
 ]
 

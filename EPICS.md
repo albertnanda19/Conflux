@@ -69,6 +69,16 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 - [ ] 🔴 Variabel dinamis dalam template
 - [ ] 🔴 Modul 4 enhancement: segmentasi, notes, filter lanjutan
 
+### Bulan 5: Modul 7 — AI Assistant Engine
+
+- [ ] 🟢 Multiple AI Assistants — UI mock selesai (Phase 1-3: data layer + list page + detail page + 6 components)
+- [ ] 🟢 Per-AI Assistant config (persona, working hours, handoff) — UI mock selesai (inline editing di detail page)
+- [ ] 🟢 AI Assistant ↔ Agent assignment — UI mock selesai (AssignAIAssignmentModal + bidirectional sync)
+- [ ] 🟢 Two-level Knowledge Base scope (global + per-assistant) — UI mock selesai (KB selector + scope filter di KnowledgeBasePage)
+- [ ] 🟢 AI Assistant di AgentProfilePage + AgentTable — Phase 3 done (assignment card + badge + AI column)
+- [ ] 🟢 SettingsPage AI tab rename — Phase 3 done ("System Default AI" + override note)
+- [ ] 🔴 Backend API — CRUD endpoints + assignment + KB scope queries
+
 ### Bulan 6: Modul 6 — Laporan & Analitik
 
 - [ ] 🟢 Dashboard ringkasan (lead, conversion, response time) — Phase 1-2 done (OverviewTab with 6 StatCards + 4 ECharts)
@@ -89,7 +99,7 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 - [ ] 🔴 Sequence / drip message
 - [ ] 🔴 A/B testing template
 - [ ] 🔴 AI lead qualification
-- [ ] 🔴 AI persona kustomisasi (nama, gaya bahasa)
+- [ ] 🟡 AI persona kustomisasi (nama, gaya bahasa) — UI mock selesai per AI Assistant (Phase 2)
 - [ ] 🔴 Training AI dari flagged conversations
 - [ ] 🔴 Integrasi LMS perusahaan
 

@@ -1,16 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 import type { AgentProfile } from '@/mock/agents'
+import type { AIAssistant } from '@/mock/ai-assistants'
 import { AgentAvatar } from './AgentAvatar'
 import { AgentRoleBadge } from './AgentRoleBadge'
 import { AgentStatusBadge } from './AgentStatusBadge'
 
 interface AgentProfileHeaderProps {
   agent: AgentProfile
+  assistant: AIAssistant | null
   onEdit: () => void
   onToggleStatus: () => void
 }
 
-export function AgentProfileHeader({ agent, onEdit, onToggleStatus }: AgentProfileHeaderProps) {
+export function AgentProfileHeader({ agent, assistant, onEdit, onToggleStatus }: AgentProfileHeaderProps) {
   const navigate = useNavigate()
 
   return (
@@ -31,6 +33,15 @@ export function AgentProfileHeader({ agent, onEdit, onToggleStatus }: AgentProfi
           <div className="flex items-center gap-2 mt-0.5">
             <AgentRoleBadge role={agent.role} />
             <AgentStatusBadge status={agent.status} />
+            {assistant ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-blue-50 text-brand-blue-deep border border-brand-blue-100">
+                🤖 {assistant.name}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-stone/10 text-stone">
+                🤖 Belum di-assign
+              </span>
+            )}
             <span className="text-xs text-steel">
               bergabung {new Date(agent.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>

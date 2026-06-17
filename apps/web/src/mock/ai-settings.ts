@@ -21,6 +21,7 @@ export interface KBDocument {
   isActive: boolean
   createdBy: string
   createdAt: string
+  aiAssistantId?: string | null
 }
 
 export interface WorkingHoursDay {
@@ -183,6 +184,7 @@ export const MOCK_KB_DOCUMENTS: KBDocument[] = [
     isActive: false,
     createdBy: 'Nina Kusuma',
     createdAt: daysAgo(1),
+    aiAssistantId: 'ai-2',
   },
   {
     id: 'kb-8',
@@ -195,6 +197,7 @@ export const MOCK_KB_DOCUMENTS: KBDocument[] = [
     isActive: true,
     createdBy: 'Admin User',
     createdAt: hoursAgo(6),
+    aiAssistantId: 'ai-2',
   },
 ]
 

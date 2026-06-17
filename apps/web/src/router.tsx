@@ -51,6 +51,12 @@ const AgentsPage = lazy(() =>
 const AgentProfilePage = lazy(() =>
   import("./pages/AgentProfilePage").then((m) => ({ default: m.AgentProfilePage })),
 )
+const AIAssistantsPage = lazy(() =>
+  import("./pages/AIAssistantsPage").then((m) => ({ default: m.AIAssistantsPage })),
+)
+const AIAssistantDetailPage = lazy(() =>
+  import("./pages/AIAssistantDetailPage").then((m) => ({ default: m.AIAssistantDetailPage })),
+)
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })),
 )
@@ -146,6 +152,14 @@ export const router = createBrowserRouter([
           {
             path: "agents",
             element: <SuspenseWrap><AgentsPage /></SuspenseWrap>,
+          },
+          {
+            path: "ai-assistants",
+            element: <SuspenseWrap><AIAssistantsPage /></SuspenseWrap>,
+          },
+          {
+            path: "ai-assistants/:id",
+            element: <SuspenseWrap><AIAssistantDetailPage /></SuspenseWrap>,
           },
           {
             path: "*",

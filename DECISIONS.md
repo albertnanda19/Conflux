@@ -337,3 +337,103 @@ Log keputusan arsitektural & teknis. Setiap keputusan diberi kode DEC-XXX.
 - Perubahan agent (tambah/edit/hapus/status) di Kelola Agent langsung terreflect di Inbox agent filter dan CRM assignment dropdown
 - `mock/inbox.ts` import `getAgents` dari `mock/agents.ts` — satu import baru
 - `MOCK_AGENTS` di inbox.ts menjadi `const` yang di-initialize dari getAgents() (module-level)
+
+---
+
+## DEC-014: Per-AI Assistant Config Architecture
+
+**Status:** Final
+**Tanggal:** 2026-06-17
+
+**Keputusan:** Setiap AI Assistant mendapat config independen (persona, workingHours, handoffConfig, KB scope), bukan shared global state.
+
+**Alternatives:**
+- Per-AI Assistant config (dipilih) — maximum flexibility, sesuai PRD v1.3, memungkinkan override per assistant
+- Shared global + per-assistant overrides — lebih kompleks, cascade logic sulit di-maintain
+- Single global config — tidak mendukung multiple assistants
+
+**Alasan:**
+- PRD v1.3 menetapkan multiple configurable AI Assistants, masing-masing bisa di-assign ke agent berbeda
+- Setiap assistant mungkin punya karakter berbeda (formal untuk support, casual untuk marketing)
+- Working hours berbeda per team/timezone (support 24/7, sales jam kantor)
+- KB scope berbeda: support bot butuh docs produk, marketing bot butuh docs campaign
+
+**Impact:**
+- Store `ai-assistants.ts` CRUD operasi langsung edit full object (bukan partial override)
+- AI Assistant detail page punya 6 config sections yang masing-masing save independently
+- System Default AI Assistant (fallback) juga punya config sendiri, bukan shared global state
+
+---
+
+## DEC-015: Two-Level Knowledge Base Scope
+
+**Status:** Final
+**Tanggal:** 2026-06-17
+
+**Keputusan:** KB scope dua level — Global (system-wide) + Per-AI Assistant (custom override). Custom KB mengoverride KB global.
+
+**Alternatives:**
+- Two-level scope: Global + Per-Assistant Custom (dipilih) — sesuai PRD v1.3, clear priority chain
+- Flat per-assistant KB — setiap assistant punya KB sendiri, tanpa global fallback — redundant docs
+- Global-only KB — tidak mendukung per-assistant specialization
+
+**Alasan:**
+- Global KB = base knowledge yang semua assistant butuh (info perusahaan, FAQ umum)
+- Custom KB = specialized knowledge per assistant (produk spesifik, campaign detail)
+- Override behavior: jika assistant punya custom KB, ia pakai custom SAJA (bukan merge)
+- Mengurangi duplikasi — common docs cukup di-global, hanya yang spesifik yang di-custom
+
+**Impact:**
+- `KBDocument.aiAssistantId` field: `undefined` = global, `string` = per-assistant
+- `AIAssistant.knowledgeBaseScope`: 'global' | 'custom' + `customKBDocumentIds: string[]`
+- KB selector UI: toggle global/custom + checkbox list untuk custom scope
+
+---
+
+## DEC-016: Bidirectional AI Assistant ↔ Agent Assignment Sync
+
+**Status:** Final
+**Tanggal:** 2026-06-17
+
+**Keputusan:** Assignment disimpan di DUA tempat — `agent.aiAssistantId` DAN `assistant.assignedAgentId`. Setiap perubahan assignment harus update kedua sisi.
+
+**Alternatives:**
+- Bidirectional sync (dipilih) — query mudah dari kedua sisi (agent page → assistant, assistant page → agent), no JOIN needed
+- Single-sided reference (agent → assistant only) — simpler tapi agent profile page butuh lookup assistants[] untuk resolve
+- Shared junction table — overkill untuk mock data 1:1 relationship
+
+**Alasan:**
+- AgentProfilePage perlu resolve assignedAssistant dari agent.aiAssistantId
+- AIAssistantDetailPage perlu resolve assignedAgent dari assistant.assignedAgentId
+- Bidirectional sync memungkinkan O(1) lookup dari kedua sisi
+- Backend nanti bisa normalize ke junction table tanpa mengubah UI logic
+
+**Impact:**
+- Assign handler di AgentProfilePage: `editAssistant(id, { assignedAgentId })` + `editAgent(agentId, { aiAssistantId })`
+- Assign handler di AIAssistantDetailPage: `editAssistant(id, { assignedAgentId })` + `editAgent(agentId, { aiAssistantId })`
+- AssignAgentModal: shows warning when target agent already assigned to different assistant
+
+---
+
+## DEC-017: Reverse Modal Pattern for Agent→Assistant Assignment
+
+**Status:** Final
+**Tanggal:** 2026-06-17
+
+**Keputusan:** AgentProfilePage menggunakan `AssignAIAssistantModal` (select assistant dari dropdown), bukan reuse `AssignAgentModal` (select agent dari dropdown).
+
+**Alternatives:**
+- Separate modal per direction (dipilih) — clear UX, correct labels, no prop confusion
+- Single generic "AssignmentModal" with direction prop — over-abstracted for 2 use cases
+- Inline dropdown instead of modal — breaks card-based design pattern
+
+**Alasan:**
+- AssignAgentModal: context = "which agent to assign this AI Assistant to?" → lists agents
+- AssignAIAssistantModal: context = "which AI Assistant to give this agent?" → lists assistants
+- Different props, different data, different empty states — a single generic modal would need many conditional branches
+- 2 small focused components beat 1 complex generic one (KISS)
+
+**Impact:**
+- New file: `components/ai-assistants/AssignAIAssistantModal.tsx`
+- Reuses same visual pattern (zoom-in-95 animation, card grid, confirm/cancel)
+- No changes to existing AssignAgentModal

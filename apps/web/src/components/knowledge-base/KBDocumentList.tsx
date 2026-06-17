@@ -7,10 +7,12 @@ import type { KBDocument } from '@/mock/ai-settings'
 
 interface KBDocumentListProps {
   onView: (doc: KBDocument) => void
+  documents?: KBDocument[]
 }
 
-export function KBDocumentList({ onView }: KBDocumentListProps) {
-  const { kbDocuments, removeKBDocument } = useAISettingsStore()
+export function KBDocumentList({ onView, documents }: KBDocumentListProps) {
+  const { kbDocuments: allDocuments, removeKBDocument } = useAISettingsStore()
+  const kbDocuments = documents ?? allDocuments
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Semua')
 

@@ -21,13 +21,19 @@ export function SettingsPage() {
 
       <Tabs defaultValue="ai">
         <TabList className="mb-8">
-          <TabTrigger value="ai">🤖 AI Engine</TabTrigger>
+          <TabTrigger value="ai">🤖 System Default AI</TabTrigger>
           <TabTrigger value="general">Umum</TabTrigger>
           <TabTrigger value="account">Akun</TabTrigger>
         </TabList>
 
         <TabContent value="ai">
           <div className="space-y-8">
+            <div className="p-4 rounded-xl bg-brand-blue-50 border border-brand-blue-100">
+              <p className="text-sm text-brand-blue-deep">
+                Konfigurasi di bawah adalah <span className="font-semibold">default untuk semua AI Assistant</span>. Setiap AI Assistant bisa mengoverride konfigurasi ini secara independen di halaman masing-masing.
+              </p>
+            </div>
+
             <div className="card-base p-6">
               <div className="flex items-center justify-between">
                 <div>

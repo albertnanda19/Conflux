@@ -1,11 +1,14 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAgentsStore } from '@/stores/agents'
+import { useAIAssistantsStore } from '@/stores/ai-assistants'
 import { AgentProfileHeader } from '@/components/agents/AgentProfileHeader'
 import { AgentPerformanceCard } from '@/components/agents/AgentPerformanceCard'
 import { AgentActivityTimeline } from '@/components/agents/AgentActivityTimeline'
 import { AgentConversationList } from '@/components/agents/AgentConversationList'
 import { AgentFormModal } from '@/components/agents/AgentFormModal'
+import { AIAssistantAssignmentCard } from '@/components/ai-assistants/AIAssistantAssignmentCard'
+import { AssignAIAssistantModal } from '@/components/ai-assistants/AssignAIAssistantModal'
 
 export function AgentProfilePage() {
   const { id } = useParams<{ id: string }>()
@@ -13,9 +16,36 @@ export function AgentProfilePage() {
   const agents = useAgentsStore((s) => s.agents)
   const cycleStatus = useAgentsStore((s) => s.cycleStatus)
   const editAgent = useAgentsStore((s) => s.editAgent)
+  const assistants = useAIAssistantsStore((s) => s.assistants)
+  const editAssistant = useAIAssistantsStore((s) => s.editAssistant)
 
   const agent = agents.find((a) => a.id === id)
   const [editOpen, setEditOpen] = useState(false)
+  const [assignOpen, setAssignOpen] = useState(false)
+
+  const assignedAssistant = useMemo(() => {
+    if (!agent?.aiAssistantId) return null
+    return assistants.find((a) => a.id === agent.aiAssistantId) ?? null
+  }, [agent?.aiAssistantId, assistants])
+
+  const handleAssign = useCallback((assistantId: string) => {
+    if (!id || !agent) return
+
+    const prevAgentId = assistants.find((a) => a.id === assistantId)?.assignedAgentId
+    if (prevAgentId && prevAgentId !== id) {
+      editAssistant(prevAgentId, { assignedAgentId: null })
+    }
+    editAssistant(assistantId, { assignedAgentId: id })
+    editAgent(id, { aiAssistantId: assistantId })
+    setAssignOpen(false)
+  }, [id, agent, assistants, editAssistant, editAgent])
+
+  const handleUnassign = useCallback(() => {
+    if (!id || !agent?.aiAssistantId) return
+    editAssistant(agent.aiAssistantId, { assignedAgentId: null })
+    editAgent(id, { aiAssistantId: null })
+    setAssignOpen(false)
+  }, [id, agent?.aiAssistantId, editAssistant, editAgent])
 
   const handleToggleStatus = useCallback(() => {
     if (id) cycleStatus(id)
@@ -48,7 +78,14 @@ export function AgentProfilePage() {
 
   return (
     <div className="p-8 h-full overflow-y-auto">
-      <AgentProfileHeader agent={agent} onEdit={() => setEditOpen(true)} onToggleStatus={handleToggleStatus} />
+      <AgentProfileHeader agent={agent} assistant={assignedAssistant} onEdit={() => setEditOpen(true)} onToggleStatus={handleToggleStatus} />
+
+      <div className="mb-6 animate-fade-in" style={{ animationDelay: '60ms' }}>
+        <AIAssistantAssignmentCard
+          assistant={assignedAssistant}
+          onAssign={() => setAssignOpen(true)}
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 mb-6">
         <AgentPerformanceCard agent={agent} />
@@ -62,6 +99,15 @@ export function AgentProfilePage() {
         onOpenChange={setEditOpen}
         editingAgent={agent}
         onSave={handleSave}
+      />
+
+      <AssignAIAssistantModal
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        currentAssistantId={agent.aiAssistantId ?? null}
+        assistants={assistants}
+        onAssign={handleAssign}
+        onUnassign={handleUnassign}
       />
     </div>
   )

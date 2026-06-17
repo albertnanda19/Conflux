@@ -1,6 +1,6 @@
 # STATUS.md
 
-**Last updated:** 2026-06-17 (Settings 2-Column Layout — Umum & Akun Complete)
+**Last updated:** 2026-06-17 (AI Assistant Engine — Phase 3 Modify Existing Pages Complete)
 
 ## Current State
 
@@ -26,9 +26,12 @@
 | **Modul 4 CRM & Pipeline Lead UI** | 🟢 Complete (Phase 1-7) — Kanban + Filters + Column Customize + Contacts List + Contact Profile + Segment Management + CSV Import + Integration Polish |
 | **Modul 6 Laporan & Analitik UI** | 🟢 Complete (Phase 1-6) — Overview, Agent Performance, Lead Source, Conversation Trends, Broadcast Report, AI vs Human |
 | **Settings Umum & Akun UI** | 🟢 Complete — 2-column layout (SettingsLayout, SettingsPillTabs, UmumTab 3 sub-tabs, AkunTab 3 sub-tabs: profile/security/notifications, mock data extended, SettingsPage wired) |
+| **AI Assistant Engine** | 🟢 Phase 1-3 Complete — Data layer + UI layer + Phase 3 modifications: AgentProfilePage AI assignment, AgentProfileHeader AI badge, KnowledgeBasePage scope selector, SettingsPage rename AI tab, AgentTable AI Assistant column, AssignAIAssistantModal, typecheck zero errors, build success |
 
 ## Open Items
 
+- [ ] Backend API AI Assistants — CRUD endpoints + assignment + KB scope queries
+- [ ] Connect AI Assistant UI ke backend API (ganti mock data)
 - [ ] Setup WebSocket server untuk real-time messaging
 - [ ] Integrasi WhatsApp Business API
 - [ ] Backend API Modul 1 — conversations, contacts, messages endpoints
@@ -41,13 +44,16 @@ _(None)_
 
 ## Next Best Actions
 
-1. **WebSocket** — Real-time messaging foundation
-2. **Backend conversations API** — CRUD conversations + messages
-3. **Connect frontend ke backend API** — ganti mock data
+1. **Backend API AI Assistants** — CRUD endpoints + agent assignment + KB scope queries
+2. **WebSocket** — Real-time messaging foundation
+3. **Backend conversations API** — CRUD conversations + messages
+4. **Connect frontend ke backend API** — ganti mock data
 
 ## Done Items
 
 - [x] Settings Phase 1: Foundation — 7 new files: toast.tsx (Zustand toast system, 3s auto-dismiss), FormField.tsx (label+input+error/hint wrapper), ToggleRow.tsx (Radix Switch row), mock/general-settings.ts (OrganizationInfo, PlatformPreferences, NotificationSettings, AppearanceSettings types + mock data + option arrays), mock/account-settings.ts (UserProfile, ActiveSession, LoginHistoryEntry, PersonalPreferences types + mock data), stores/general-settings.ts (Zustand: 4 sub-objects + update*/saveAll/resetChanges), stores/account-settings.ts (Zustand: profile/sessions/history/preferences + update*/revoke/save/changePassword), typecheck zero errors, build success
+- [x] AI Assistant Engine Phase 1-2 Complete — 8 new files + 4 modified: mock/ai-assistants.ts (AIAssistant type + 4 assistants + CRUD), stores/ai-assistants.ts (Zustand: search+filter+CRUD), AIAssistantStats (animated counters), AIAssistantCard (avatar+status+agent+persona), AIAssistantFormModal (create/edit), AssignAgentModal (select agent), AIAssistantKBSelector (global/custom toggle), AIAssistantAssignmentCard (profile card), AIAssistantsPage (/ai-assistants), AIAssistantDetailPage (/ai-assistants/:id with 6 config sections), router.tsx + Sidebar.tsx updated, mock/ai-settings.ts (aiAssistantId added to KBDocument), mock/agents.ts (aiAssistantId added to AgentProfile), typecheck zero errors, build success
+- [x] AI Assistant Engine Phase 3: Modify Existing Pages — 1 new file + 5 modified: AssignAIAssistantModal (new: select AI Assistant from agent profile), AgentProfilePage (AI assignment card + assign modal + bidirectional sync), AgentProfileHeader (AI assistant badge indicator), KnowledgeBasePage (scope toggle Global/Per-AI Assistant + assistant selector dropdown + KB scope info card), SettingsPage (renamed "AI Engine" → "System Default AI" + override note), AgentTable (AI Assistant column with clickable badge linking to /ai-assistants/:id), mock/agents.ts (+aiAssistantId field + 6 agent assignments), mock/ai-settings.ts (+aiAssistantId field + kb-7/kb-8 assigned to ai-2), typecheck zero errors, build success
 - [x] Settings Phase 2: 2-Column Layout — 10 new files + 2 modified: SettingsLayout.tsx (2-column flex, sticky right), SettingsPillTabs.tsx (pill sub-tab switcher), UmumTab.tsx (3 sub-tabs: company/location/appearance), 3 wrappers (CompanyProfile, LocationTimezone, Appearance), AkunTab.tsx (3 sub-tabs: profile/security/notifications), MyProfile.tsx (avatar + role badge + form fields + validation), Security.tsx (password strength + sessions + login history table), Notifications.tsx (5 toggles + digest select), mock/account-settings.ts extended (+5 PersonalPreferences fields), SettingsPage.tsx wired, typecheck zero errors, build success
 - [x] Kelola Agent UI Complete (Phase 1-6) — 17 new files + 4 modified: mock/agents.ts (AgentProfile type + 6 agents + CRUD), stores/agents.ts (Zustand), AgentsPage, AgentProfilePage, AgentAvatar, AgentStatusBadge, AgentRoleBadge, AgentFilters, AgentStatsOverview, AgentTable, AgentFormModal, AgentProfileHeader, AgentPerformanceCard, AgentActivityTimeline, AgentConversationList, AgentDeleteConfirm, router.tsx (/agents, /agents/new, /agents/:id), Sidebar.tsx (nav item), mock/inbox.ts (MOCK_AGENTS derives from agents.ts), typecheck zero errors, build success (AgentsPage 11.87kB, AgentProfilePage 9.96kB)
 

@@ -2,6 +2,75 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-17 — AI Assistant Engine Phase 3: Modify Existing Pages
+
+### Yang Dikerjakan
+- Created `components/ai-assistants/AssignAIAssistantModal.tsx` — Reverse of AssignAgentModal: modal for selecting an AI Assistant from agent profile. Shows current assignment with unassign option, lists available (non-draft) assistants with avatar/name/status/tone, one-click assign with confirmation
+- Modified `mock/agents.ts` — Added `aiAssistantId?: string | null` to AgentProfile interface. Updated 6 mock agents: a1→ai-1 (Sari Bot), a3→ai-2 (Support Bot), others→null
+- Modified `mock/ai-settings.ts` — Added `aiAssistantId?: string | null` to KBDocument interface. Updated kb-7 and kb-8 to belong to ai-2 (Support Bot custom KB)
+- Modified `pages/AgentProfilePage.tsx` — Added AI Assistant assignment section: imports useAIAssistantsStore + AIAssistantAssignmentCard + AssignAIAssistantModal, resolves assignedAssistant from aiAssistantId, handles assign/unassign with bidirectional sync (updates both agent.aiAssistantId and assistant.assignedAgentId), renders assignment card between header and performance grid
+- Modified `components/agents/AgentProfileHeader.tsx` — Added `assistant` prop (AIAssistant | null), renders AI assistant badge next to role/status: "🤖 Sari Bot" with blue background if assigned, "🤖 Belum di-assign" with gray if not
+- Modified `pages/KnowledgeBasePage.tsx` — Added scope selector: pill toggle (Global KB / Per AI Assistant), global mode shows green dot + doc count, assistant mode shows dropdown selector + assistant info card with KB scope detail. KBDocumentList receives filtered documents prop. Empty state when no assistant selected
+- Modified `components/knowledge-base/KBDocumentList.tsx` — Added optional `documents` prop override, uses provided docs instead of store when present
+- Modified `pages/SettingsPage.tsx` — Renamed tab "🤖 AI Engine" → "🤖 System Default AI", added blue info note: "Konfigurasi di bawah adalah default untuk semua AI Assistant..."
+- Modified `components/agents/AgentTable.tsx` — Added AI Assistant column (header + cell with clickable badge linking to /ai-assistants/:id), colSpan updated to 7, uses useAIAssistantsStore to resolve assistant name from aiAssistantId
+
+### Keputusan yang Diambil
+- Reverse modal pattern: AgentProfilePage needs "select AI Assistant" (not "select agent"), so created AssignAIAssistantModal rather than reusing AssignAgentModal
+- Bidirectional assignment sync: updating agent.aiAssistantId also updates assistant.assignedAgentId, and vice versa — prevents orphaned references
+- KB scope filter: global = docs with undefined aiAssistantId, assistant = docs matching specific aiAssistantId — clean separation
+- SettingsPage note: blue info banner clarifies system-wide default vs per-assistant override relationship
+
+### Yang Berhasil
+- 1 new file created, 7 modified, zero TypeScript errors, build success
+- AgentProfilePage: AI assignment card + badge + assign/unassign modal working
+- KnowledgeBasePage: scope toggle (Global/Per-AI) with assistant selector and info card
+- SettingsPage: renamed tab + override note
+- AgentTable: AI Assistant column with clickable badges
+- Build: KnowledgeBasePage (326kB), SettingsPage (49kB), all chunks verified
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Backend API AI Assistants — CRUD endpoints + agent assignment + KB scope queries
+- Connect AI Assistant UI ke backend API (ganti mock data)
+- WebSocket — Real-time messaging foundation
+
+## 2026-06-17 — AI Assistant Engine Phase 1-2: Data Layer + UI Components & Pages
+
+### Yang Dikerjakan
+- Created `mock/ai-assistants.ts` — AIAssistant type (id, name, description, avatar, status, persona, workingHours, handoffConfig, knowledgeBaseScope, customKBDocumentIds, assignedAgentId, timestamps) + 4 mock assistants (Sari Bot, Support Bot, Marketing Bot, System Default) + CRUD helpers (getAIAssistants, getAIAssistantById, createAIAssistant, updateAIAssistant, deleteAIAssistant, toggleAIAssistantStatus)
+- Modified `mock/ai-settings.ts` — Added `aiAssistantId?: string` to KBDocument interface (existing 8 docs global scope)
+- Modified `mock/agents.ts` — Added `aiAssistantId?: string` to AgentProfile interface, updated 6 mock agents with assignment data
+- Created `stores/ai-assistants.ts` — Zustand store: assistants[], searchQuery, statusFilter, CRUD actions, getFilteredAssistants (search + filter)
+- Created `components/ai-assistants/AIAssistantStats.tsx` — 4 animated counter cards (Total, Active, Draft, Unassigned) with staggered entrance + AnimatedCounter
+- Created `components/ai-assistants/AIAssistantCard.tsx` — Card: emoji avatar (hover scale+rotate), name, status badge (pulse for active), assigned agent info, persona summary, status-colored left border, edit/delete hover actions, staggered entrance
+- Created `components/ai-assistants/AIAssistantFormModal.tsx` — Create/Edit modal: avatar picker (12 emoji), name, persona name, description, language select, tone selector, system prompt textarea, scale-in animation
+- Created `components/ai-assistants/AssignAgentModal.tsx` — Assignment modal: current assignment display, unassign option, available agents list with avatar/name/role/status, one-click assign, confirmation
+- Created `components/ai-assistants/AIAssistantKBSelector.tsx` — KB scope toggle (Global/Custom), searchable checkbox list for custom docs, warning note, visual summary
+- Created `components/ai-assistants/AIAssistantAssignmentCard.tsx` — Card for AgentProfilePage: shows assigned AI assistant with avatar/name/status, empty state CTA
+- Created `pages/AIAssistantsPage.tsx` — Route /ai-assistants: header + create button + stats + search + status filter pills + 2-column card grid + empty state + delete confirmation
+- Created `pages/AIAssistantDetailPage.tsx` — Route /ai-assistants/:id: profile header + 6 config sections (Assignment, Persona, KB Scope, Working Hours, Handoff, Test AI) + edit/delete modals
+- Modified `router.tsx` — Added lazy imports + routes for AIAssistantsPage, AIAssistantDetailPage
+- Modified `Sidebar.tsx` — Added "AI Assistant" nav item (🤖) between Kelola Agent and Pipeline
+
+### Keputusan yang Diambil
+- Per-AI Assistant config architecture: each AI Assistant gets independent persona, workingHours, handoffConfig, KB scope — no shared global state between assistants
+- Mock-first approach: full CRUD in mock layer with local state persistence, backend integration deferred to Phase 3+
+- AI Assistant detail page uses inline editing (no separate edit page) — changes save directly via editAssistant to store
+- KB scope: two-level (global + per-assistant custom override), matching PRD v1.3 requirements
+- Assignment model: 1 AI Assistant → 1 human agent (bidirectional link via assignedAgentId on AIAssistant + aiAssistantId on AgentProfile)
+
+### Yang Berhasil
+- 8 new files created, 4 modified, zero TypeScript errors, build success
+- AI Assistant list page: animated stats, search + filter, 2-column card grid, CRUD operations
+- AI Assistant detail page: 6 config sections with inline editing, assignment management, KB scope selector
+- Build chunks: AIAssistantsPage (10.40kB), AIAssistantFormModal (11.20kB), AIAssistantDetailPage (29.97kB)
+- All animations working: staggered card entrance, hover effects, status badge pulse, counter animation
+
+### Yang Perlu Dikerjakan Selanjutnya
+- AI Assistant Engine Phase 3 — Modify existing pages (SettingsPage rename AI tab, KnowledgeBasePage scope selector, AgentProfilePage AI badge, AgentTable AI Assistant column)
+- Backend API for AI Assistants — CRUD endpoints + agent assignment + KB scope queries
+- WebSocket — Real-time messaging foundation
+
 ## 2026-06-17 — Settings Page 2-Column Layout Redesign (Umum & Akun)
 
 ### Yang Dikerjakan

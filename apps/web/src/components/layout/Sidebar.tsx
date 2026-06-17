@@ -7,6 +7,7 @@ const navItems = [
   { to: "/inbox", label: "Inbox", icon: "💬" },
   { to: "/contacts", label: "Kontak", icon: "👤" },
   { to: "/agents", label: "Kelola Agent", icon: "👥" },
+  { to: "/ai-assistants", label: "AI Assistant", icon: "🤖" },
   { to: "/pipeline", label: "Pipeline", icon: "📋" },
   { to: "/labels", label: "Label", icon: "🏷️" },
   { to: "/campaigns", label: "Campaign", icon: "📢" },
