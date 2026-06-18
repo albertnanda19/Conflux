@@ -1,6 +1,6 @@
 # STATUS.md
 
-**Last updated:** 2026-06-18 (Frontend UI — Dashboard charts + Template Edit Modal + Dark background fixes)
+**Last updated:** 2026-06-18 (Frontend — Removed programValue/monetary values from Pipeline Kanban)
 
 ## Current State
 
@@ -51,6 +51,7 @@ _(None)_
 
 ## Done Items
 
+- [x] Removed programValue/monetary values from Pipeline Kanban — Deleted `programValue` field from CrmContact type + all 18 mock contacts, removed `getTotalValueByStatus()` + `formatCurrency()` from mock/crm.ts. Updated KanbanBoard, KanbanColumnHeader, KanbanCard, ContactInfoCard, ContactTable, ContactsPage (import) to remove monetary displays. Column headers now show only name + count; cards show only program interest. typecheck zero errors, build success.
 - [x] Frontend UI Enhancements (3 fixes) — DashboardPage: rewrote with 4 charts (LeadTrendChart, ChannelDistributionChart, ConversionByProgramChart, TopAgentChart) + rich StatCard (AnimatedNumber + icon + change%) reusing reports/ components. TemplateEditModal: new component pre-filled from Template, calls updateTemplate on save, wired via onEdit in TemplatesPage. Dark background: pill-button-primary/secondary → brand-blue-deep/700, checkbox checked state → brand-blue-deep, tooltip text-on-dark → text-white, CampaignWizard step indicator + Next button, CampaignRecipientList active tab, TemplateCreateModal save button, SegmentBuilder Tambah button, ContactDetailPanel Save Notes + active underline. typecheck zero errors.
 - [x] Frontend UI Bug Fixes (6 fixes) — DashboardPage: wired MOCK_ANALYTICS_OVERVIEW → 6 StatCards with change indicators. CampaignsPage: replaced inline MOCK_CAMPAIGNS with useCampaignStore, stats computed dynamically. TemplatesPage: replaced inline MOCK_TEMPLATES with useCampaignStore, wired toggleTemplateActive + deleteTemplate. CampaignDetailPage: dynamic campaign lookup by route params, not-found state, cancel/delete actions wired to store, stats/progress/timeline wired from campaignStats. ContactsPage: all 4 BulkActionBar handlers implemented (delete, status picker modal, agent picker modal, label picker modal). Sidebar: emoji icons replaced with inline SVG stroke icons (12 icons). typecheck zero errors.
 

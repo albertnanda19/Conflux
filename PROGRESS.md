@@ -2,6 +2,31 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-18 — Removed programValue/monetary values from Pipeline Kanban
+
+### Yang Dikerjakan
+- `mock/crm.ts` — Removed `programValue: number` from `CrmContact` type, removed `programValue` from all 18 `MOCK_CRM_CONTACTS`, removed `getTotalValueByStatus()` + `formatCurrency()` utility functions
+- `components/contacts/KanbanBoard.tsx` — Removed `formatCurrency` import, removed `totalValue` calculation + prop to `KanbanColumnHeader`
+- `components/contacts/KanbanColumnHeader.tsx` — Removed `totalValue` from props interface + destructuring, removed display logic for monetary value
+- `components/contacts/KanbanCard.tsx` — Removed `formatCurrency` import, removed monetary display line (now only shows `programInterest`)
+- `components/contacts/ContactInfoCard.tsx` — Removed `formatCurrency` import, removed "Nilai Program" row
+- `components/contacts/ContactTable.tsx` — Removed `formatCurrency` import, removed "Nilai" column header + cell
+- `pages/ContactsPage.tsx` — Removed `programValue: 0` from imported contact creation
+
+### Keputusan yang Diambil
+- Menghapus fitur monetary value sepenuhnya dari Pipeline UI per permintaan user
+- Surgical removal — hanya file yang terkait, tidak refactor tidak perlu
+
+### Yang Berhasil
+- TypeScript typecheck zero errors
+- Vite build success (7 files dimodifikasi, 0 file baru)
+- Kolom Kanban sekarang hanya tampil nama + count
+- Card Kanban hanya tampil program interest
+- Contact detail/table tidak lagi tampil nilai program
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Backend API integration (ganti mock data dengan real API)
+
 ## 2026-06-18 — Frontend UI Enhancements (Dashboard charts, Template Edit, Dark bg fixes)
 
 ### Yang Dikerjakan

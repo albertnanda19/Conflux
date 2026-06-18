@@ -1,4 +1,4 @@
-import { type CrmContact, getAgentById, formatCurrency } from '@/mock/crm'
+import { type CrmContact, getAgentById } from '@/mock/crm'
 import { ChannelIcon } from '@/components/inbox/ChannelIcon'
 import { LabelBadge } from '@/components/labels/LabelBadge'
 import { useCrmStore } from '@/stores/crm'
@@ -55,10 +55,6 @@ export function ContactInfoCard({ contact }: ContactInfoCardProps) {
         <div>
           <span className="text-xs text-steel block mb-1">Program Minat</span>
           <span className="text-sm text-ink font-medium">{contact.programInterest}</span>
-        </div>
-        <div>
-          <span className="text-xs text-steel block mb-1">Nilai Program</span>
-          <span className="text-sm text-ink font-medium">{formatCurrency(contact.programValue)}</span>
         </div>
         <div>
           <span className="text-xs text-steel block mb-1">Agent</span>

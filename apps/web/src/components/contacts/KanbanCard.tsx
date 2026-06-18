@@ -1,4 +1,4 @@
-import { type CrmContact, getAgentById, formatCurrency } from '@/mock/crm'
+import { type CrmContact, getAgentById } from '@/mock/crm'
 import { ChannelIcon } from '@/components/inbox/ChannelIcon'
 import { LabelBadge } from '@/components/labels/LabelBadge'
 import { formatRelativeTime } from '@/lib/utils'
@@ -38,7 +38,7 @@ export function KanbanCard({ contact }: KanbanCardProps) {
       </div>
 
       <div className="text-xs text-steel mb-2">
-        {contact.programInterest} · {formatCurrency(contact.programValue)}
+        {contact.programInterest}
       </div>
 
       {contact.labels.length > 0 && (

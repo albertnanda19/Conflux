@@ -3,7 +3,6 @@ import { useCrmStore } from '@/stores/crm'
 import { KanbanCard } from './KanbanCard'
 import { KanbanColumnHeader } from './KanbanColumnHeader'
 import type { PipelineStatus } from '@/mock/inbox'
-import { formatCurrency } from '@/mock/crm'
 
 export function KanbanBoard() {
   const { columns, getFilteredContacts, moveContact } = useCrmStore()
@@ -55,7 +54,6 @@ export function KanbanBoard() {
     <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-220px)]">
       {columns.map((col) => {
         const colContacts = contacts.filter((c) => c.pipelineStatus === col.id)
-        const totalValue = colContacts.reduce((sum, c) => sum + c.programValue, 0)
 
         return (
           <div
@@ -72,7 +70,6 @@ export function KanbanBoard() {
               color={col.color}
               name={col.name}
               count={colContacts.length}
-              totalValue={totalValue > 0 ? formatCurrency(totalValue) : ''}
             />
 
             <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2 min-h-[80px] rounded-b-xl">

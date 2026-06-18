@@ -3,7 +3,6 @@ import { LABELS, MOCK_AGENTS, type Contact, type Agent, type ChannelType, type P
 export type CrmContact = Contact & {
   programInterest: string
   assignedAgentId: string | null
-  programValue: number
 }
 
 export interface PipelineColumn {
@@ -38,7 +37,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     notes: 'Lulusan TI, baru kerja 1 tahun. Tertarik Data Science.',
     programInterest: 'Data Science',
     assignedAgentId: 'a1',
-    programValue: 4500000,
     activityLog: [
       { id: 'al1', type: 'message_sent', description: 'Rina mengirim pesan pertama', createdAt: daysAgo(5) },
       { id: 'al2', type: 'assignment', description: 'Ditugaskan ke Sari Dewi', agentName: 'Sari Dewi', createdAt: daysAgo(5) },
@@ -58,7 +56,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[1]],
     programInterest: 'UX Design',
     assignedAgentId: 'a2',
-    programValue: 3800000,
     activityLog: [
       { id: 'al6', type: 'message_sent', description: 'Budi mengirim pesan dari WhatsApp', createdAt: daysAgo(3) },
       { id: 'al7', type: 'ai_handoff', description: 'AI menyerahkan ke human agent', createdAt: daysAgo(3) },
@@ -76,7 +73,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[1], LABELS[4]],
     programInterest: 'UX Design',
     assignedAgentId: null,
-    programValue: 3800000,
     activityLog: [
       { id: 'al9', type: 'message_sent', description: 'Maya DM dari Instagram', createdAt: daysAgo(1) },
       { id: 'al10', type: 'label_added', description: 'Label "Dari IG Ads" ditambahkan', createdAt: daysAgo(1) },
@@ -93,7 +89,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[0]],
     programInterest: 'Data Science',
     assignedAgentId: null,
-    programValue: 4500000,
     activityLog: [
       { id: 'al11', type: 'message_sent', description: 'Ahmad kirim pesan dari Facebook', createdAt: daysAgo(2) },
       { id: 'al12', type: 'ai_handoff', description: 'AI menyerahkan ke human', createdAt: daysAgo(2) },
@@ -111,7 +106,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     notes: 'Sudah daftar program Data Science Batch 12. Pembayaran lunas.',
     programInterest: 'Data Science',
     assignedAgentId: 'a3',
-    programValue: 4500000,
     activityLog: [
       { id: 'al13', type: 'message_sent', description: 'Dewi mengirim pesan pertama', createdAt: daysAgo(14) },
       { id: 'al14', type: 'assignment', description: 'Ditugaskan ke Nina Kusuma', agentName: 'Nina Kusuma', createdAt: daysAgo(14) },
@@ -131,7 +125,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [],
     programInterest: 'Full-Stack Web Dev',
     assignedAgentId: null,
-    programValue: 5200000,
     activityLog: [
       { id: 'al18', type: 'message_sent', description: 'Fajar mengirim pesan dari WhatsApp', createdAt: daysAgo(1) },
     ],
@@ -147,7 +140,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[4]],
     programInterest: 'UX Design',
     assignedAgentId: null,
-    programValue: 3800000,
     activityLog: [
       { id: 'al19', type: 'message_sent', description: 'Sinta DM dari Instagram', createdAt: hoursAgo(4) },
       { id: 'al20', type: 'label_added', description: 'Label "Dari IG Ads" ditambahkan', createdAt: hoursAgo(4) },
@@ -165,7 +157,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     notes: 'Minta penawaran harga program Full-Stack. Sudah kirim brochure.',
     programInterest: 'Full-Stack Web Dev',
     assignedAgentId: 'a4',
-    programValue: 5200000,
     activityLog: [
       { id: 'al21', type: 'message_sent', description: 'Hendra mengirim pesan', createdAt: daysAgo(7) },
       { id: 'al22', type: 'assignment', description: 'Ditugaskan ke Andi Wijaya', agentName: 'Andi Wijaya', createdAt: daysAgo(7) },
@@ -187,7 +178,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[1], LABELS[2]],
     programInterest: 'UX Design',
     assignedAgentId: 'a1',
-    programValue: 3800000,
     activityLog: [
       { id: 'al25', type: 'message_sent', description: 'Lisa mengirim pesan dari Facebook', createdAt: daysAgo(4) },
       { id: 'al26', type: 'assignment', description: 'Ditugaskan ke Sari Dewi', agentName: 'Sari Dewi', createdAt: daysAgo(4) },
@@ -204,7 +194,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[5]],
     programInterest: 'Full-Stack Web Dev',
     assignedAgentId: null,
-    programValue: 5200000,
     activityLog: [
       { id: 'al27', type: 'message_sent', description: 'Dimas kirim pesan dari WhatsApp', createdAt: hoursAgo(6) },
     ],
@@ -222,7 +211,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     notes: 'Senior data analyst. Mau upgrade ke ML/DL.',
     programInterest: 'Data Science',
     assignedAgentId: 'a2',
-    programValue: 4500000,
     activityLog: [
       { id: 'al28', type: 'message_sent', description: 'Putri DM dari Instagram', createdAt: daysAgo(6) },
       { id: 'al29', type: 'assignment', description: 'Ditugaskan ke Rizki Pratama', agentName: 'Rizki Pratama', createdAt: daysAgo(6) },
@@ -241,7 +229,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[0]],
     programInterest: 'Data Science',
     assignedAgentId: 'a3',
-    programValue: 4500000,
     activityLog: [
       { id: 'al32', type: 'message_sent', description: 'Raka kirim pesan dari Facebook', createdAt: daysAgo(10) },
       { id: 'al33', type: 'assignment', description: 'Ditugaskan ke Nina Kusuma', agentName: 'Nina Kusuma', createdAt: daysAgo(10) },
@@ -259,7 +246,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[1]],
     programInterest: 'UX Design',
     assignedAgentId: 'a4',
-    programValue: 3800000,
     activityLog: [
       { id: 'al35', type: 'message_sent', description: 'Citra kirim pesan', createdAt: daysAgo(20) },
       { id: 'al36', type: 'assignment', description: 'Ditugaskan ke Andi Wijaya', agentName: 'Andi Wijaya', createdAt: daysAgo(20) },
@@ -277,7 +263,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [],
     programInterest: 'Data Science',
     assignedAgentId: null,
-    programValue: 4500000,
     activityLog: [
       { id: 'al38', type: 'message_sent', description: 'Yoga kirim pesan dari WhatsApp', createdAt: hoursAgo(2) },
     ],
@@ -293,7 +278,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[4], LABELS[2]],
     programInterest: 'Full-Stack Web Dev',
     assignedAgentId: 'a1',
-    programValue: 5200000,
     activityLog: [
       { id: 'al39', type: 'message_sent', description: 'Anisa DM dari Instagram', createdAt: daysAgo(2) },
       { id: 'al40', type: 'assignment', description: 'Ditugaskan ke Sari Dewi', agentName: 'Sari Dewi', createdAt: daysAgo(2) },
@@ -311,7 +295,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     notes: 'Backend engineer, mau switch ke fullstack. Budget ready.',
     programInterest: 'Full-Stack Web Dev',
     assignedAgentId: 'a3',
-    programValue: 5200000,
     activityLog: [
       { id: 'al41', type: 'message_sent', description: 'Reza kirim pesan dari Facebook', createdAt: daysAgo(8) },
       { id: 'al42', type: 'assignment', description: 'Ditugaskan ke Nina Kusuma', agentName: 'Nina Kusuma', createdAt: daysAgo(8) },
@@ -331,7 +314,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     notes: 'Daftar UX Design Bootcamp Batch 8. Sudah bayar full.',
     programInterest: 'UX Design',
     assignedAgentId: 'a2',
-    programValue: 3800000,
     activityLog: [
       { id: 'al45', type: 'message_sent', description: 'Salsa DM dari Instagram', createdAt: daysAgo(18) },
       { id: 'al46', type: 'assignment', description: 'Ditugaskan ke Rizki Pratama', agentName: 'Rizki Pratama', createdAt: daysAgo(18) },
@@ -349,7 +331,6 @@ export const MOCK_CRM_CONTACTS: CrmContact[] = [
     labels: [LABELS[0]],
     programInterest: 'Data Science',
     assignedAgentId: 'a4',
-    programValue: 4500000,
     activityLog: [
       { id: 'al48', type: 'message_sent', description: 'Taufik kirim pesan dari WhatsApp', createdAt: daysAgo(3) },
       { id: 'al49', type: 'assignment', description: 'Ditugaskan ke Andi Wijaya', agentName: 'Andi Wijaya', createdAt: daysAgo(3) },
@@ -380,18 +361,4 @@ export function getContactsByStatus(status: PipelineStatus): CrmContact[] {
 
 export function getContactCountByStatus(status: PipelineStatus): number {
   return MOCK_CRM_CONTACTS.filter((c) => c.pipelineStatus === status).length
-}
-
-export function getTotalValueByStatus(status: PipelineStatus): number {
-  return MOCK_CRM_CONTACTS
-    .filter((c) => c.pipelineStatus === status)
-    .reduce((sum, c) => sum + c.programValue, 0)
-}
-
-export function formatCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    const m = value / 1_000_000
-    return `Rp ${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}jt`
-  }
-  return `Rp ${value.toLocaleString('id-ID')}`
 }

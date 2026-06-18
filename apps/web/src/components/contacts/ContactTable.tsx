@@ -1,4 +1,4 @@
-import { getAgentById, formatCurrency, type CrmContact, type PipelineColumn } from '@/mock/crm'
+import { getAgentById, type CrmContact, type PipelineColumn } from '@/mock/crm'
 import { ChannelIcon } from '@/components/inbox/ChannelIcon'
 import { LabelBadge } from '@/components/labels/LabelBadge'
 import { formatRelativeTime } from '@/lib/utils'
@@ -59,7 +59,6 @@ export function ContactTable({
             <th className="text-left px-3 py-2.5 font-medium text-steel">Status</th>
             <th className="text-left px-3 py-2.5 font-medium text-steel">Label</th>
             <th className="text-left px-3 py-2.5 font-medium text-steel">Agent</th>
-            <th className="text-right px-3 py-2.5 font-medium text-steel">Nilai</th>
             <th className="text-left px-3 py-2.5 font-medium text-steel">Dibuat</th>
             <th className="w-10 px-3 py-2.5" />
           </tr>
@@ -112,9 +111,6 @@ export function ContactTable({
                       {agent.name}
                     </span>
                   ) : '—'}
-                </td>
-                <td className="px-3 py-2.5 text-right font-medium text-ink whitespace-nowrap">
-                  {formatCurrency(c.programValue)}
                 </td>
                 <td className="px-3 py-2.5 text-steel whitespace-nowrap text-xs">
                   {formatRelativeTime(c.createdAt)}

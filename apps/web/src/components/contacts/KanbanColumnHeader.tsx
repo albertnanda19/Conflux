@@ -8,10 +8,9 @@ interface KanbanColumnHeaderProps {
   color: string
   name: string
   count: number
-  totalValue: string
 }
 
-export function KanbanColumnHeader({ columnId, color, name, count, totalValue }: KanbanColumnHeaderProps) {
+export function KanbanColumnHeader({ columnId, color, name, count }: KanbanColumnHeaderProps) {
   const renameColumn = useCrmStore((s) => s.renameColumn)
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -84,11 +83,6 @@ export function KanbanColumnHeader({ columnId, color, name, count, totalValue }:
         {count}
       </span>
       <div className="ml-auto flex items-center gap-2">
-        {totalValue && (
-          <span className="text-[11px] text-steel">
-            {totalValue}
-          </span>
-        )}
         <div className="relative" ref={menuRef}>
           <button
             type="button"

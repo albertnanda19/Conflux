@@ -123,7 +123,6 @@ export function ContactsPage() {
       createdAt: new Date().toISOString(),
       programInterest: r.program || 'Belum Ditentukan',
       assignedAgentId: null,
-      programValue: 0,
     }))
     setContacts((prev) => [...newContacts, ...prev])
   }
