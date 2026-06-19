@@ -27,7 +27,7 @@ export function AgentStatsOverview({ agents }: AgentStatsOverviewProps) {
       <StatCard label="Total Agent" value={total} icon="👥" color="text-ink" bgColor="bg-surface" />
       <StatCard label="Online Saat Ini" value={onlineCount} icon="🟢" color="text-emerald-600" bgColor="bg-emerald-50" />
       <StatCard label="Avg Response Time" value={responseDisplay} icon="⏱️" color="text-brand-blue-deep" bgColor="bg-brand-blue-200" decimals={1} suffix="m" />
-      <StatCard label="Avg Konversi" value={avgConversion} icon="📈" color="text-brand-coral" bgColor="bg-brand-coral/10" suffix="%" />
+      <StatCard label="Avg Konversi" value={avgConversion} icon="📈" color="text-coral" bgColor="bg-coral/10" suffix="%" />
     </div>
   )
 }

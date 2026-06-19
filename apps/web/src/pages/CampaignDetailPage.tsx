@@ -190,7 +190,7 @@ export function CampaignDetailPage() {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setConfirmDelete(false)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setConfirmDelete(false)} />
           <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-sm mx-4 border border-hairline p-6 text-center animate-in zoom-in-95 fade-in duration-200">
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-xl mx-auto mb-4">🗑️</div>
             <h3 className="text-base font-semibold text-ink mb-1">Hapus Campaign?</h3>

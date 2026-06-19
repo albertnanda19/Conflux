@@ -1,14 +1,14 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAISettingsStore } from '@/stores/ai-settings'
-import { useAIAssistantsStore } from '@/stores/ai-assistants'
+import { useAIAssistants } from '@/hooks/ai-assistants'
+import { useKbDocuments, useKbDocument, useKbMutations } from '@/hooks/knowledge-base'
 import { KBDocumentList } from '@/components/knowledge-base/KBDocumentList'
 import { KBUploadModal } from '@/components/knowledge-base/KBUploadModal'
 import { KBDocumentEditor } from '@/components/knowledge-base/KBDocumentEditor'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { XIcon, UploadIcon } from '@/icons'
-import type { KBDocument } from '@/mock/ai-settings'
+import type { KBDocument } from '@/types/ai'
 
 const FILE_TYPE_ICONS: Record<string, { label: string; color: string }> = {
   pdf: { label: 'PDF', color: 'text-red-500 bg-red-50' },
@@ -27,32 +27,44 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'success' | 'warni
 
 export function KnowledgeBasePage() {
   const navigate = useNavigate()
-  const { kbDocuments } = useAISettingsStore()
-  const assistants = useAIAssistantsStore((s) => s.assistants)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [viewingDoc, setViewingDoc] = useState<KBDocument | null>(null)
   const [editorContent, setEditorContent] = useState('')
   const [scope, setScope] = useState<'global' | 'assistant'>('global')
   const [selectedAssistantId, setSelectedAssistantId] = useState<string>('')
 
-  const filteredDocs = useMemo(() => {
-    if (scope === 'global') {
-      return kbDocuments.filter((d) => !d.aiAssistantId)
-    }
-    if (selectedAssistantId) {
-      return kbDocuments.filter((d) => d.aiAssistantId === selectedAssistantId)
-    }
-    return []
-  }, [kbDocuments, scope, selectedAssistantId])
+  const { data: assistants = [] } = useAIAssistants({})
+  const { data: allDocs = [] } = useKbDocuments({})
+  const { data: scopedDocs = [] } = useKbDocuments(
+    scope === 'global'
+      ? { scope: 'global' }
+      : selectedAssistantId
+        ? { aiAssistantId: selectedAssistantId }
+        : { aiAssistantId: '__none__' },
+  )
+  const { data: viewingDetail } = useKbDocument(viewingDoc?.id ?? null)
+  const { update, remove } = useKbMutations()
 
-  const globalCount = useMemo(() => kbDocuments.filter((d) => !d.aiAssistantId).length, [kbDocuments])
-  const completedCount = kbDocuments.filter((d) => d.processingStatus === 'completed').length
+  useEffect(() => {
+    if (viewingDetail) setEditorContent(viewingDetail.content ?? '')
+  }, [viewingDetail])
+
+  const filteredDocs = scope === 'assistant' && !selectedAssistantId ? [] : scopedDocs
+  const globalCount = useMemo(() => allDocs.filter((d) => !d.aiAssistantId).length, [allDocs])
+  const completedCount = allDocs.filter((d) => d.processingStatus === 'completed').length
   const selectedAssistant = assistants.find((a) => a.id === selectedAssistantId)
 
   const handleView = useCallback((doc: KBDocument) => {
     setViewingDoc(doc)
-    setEditorContent(doc.id)
+    setEditorContent('')
   }, [])
+
+  const handleSaveContent = useCallback(() => {
+    if (viewingDoc) {
+      update.mutate({ id: viewingDoc.id, patch: { content: editorContent } })
+      setViewingDoc(null)
+    }
+  }, [viewingDoc, editorContent, update])
 
   return (
     <div className="p-8 h-full">
@@ -62,7 +74,7 @@ export function KnowledgeBasePage() {
           <p className="text-steel text-sm">
             Kelola dokumen yang digunakan AI untuk menjawab pertanyaan.{' '}
             <span className="text-ink font-medium">{completedCount}</span> dari{' '}
-            <span className="text-ink font-medium">{kbDocuments.length}</span> dokumen aktif.
+            <span className="text-ink font-medium">{allDocs.length}</span> dokumen aktif.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -159,10 +171,19 @@ export function KnowledgeBasePage() {
           <p className="text-xs text-steel">Pilih AI Assistant dari dropdown untuk melihat dokumen Knowledge Base-nya.</p>
         </div>
       ) : (
-        <KBDocumentList onView={handleView} documents={filteredDocs} />
+        <KBDocumentList
+          onView={handleView}
+          documents={filteredDocs}
+          onToggleActive={(id, isActive) => update.mutate({ id, patch: { isActive } })}
+          onRemove={(id) => remove.mutate(id)}
+        />
       )}
 
-      <KBUploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <KBUploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        aiAssistantId={scope === 'assistant' ? selectedAssistantId || undefined : undefined}
+      />
 
       {viewingDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -214,7 +235,7 @@ export function KnowledgeBasePage() {
                 <span>Oleh {viewingDoc.createdBy}</span>
               </div>
               <button
-                onClick={() => setViewingDoc(null)}
+                onClick={handleSaveContent}
                 className="px-4 py-1.5 rounded-full bg-brand-blue-deep text-white text-xs font-semibold hover:bg-brand-blue-700 transition-colors"
               >
                 Simpan

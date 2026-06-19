@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import type { AIAssistant } from '@/mock/ai-assistants'
+import type { AIAssistant } from '@/types/ai'
 import { Badge } from '@/components/ui/badge'
 import { useAgentsStore } from '@/stores/agents'
 

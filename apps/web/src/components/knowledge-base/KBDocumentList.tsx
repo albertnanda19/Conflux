@@ -1,18 +1,18 @@
-import { useState, useMemo, useCallback } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import { useState, useMemo } from 'react'
 import { KBDocumentCard } from './KBDocumentCard'
 import { KBCategoryFilter } from './KBCategoryFilter'
 import { MagnifierIcon } from '@/icons'
-import type { KBDocument } from '@/mock/ai-settings'
+import type { KBDocument } from '@/types/ai'
 
 interface KBDocumentListProps {
   onView: (doc: KBDocument) => void
-  documents?: KBDocument[]
+  documents: KBDocument[]
+  onToggleActive: (id: string, isActive: boolean) => void
+  onRemove: (id: string) => void
 }
 
-export function KBDocumentList({ onView, documents }: KBDocumentListProps) {
-  const { kbDocuments: allDocuments, removeKBDocument } = useAISettingsStore()
-  const kbDocuments = documents ?? allDocuments
+export function KBDocumentList({ onView, documents, onToggleActive, onRemove }: KBDocumentListProps) {
+  const kbDocuments = documents
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Semua')
 
@@ -40,10 +40,6 @@ export function KBDocumentList({ onView, documents }: KBDocumentListProps) {
     }
     return result
   }, [kbDocuments, category, search])
-
-  const handleRemove = useCallback((id: string) => {
-    removeKBDocument(id)
-  }, [removeKBDocument])
 
   return (
     <div className="space-y-4">
@@ -73,7 +69,8 @@ export function KBDocumentList({ onView, documents }: KBDocumentListProps) {
               key={doc.id}
               document={doc}
               onView={onView}
-              onRemove={handleRemove}
+              onRemove={onRemove}
+              onToggleActive={onToggleActive}
             />
           ))
         )}

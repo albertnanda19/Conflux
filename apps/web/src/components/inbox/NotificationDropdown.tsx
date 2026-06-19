@@ -1,6 +1,6 @@
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { useNotificationStore } from '@/stores/notifications'
-import { type NotificationType } from '@/mock/notifications'
+import { type NotificationType } from '@/types/notifications'
 
 interface NotificationDropdownProps {
   onClose: () => void
@@ -14,11 +14,18 @@ const NOTIF_ICON: Record<NotificationType, { icon: string; color: string }> = {
 }
 
 export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
-  const { notifications, markAsRead, markAllAsRead } = useNotificationStore()
+  const { notifications, markAsRead, markAllAsRead, soundEnabled, browserPushEnabled, setSoundEnabled, setBrowserPushEnabled } = useNotificationStore()
 
   const handleNotifClick = (id: string) => {
     markAsRead(id)
     onClose()
+  }
+
+  const handleTogglePush = (next: boolean) => {
+    if (next && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      void Notification.requestPermission()
+    }
+    setBrowserPushEnabled(next)
   }
 
   return (
@@ -51,7 +58,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className={cn('text-xs font-semibold', color)}>{notif.title}</p>
-                    {!notif.read && <span className="w-2 h-2 rounded-full bg-brand-coral flex-shrink-0" />}
+                    {!notif.read && <span className="w-2 h-2 rounded-full bg-coral flex-shrink-0" />}
                   </div>
                   <p className="text-xs text-slate mt-0.5 line-clamp-2">{notif.body}</p>
                   <p className="text-[10px] text-stone mt-1">{formatRelativeTime(notif.createdAt)}</p>
@@ -61,6 +68,24 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           })
         )}
       </div>
+      <div className="px-4 py-2.5 border-t border-hairline-soft space-y-2">
+        <ToggleRow label="Suara notifikasi" checked={soundEnabled} onChange={setSoundEnabled} />
+        <ToggleRow label="Notifikasi browser" checked={browserPushEnabled} onChange={handleTogglePush} />
+      </div>
+    </div>
+  )
+}
+
+function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-ink">{label}</span>
+      <button
+        onClick={() => onChange(!checked)}
+        className={cn('relative w-9 h-5 rounded-full transition-colors flex-shrink-0', checked ? 'bg-brand-blue' : 'bg-hairline')}
+      >
+        <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform', checked ? 'translate-x-4' : 'translate-x-0')} />
+      </button>
     </div>
   )
 }

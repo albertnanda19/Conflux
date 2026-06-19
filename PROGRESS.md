@@ -2,6 +2,569 @@
 
 Log kerja harian berurutan waktu. Entry terbaru di ATAS.
 
+## 2026-06-19 — MODUL 2 AI Engine: Async AI Queue + Kualitas/Kecepatan Balasan + Verifikasi Runtime
+
+### Yang Dikerjakan
+- **Audit MODUL 2 (full-stack):** dikonfirmasi sudah ter-wire end-to-end (FE React Query hooks → `lib/api` → backend modul `ai-assistant`/`knowledge-base`/`settings`; mock FE sudah dihapus). Provider fallback, RAG pgvector, handoff, jam kerja, document worker = nyata + bertest.
+- **Workstream B — Async AI Queue (perbaikan deviasi PRD §7.4):** `lib/queues.ts` +`aiQueue` (`ai-queue`/`ai-reply`, `attempts:1`). `ingest.ts` & `triggerAiReply` kini enqueue (non-blocking). `ai-worker.ts` ditulis ulang dari stub → consumer nyata (`concurrency:5` → `maybeAutoReply`).
+- **Workstream C — Kecepatan & Kualitas:** `lib/ai.ts` timeout per-provider (`AbortSignal.timeout`, `AI_REQUEST_TIMEOUT_MS` def 12s). `searchChunks` threshold relevansi (`KB_MAX_DISTANCE` def 0.6) + dedupe + cap 6000 char. `buildSystemPrompt` inject profil kontak + tanggal + anti-halusinasi. `generateRagReply` query expansion (2–3 giliran user terakhir). `buildHistory` buang pesan `system`.
+- **Test:** services.test +2 (enrichment prompt, query expansion), ai-reply integration +1 (buang system).
+- **Workstream A — Verifikasi runtime:** pg+redis up, migrasi+seed, server live, smoke test-chat dengan **Gemini asli**.
+
+### Keputusan yang Diambil
+- DEC-039: AI reply sinkron → async BullMQ `ai-queue` (attempts:1, concurrency:5) + RAG threshold + enrichment + timeout per-provider.
+
+### Yang Berhasil
+- **135 unit + 67 integration test hijau** (server).
+- **Live (Gemini asli):** test-chat balas nyata; RAG threshold → jawaban jujur "belum punya info" saat tak ada chunk relevan (anti-halusinasi); `handoffDetected:true` pada "mau daftar dan bayar"; multi-turn "berapa harganya?" tetap relevan; assign-AI → enqueue → **ai-worker mengonsumsi job & menyimpan balasan** (jalur async terbukti).
+- Ingest tak lagi terblok latensi LLM.
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Infra dev: MinIO mati (ECONNREFUSED) → upload KB file butuh MinIO hidup untuk diuji live.
+- Nice-to-have MODUL 2 belum ada: 5.2.9 kualifikasi lead, 5.2.10 training/review queue, KB versioning/rollback.
+
+## 2026-06-19 — Inbox: Assign AI Assistant ke Percakapan (Manual Takeover)
+
+### Yang Dikerjakan
+- Schema: `conversations.aiAssistantId` (FK ai_assistants, set null) — migration 0003. Menandai AI yang menangani percakapan secara manual.
+- Backend: `conversations/queries.setConversationAi`; `findConversationDetail`+aiAssistantId (service enrich nama/avatar via `findAssistantById`); `services.assignAiAssistant` (validasi active, set, activity `ai_assigned`, emit, `triggerAiReply` balas segera) + `deactivateAi`; handlers + routes `POST /:id/assign-ai` & `/:id/deactivate-ai`; `messages/queries.getConversationWithChannel`+isAiHandling/aiAssistantId.
+- `ai-reply`: `maybeAutoReply` konsep **manual override** (isAiHandling && aiAssistantId) → bypass aiEnabled + agen-online gate + jam kerja; `resolveAssistant` prioritas aiAssistantId; export `triggerAiReply` (ambil inbound terakhir → maybeAutoReply).
+- FE: types/inbox + lib/api/inbox (`assignAi`/`deactivateAi`) + hook mutations; `AssignAIModal` (list assistant active); ActionBar tombol "Assign AI" / chip "Ambil Alih"; ChatPanel wiring.
+- Test: conversations handlers integration +3 (assign-ai set+activity+balas, 400 assistant draft, deactivate reset); ai-reply integration +2 (manual override walau agen online; manual di luar jam → tetap RAG).
+
+### Keputusan yang Diambil
+- DEC-038: manual assign AI = override penuh + agen dipertahankan (auto take-over saat agen balas / tombol Ambil Alih).
+
+### Yang Berhasil
+- 133 unit + 66 integration hijau; server+web tsc clean; web build ok. Live-verified: assign AI ke percakapan beragen-online → AI langsung balas grounded; deactivate → AI off.
+
+### Yang Perlu Dikerjakan Selanjutnya
+- (opsional) realtime push balasan AI manual tanpa invalidate; sentiment ML.
+
+## 2026-06-19 — Module 2: Jam Kerja + OOO & Threshold/Sentiment Handoff
+
+### Yang Dikerjakan
+- `lib/working-hours.ts`: `isWithinWorkingHours(workingHours, now)` (tz-aware via `Intl.DateTimeFormat` hourCycle h23, parse IANA tz dari string, cek day.enabled + start/end) + `oooMessageOf`.
+- `maybeAutoReply`: di luar jam kerja assistant → kirim pesan OOO (isAiHandling=true), bukan RAG. Tambah cek `maxAiMessages` (`msgQ.countAiMessages`) → handoff paksa bila pesan AI ≥ batas.
+- `detectHandoff` diperluas: selain `triggerKeywords`, untuk tiap `conversionSignals` yang `enabled`, cocokkan pola builtin per type (keyword/behavior/sentiment).
+- Test: `working-hours.test.ts` (6), `detectHandoff` signal cases (4 unit), ai-reply integration +2 (OOO, threshold).
+
+### Keputusan yang Diambil
+- DEC-037: jam kerja assistant sebagai gate (luar jam → OOO); threshold maxAiMessages; signals via keyword-proxy (sentiment ML = open item).
+
+### Yang Berhasil
+- 133 unit + 61 integration hijau; server tsc clean. Live-verified: luar jam → pesan OOO; maxAiMessages tercapai → pesan handoff (bukan RAG lagi).
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Sentiment ML classifier; behavior event tracking nyata; KB versioning; template assistant; lead qualification/training (nice-to-have).
+
+## 2026-06-19 — Module 2: Live AI Auto-Reply + Handoff di Inbox
+
+### Yang Dikerjakan
+- `modules/messages/ai-reply.ts` (`maybeAutoReply`): dipanggil di akhir `ingestInbound`. Aktivasi = `ai_settings.aiEnabled` + tak ada agen online yang pegang percakapan. Pilih assistant: `findAssistantByAgentId` (jika agen ter-assign offline/busy) → else `findDefaultAssistant` (status active). Balas RAG via `generateRagReply` → kirim channel adapter (senderType `ai`, status sent/failed, isAiHandling=true) + realtime message:new/conversation:updated.
+- Handoff: `detectHandoff` keyword → kirim `handoffConfig.handoffMessage` → assign agen (`assistant.assignedAgentId` atau `findLeastBusyOnlineAgent`) → activity `ai_handoff` + WS `conversation:assigned` + notif + isAiHandling=false.
+- Refactor `ai-assistant/services`: export `detectHandoff` + `generateRagReply` (dipakai test-chat & auto-reply). +`users/queries.getUserStatusById`, +`ai-assistant/queries.findAssistantByAgentId`/`findDefaultAssistant`.
+- Test: `ai-reply.integration.test.ts` (5 kasus: balas no-agent, handoff assign+activity, skip agen online, skip aiEnabled false, balas saat agen offline).
+
+### Keputusan yang Diambil
+- DEC-036: aktivasi AI berbasis ketersediaan agen online (bukan jam kerja, round ini); handoff keyword-only; reuse RAG service.
+
+### Yang Berhasil
+- Server tsc clean; 123 unit + 59 integration hijau. Live-verified (simulate-inbound Fonnte): AI balas grounded dari KB saat semua agen offline (isAiHandling=true); skip saat agen online (auto-assign ke agen); "saya mau daftar" → handoff: pesan transisi + assign Sari + activity ai_handoff + isAiHandling=false. (status kirim `failed` ke nomor dummy = wajar, logika AI benar.)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Working-hours gate + OOO message; max-AI-messages threshold; sentiment/behavior signals.
+
+## 2026-06-19 — Module 2 AI Assistant Engine: Backend + Integrasi FE
+
+### Yang Dikerjakan
+- **Schema**: tabel `ai_assistants` (persona/workingHours/handoffConfig jsonb, kbScope, customKbDocumentIds, assignedAgentId UNIQUE FK users, isDefault), `ai_providers` (model/priority/maxTokens/temperature/isEnabled/envKeyName), `ai_settings` (aiEnabled). Alter `kb_documents`: embedding text→`vector(768)` + `aiAssistantId` + fileSize/chunkCount/createdByName + hnsw cosine index. Migration 0002 (prepend CREATE EXTENSION vector, drop+add embedding).
+- **lib/ai.ts**: `generateEmbedding`/`embedTexts` (text-embedding-004); fallback chain DB-driven dari `ai_providers` + OpenRouter (openai-compatible) → 3-chain Gemini→OpenRouter→OpenAI, skip provider tanpa env key.
+- **Document pipeline**: `lib/extract.ts` (pdf-parse/mammoth/utf8), `lib/text-splitter.ts`, `queues.ts` DOCUMENT_QUEUE, `workers/document-worker.ts` + `modules/knowledge-base/processing.ts` (extract→chunk→embed→insert chunk rows pgvector→status).
+- **Modules** (4-layer): `ai-assistant` (CRUD + status cycle + assign 1:1 + test-chat RAG), `knowledge-base` (list/get/upload multipart→MinIO→enqueue/patch/delete cascade + vector search), `settings` (GET/PATCH /settings/ai + provider config). Register di routes/index.
+- **Seed**: `seed-ai.ts` (3 provider, 3 assistant incl default, ai_settings) + script `db:seed:ai`. Env: AI_EMBEDDING_MODEL.
+- **FE**: `types/ai.ts` (interface + DEFAULT consts); `lib/api/{ai-assistants,knowledge-base,ai-settings}` (mapper backend↔FE nested shape); `hooks/{ai-assistants,knowledge-base,ai-settings}` + `useAssistantDraft` (debounced save); wire AIAssistantsPage/DetailPage/KnowledgeBasePage/SettingsPage AI tab + ProviderConfig/Persona/WorkingHours/HandoffConfig (controlled) + AIChatPreview (real test-chat) + AssignAgentModal (real agents) + KB components. Hapus mock/ai-assistants, mock/ai-settings, stores/ai-settings; store ai-assistants → UI-only.
+- **Tests**: text-splitter, ai (embed+fallback), ai-assistant services + handlers integration (assign 1:1 reassign, test-chat handoff), knowledge-base handlers integration (filters/patch/cascade), processing integration (extract→chunk→embed→completed; failed paths), settings integration. 123 unit + 54 integration hijau.
+
+### Keputusan yang Diambil
+- DEC-035: pgvector(768)+RAG, provider key env-only (DB non-secret), assignment via single `assignedAgentId` column, FE nested shape via API mapper.
+
+### Yang Berhasil
+- Server + web tsc clean; web build success; live-verified: assistant CRUD/status/assign(real agent)/delete, KB upload+validation+pipeline (pending→worker→failed graceful tanpa GEMINI key), settings/ai providers.
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Live AI auto-reply + handoff di inbox Module 1 (round berikutnya). Set GEMINI/OPENROUTER key untuk embedding+test-chat penuh.
+
+## 2026-06-19 — Race Auto-Assign: Postgres Advisory Lock
+
+### Yang Dikerjakan
+- Temuan: `message-worker` default concurrency 1 → race belum terjadi single-instance; perlu jaminan utk scaling
+- `lib/db` +tipe `DbExecutor`; `findLeastBusyOnlineAgent(exec?)` + `assignAgent(id,agentId,exec?)` terima executor opsional
+- `auto-assign.ts`: bagian kritis (pilih least-busy + assign) dalam `db.transaction` + `pg_advisory_xact_lock(482917365)`; side-effect (activity/WS/notif) di luar transaksi
+- Tests: autoAssign unit mock `db.transaction`; integration RACE (2 ingest paralel, 2 agent mulai 0 → agent berbeda)
+
+### Keputusan yang Diambil
+- DEC-034: advisory lock transaksi (serial DB), bukan cursor; jamin lintas instance
+
+### Yang Berhasil
+- BE tsc bersih; 104 unit + 37 integration hijau (incl race)
+- Live: pick-2 melihat count ter-update (lock aktif). Catatan: least-busy + tie-break boleh pilih agent sama bila memang paling sepi/seri — itu benar, bukan race
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Presence heartbeat (auto-offline); cabang AI alur 4.1 (AI hold)
+
+## 2026-06-18 — Auto-Assign Round-Robin (Least-Busy) PRD 5.1.4
+
+### Yang Dikerjakan
+- `users/queries.findLeastBusyOnlineAgent()` — agent role=agent + status=online, urut count(open/pending) asc + nama asc, limit 1
+- `conversations/auto-assign.ts` `autoAssign(convId, contactId, contactName?)` — toggle `AUTO_ASSIGN_ENABLED` (default true), pilih agent, bila ada: assignAgent + activity assignment + WS conversation:assigned + notif new_assignment; bila tak ada → null (unassigned)
+- Hook `messages/ingest.ts` — hanya conversation BARU, panggil autoAssign lalu set conversation.agentId sebelum resolveRecipients (notif new_message tepat ke agent terpilih, bukan broadcast)
+- Tests: autoAssign unit (3), findLeastBusyOnlineAgent + ingest auto-assign integration (4); mock autoAssign di ingest unit test
+- e2e badge test (test 6) di-deterministik-kan: login sari + self-assign percakapan → notif new_assignment (lepas dari routing auto-assign yang kini aktif)
+
+### Keputusan yang Diambil
+- DEC-033: least-busy online (bukan strict cursor), online-only, toggle env
+
+### Yang Berhasil
+- BE tsc bersih; 104 unit + 36 integration + 7 e2e hijau
+- Live: sari online → simulate-inbound nomor baru → percakapan auto-assign ke Sari Dewi; tak ada agent online → unassigned (broadcast new_message lama)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Presence heartbeat (auto-offline); mitigasi race auto-assign (Redis lock) bila perlu; cabang AI alur 4.1 (AI di-hold)
+
+## 2026-06-18 — Perf Inbox: Scroll & Popup Smooth
+
+### Yang Dikerjakan
+- **Hapus backdrop-blur** (biang jank utama popup): `ui/modal.tsx` overlay `backdrop-blur-sm`→`bg-black/50`; strip `backdrop-blur-sm` dari semua dialog full-screen (ai-assistants modals, AgentDeleteConfirm, LabelsPage, ContactsPage, AIAssistant pages, CampaignDetailPage). LoginPage blur logo kecil (murah) disimpan
+- **React.memo** `ConversationItem` (prop `onSelect:(id)=>void` stabil + `useCallback` internal) → list tak re-render penuh tiap WS refetch / store update; **React.memo** `MessageBubble` (onRetry stabil via useCallback) → chat scroll tak patah
+- `useConversations` `placeholderData: keepPreviousData` → list tak unmount/flash saat WS invalidate
+
+### Yang Berhasil
+- FE tsc + build bersih; e2e 7/7 hijau
+- Penyebab lag: blur viewport saat animasi modal + re-render seluruh item list/bubble saat WS message:new invalidate ['conversations'] (global di AppLayout)
+
+## 2026-06-18 — Fix Badge Tak Terlihat (warna) + Toggle Thumb
+
+### Yang Dikerjakan
+- Diagnosa: badge ADA di DOM tapi tak terlihat — kelas `bg-brand-coral` tak terdefinisi (tailwind config: `coral` top-level, grup `brand` tak punya coral) → background transparan, teks putih → invisible
+- Ganti semua `brand-coral`→`coral` di `src/` (NotificationBell badge, NotificationDropdown unread dot, agents AgentRoleBadge/Avatar/PerformanceCard/StatsOverview, UserMenu)
+- Toggle ToggleRow: thumb `left-0.5` base + `translate-x-0`(off)/`translate-x-4`(on) simetris + `shadow-sm` (sebelumnya `translate-x-0.5` asimetris)
+- e2e selector `span.bg-brand-coral`→`span.bg-coral`
+
+### Yang Berhasil
+- FE tsc + build bersih; e2e 7/7 hijau (badge realtime + auto-clear test lolos dgn warna benar)
+
+## 2026-06-18 — Fix Bell Badge Tak Muncul Realtime (WS global)
+
+### Yang Dikerjakan
+- Diagnosa: badge tak update karena `useInboxRealtime()` (WS subscribe + `loadFromServer`) hanya di `InboxPage`; bell global di `AppLayout`. Di luar /inbox → tak ada koneksi WS/load → notif baru tak ke-render
+- Pindah `useInboxRealtime()` → `AppLayout` (global, 1 WS untuk seluruh app); hapus dari `InboxPage`
+- Tambah e2e: badge muncul realtime di `/contacts` (non-inbox) saat inbound, hilang saat bell dibuka
+
+### Yang Berhasil
+- FE tsc + build bersih; e2e 7/7 hijau
+- Live: login admin → /contacts → simulate-inbound (unassigned→broadcast) → badge "1" via WS; buka bell → badge hilang
+
+### Catatan
+- Notif new_message hanya ke recipient: assigned→agent pemegang, unassigned→broadcast (agent/supervisor/admin). Bila percakapan sudah di-assign ke agent lain, admin tak dapat badge (sesuai desain DEC-032)
+
+## 2026-06-18 — Bell Badge Notif + Auto-Clear
+
+### Yang Dikerjakan
+- `NotificationBell`: badge jumlah `unreadCount` (sudah ada) + `handleToggle` → saat buka popup & unread>0 panggil `markAllAsRead()` (update lokal + persist API) → badge hilang
+
+### Yang Berhasil
+- FE tsc bersih; live browser: notif masuk → badge "4" → buka bell → badge hilang (count 0)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- (lanjutan Module 1 lainnya sesuai prioritas user)
+
+## 2026-06-18 — Notif Persist (5.1.6) + Hardening Media URL (5.1.2)
+
+### Yang Dikerjakan
+- BE notif: tabel `notifications` (migrasi 0001) + modul 4-layer (queries/services/types/handlers/routes); `GET /notifications?unreadOnly`, `POST /:id/read`, `POST /read-all` scope per-user
+- `notifyUsers(userIds,payload)` bulk insert + WS `notification:new` per `agentRoom`; `resolveRecipients` (assigned→agent, unassigned→`listUserIdsByRoles` agent/supervisor/admin/super_admin)
+- Hook: `messages/ingest` → new_message; `conversations/services` assign+transfer → new_assignment; `pubsub` +event
+- Media hardening: `storage.buildPublicUrl` (`MEDIA_PUBLIC_BASE_URL` deploy / `http(s)://endpoint:port/bucket/key` lokal), `MINIO_USE_SSL`; `uploadFile` pakai builder → fix URL tanpa scheme
+- FE: `lib/api/inbox` +notifications API; `stores/notifications` setAll/loadFromServer + markRead/all ke API; `useInboxRealtime` handle `notification:new` + load awal, **hapus derive client-side** (no double)
+- Tests: storage URL builder unit, notif service unit (resolveRecipients/notifyUsers dedup+publish), notif handlers integration; mock notif di unit test ingest/conversations
+
+### Keputusan yang Diambil
+- DEC-032: notif persist fan-out per-user + broadcast antrian unassigned; media URL builder env-aware
+
+### Yang Berhasil
+- 101 unit + 32 integration + 6 e2e hijau; FE tsc+build bersih
+- Live: simulate-inbound unassigned → 4 user dapat notif (DB 4 rows), admin unread=1; read-all→0; media upload URL `http://localhost:9000/...` (scheme benar)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Media delivery nyata saat deploy (set `MEDIA_PUBLIC_BASE_URL`); auto-assign round-robin; stale-message notif; integrasi sosmed (hold)
+
+## 2026-06-18 — Hapus Mock Data Module 1 + Fix Bug Minor
+
+### Yang Dikerjakan
+- Audit pemakai tiap export mock (data vs type) lintas src
+- `types/notifications.ts` baru (Notification + NotificationType); repoint `stores/notifications` + `NotificationDropdown`
+- Hapus file mati: `mock/notifications.ts` (MOCK_NOTIFICATIONS tak dipakai), `mock/labels.ts` (getLabels dll tak dipakai)
+- `mock/inbox.ts` diramping: buang `MOCK_QUICK_REPLIES`/`MOCK_CONVERSATIONS`/`MOCK_MESSAGES`/`MOCK_CONTACTS` (mati) + helper waktu; sisakan `LABELS` + `MOCK_AGENTS` (masih dipakai Module 4 contacts/crm/analytics)
+- Bersihkan polusi DB tes (2 pesan failed dari tes media localhost)
+- Fix e2e: selektor exact-match (jebakan `has-text("Kirim")` keliru match "ter**kirim**"); `Status` button accessible name "Status ▾" → regex `/^Status/`
+- Perluas e2e 3→6 test: +filter status/tanggal (assert query param), +presence PATCH, +channels GET + badge
+
+### Keputusan yang Diambil
+- Module 1 = 0 mock. `mock/inbox.ts` LABELS/MOCK_AGENTS tetap (milik Module 4 sekarang, bukan Module 1) — dibersihkan saat Module 4 diintegrasi
+
+### Yang Berhasil
+- grep Module 1 (inbox/labels/channels/store/hooks) → 0 referensi mock
+- FE build + tsc bersih; BE 93 unit + 28 integration; e2e 6/6 hijau
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Integrasi Module 4 (hapus mock/inbox LABELS/MOCK_AGENTS sisa); channel WA Cloud/IG/FB
+
+## 2026-06-18 — E2E Testing UI Baru Module 1 (MinIO up)
+
+### Yang Dikerjakan
+- `docker compose up -d minio` (colima jalan) → MinIO up; restart backend → `ensureBucket` OK (bucket dbb-psc-media)
+- E2E API: upload PNG valid → MinIO url, public fetch HTTP 200; bad-type → 400
+- E2E browser (chromium): presence ganti status → PATCH /users/me/status; filter Tanggal "7 Hari" → `datePreset=7d` param; filter Status Open → `status=open` param; /channels render dari `GET /channels` + badge "Terhubung"; chat attach file → preview chip → tombol Kirim → `POST /media/upload` + `POST messages` (image)
+- Catatan: selektor `has-text("Kirim")` keliru match "terkirim" (bubble gagal) → pakai exact match
+
+### Yang Berhasil
+- 93 unit + 28 integration + 3 e2e hijau
+- Media pipeline penuh terbukti: upload→MinIO→DB→sendMessage. Outbound ke Telegram `failed` (localhost url ditolak Telegram = batasan dev terdokumentasi)
+- Semua UI baru Module 1 live-verified tersambung backend
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Outbound media butuh URL publik (tunnel) utk delivery nyata; integrasi channel WA Cloud/IG/FB; presence heartbeat
+
+## 2026-06-18 — Integrasi UI Baru Module 1 ke Backend (tanpa dummy)
+
+### Yang Dikerjakan
+- **Filter tanggal**: conversations types +`datePreset` (today/7d/30d), queries filter SQL `gte(lastMessageAt)`. FE ConversationList kirim param; ConversationFilters +datePreset
+- **Presence**: users +`updateUserStatus`/service `setMyStatus` (publish WS `presence:changed`)/handler `PATCH /users/me/status`/types. pubsub +event. FE PresenceSwitcher panggil API; useInboxRealtime invalidate agents
+- **Media upload**: modul `media` (handler validasi tipe+10MB → storage.uploadFile MinIO, route /media/upload); index ensureBucket saat start. FE inboxApi.uploadMedia + useConversationMutations.sendMedia (optimistic) + ChatPanel.handleFileSelect
+- **Channels page**: ChannelsPage rewrite (katalog statis config + merge instance dari useChannels()); ChannelConnectModal CRUD via useChannelMutations (create/update/delete); note token via env; inboxApi +listChannels/create/update/delete; hooks +useChannels/useChannelMutations
+- **Notif prefs**: stores/notifications persist soundEnabled/browserPushEnabled ke localStorage
+
+### Keputusan yang Diambil
+- DEC-031: filter tanggal preset di SQL, presence persist+WS, media MinIO endpoint, channels katalog+instance, notif prefs localStorage
+
+### Yang Berhasil
+- BE tsc bersih; 93 unit + 28 integration hijau (+datePreset, +presence integration, +media validasi)
+- FE tsc bersih; build sukses; e2e inbox 3/3
+- Live verify: presence PATCH→busy, channels list real, datePreset today=7/30d=8, media bad-type→400
+- Semua filter/search/sort Module 1 di backend; UI bebas dummy (katalog channel = config statis)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- MinIO/colima jalan utk media upload nyata; outbound media butuh URL publik; integrasi channel WA Cloud/IG/FB; presence heartbeat
+
+## 2026-06-18 — Lengkapi Semua UI PRD Module 1 (UI-only, belum integrasi)
+
+### Yang Dikerjakan
+- **Filter status & tanggal** (5.1.1): ConversationList +dropdown Status (open/pending/resolved/snoozed) & Tanggal (Semua/Hari Ini/7d/30d); store ui +`statusFilter`/`dateFilter`. Status sudah masuk query param backend; date UI saja (param backend belum ada)
+- **Presence agent** (5.1.4): `PresenceSwitcher` (online/busy/offline) di header AppLayout; `usePresenceStore`
+- **Notifikasi prefs** (5.1.6): toggle suara + browser push di NotificationDropdown; store notifications +`soundEnabled`/`browserPushEnabled`; `useInboxRealtime` bunyi (WebAudio beep) + `Notification` API saat pesan masuk
+- **Media upload UI** (5.1.2): MessageInput preview chip (gambar/file + nama + ukuran + Kirim/Batal) sebelum kirim
+- **Sticker** (5.1.2): MediaMessage render sticker (img/emoji) + type `sticker`
+- **Add Label di chat** (5.1.5): ActionBar +tombol Label (LabelPicker) wired ke addLabel/removeLabel mutation
+- **Channel integration page** (5.1.3): `ChannelsPage` `/channels` (6 channel: WA Cloud/Fonnte/Telegram/IG/FB/livechat, status terhubung, official/unofficial badge) + `ChannelConnectModal` (field kredensial per-provider + snippet widget livechat); sidebar nav +Channel
+
+### Yang Berhasil
+- FE tsc bersih; `bun run build` sukses; e2e inbox 3/3 hijau
+- Semua fitur UI PRD Module 1 kini ADA (sebagian belum di-wire ke backend sesuai instruksi)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Integrasi backend untuk UI baru: filter tanggal (param), media upload (storage endpoint), presence (update real), channel page (CRUD asli), auto-assign round-robin
+
+## 2026-06-18 — Optimistic Send + Retry + Klarifikasi Centang Telegram
+
+### Yang Dikerjakan
+- `types/inbox` +status `'sending'`
+- `hooks/inbox` `useConversationMutations.send` → optimistic: `mutate({text,tempId})`, onMutate append bubble `sending`, onSuccess ganti dgn pesan asli (dedup WS by id), onError → `failed`
+- `ChatPanel`: ikon jam (sending), tombol "Gagal terkirim · Coba lagi" (failed) → hapus bubble gagal + kirim ulang (tempId baru)
+- Klarifikasi user: Telegram centang 1 = ceiling Bot API (bukan bug); centang >1 hanya Fonnte/WA
+
+### Yang Berhasil
+- FE tsc bersih; e2e inbox 3/3 hijau; backend tak berubah
+- Pengiriman terasa instan; error tampil + bisa retry
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Live Fonnte (device connect + webhook publik) utk lihat delivered→read; integrasi channel berikut
+
+## 2026-06-18 — Sinkronisasi Status Pesan (centang sent/delivered/read)
+
+### Yang Dikerjakan
+- `pubsub` +event `message:status`
+- `messages/queries`: `setMessageDelivery(id,extId,status)` + `updateMessageStatusByExternalId(extId,status)` (ganti `setMessageExternalId`)
+- `messages/services`: on send → `delivered` (sukses) / `failed` (gagal); `applyMessageStatus()` update + broadcast `message:status`
+- `fonnte-webhook`: cabang status report (`{status,id}` tanpa sender/message) → `applyMessageStatus`; else ingest
+- FE `useInboxRealtime`: tangani `message:status` → patch status bubble di cache (centang realtime)
+- Test: services unit update (setMessageDelivery + status delivered); integration baru `fonnte-webhook.integration.test.ts` (status→read, inbound, reject non-fonnte) + assertion delivered di messages integration; helper `seedOutboundMessage`/`getMessageById`
+
+### Keputusan yang Diambil
+- DEC-029: status per channel — Fonnte sampai `read` (webhook report), Telegram mentok `delivered` (Bot API tak ada read receipt)
+
+### Yang Berhasil
+- 87 unit + 25 integration hijau; BE+FE tsc bersih
+- Live: Telegram send → `status: sent` (centang 1; jujur)
+
+### Koreksi (atas laporan user: HP airplane mode tetap centang 2)
+- Bug semantik: `delivered` ter-set saat Telegram API *accept* (server terima walau HP offline), bukan sampai device. Telegram Bot API TAK punya delivery/read receipt → outbound Telegram **mentok `sent`**. `delivered`/`read` hanya dari status report nyata (Fonnte). Test + live diperbaiki.
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Live Fonnte read-status (perlu device connect + webhook publik); integrasi channel berikut
+
+## 2026-06-18 — Channel #2: WhatsApp Fonnte + Token via .env
+
+### Yang Dikerjakan
+- `.env` +`TELEGRAM_BOT_TOKEN` +`FONNTE_TOKEN` (.env gitignored)
+- `modules/channels/credentials.ts` — `resolveCredentials(provider, stored)`: decrypt config DB + inject token dari env by provider (telegram_bot→botToken, whatsapp_fonnte→apiToken), env-first
+- `providers/whatsapp-fonnte.ts` — adapter REAL: sendMessage (POST api.fonnte.com/send, text/media url/location), parseInbound (sender/name/message/url/extension/location)
+- `fonnte-webhook.ts` + route publik `POST /webhooks/fonnte/:channelId` (inbound Fonnte webhook-only)
+- Read-points (messages sendMessage, telegram-poller, telegram-webhook) → `resolveCredentials`
+- Strip token Telegram dari DB (creds → `{mode}`), token kini env-only
+- Test: `whatsapp-fonnte.test.ts` (parseInbound) + `credentials.test.ts` (resolver)
+
+### Keputusan yang Diambil
+- DEC-028: Fonnte real + token di .env via resolver (env-first); Fonnte inbound webhook-only; enkripsi DB (DEC-027) tetap utk secret DB lain
+
+### Yang Berhasil
+- `tsc` bersih; 87 unit (+8) + 22 integration hijau
+- Fonnte token valid (device "Jual Mobilmu", status disconnect); channel Fonnte dibuat tanpa token di body (env)
+- Inbound webhook Fonnte simulasi → ingest → kontak "Calon Pembeli" + percakapan WA
+- Telegram tetap jalan via env token (outbound msg_id 7); DB token leak = 0
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Live Fonnte: user connect device WA (scan QR) + set webhook Fonnte ke URL publik `/webhooks/fonnte/<channelId>`
+- Integrasi channel berikut (WA Cloud official / IG / FB); refresh poller tanpa restart; rotasi key
+
+## 2026-06-18 — Enkripsi AES-256-GCM Credentials Channel
+
+### Yang Dikerjakan
+- `lib/crypto.ts` — AES-256-GCM (`encrypt`/`decrypt` format `iv:tag:cipher` base64), `encryptCredentials→{_enc}`, `decryptCredentials` (backward-compat plaintext/null); key `ENCRYPTION_KEY` base64 32B
+- `.env` +`ENCRYPTION_KEY` (di-generate random 32B); `test/setup-env.ts` +key dummy
+- Encrypt saat tulis: `channels/services` create+update
+- Decrypt saat baca: `messages/services.sendMessage`, `workers/telegram-poller`, `channels/telegram-webhook`
+- Re-encrypt channel telegram existing (script one-off)
+- `lib/crypto.test.ts` (6 case)
+
+### Keputusan yang Diambil
+- DEC-027: AES-256-GCM at-rest, `{_enc}` di kolom jsonb credentials, backward-compat read, credentials tak pernah ke FE
+
+### Yang Berhasil
+- `tsc` bersih; 79 unit (+6 crypto) + 22 integration hijau
+- DB at-rest: credentials = `{_enc:...}`, cek plaintext token leak = **0**
+- Poller decrypt → "Polling 1 channel"; outbound decrypt → terkirim Telegram (`message_id` 6, tanpa error)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- #3 integrasi WhatsApp Fonnte (unofficial, mudah testing); rotasi key; refresh poller tanpa restart
+
+## 2026-06-18 — Verifikasi Browser (Playwright) Inbox Terintegrasi
+
+### Yang Dikerjakan
+- Drive chromium (headless, @playwright/test + Bun) live terhadap server jalan (web 5173 + BE 3000)
+- Verifikasi manual via script: login → `/` → `/inbox` tampil percakapan REAL (Telegram "Albert Mangiri" + pesan "halo bot"); buka percakapan → panel chat + pesan termuat; kirim dari UI (textarea "Ketik pesan...") → terkirim ke Telegram nyata (tanpa "Gagal kirim" di log)
+- Tulis spec permanen `apps/web/e2e/inbox.spec.ts` (3 test, pakai data seed Rina Sari — tak spam Telegram): (1) inbox memuat percakapan dari backend, (2) buka percakapan → chat+pesan termuat, (3) filter WA + search
+
+### Yang Berhasil
+- `bun run test:e2e` (config root, reuseExistingServer) → **3/3 hijau** (~8s)
+- Membuktikan stack penuh browser→API→DB→WS→Telegram yang sebenarnya dipakai user
+
+### Yang Perlu Dikerjakan Selanjutnya
+- #2 Enkripsi AES-256 credentials channel (token kini plaintext); lalu #3 integrasi WhatsApp Fonnte
+
+## 2026-06-18 — Channel Integration #1: Telegram (REAL)
+
+### Yang Dikerjakan
+- `providers/telegram.ts` — adapter nyata: `sendMessage` (sendMessage/sendPhoto/sendDocument/sendLocation), `parseInbound` (Update→NormalizedInbound, text/photo/doc/location), `telegramCall`, token dari `credentials.botToken`
+- `workers/telegram-poller.ts` — long polling `getUpdates` (timeout 20) per channel telegram aktif (mode≠webhook), offset Redis, enqueue `messageQueue` (idempoten), `deleteWebhook` saat mulai; di-wire `workers/index.ts`
+- `modules/channels/telegram-webhook.ts` + route PUBLIK `POST /webhooks/telegram/:channelId` (verifikasi `x-telegram-bot-api-secret-token`) — path produksi
+- `channels/queries.ts` +`listActiveTelegramChannels`
+- Registry: hapus `getEffectiveAdapter`/`isSimulateMode`; `messages/services.sendMessage` → `getAdapter(provider)` (real). Simulator = provider eksplisit + simulate-inbound saja
+- FE: `ChannelType`+telegram, `ChannelIcon` ikon Telegram, tab "TG" ConversationList, `ChannelTab` store
+- Playwright chromium di-install (utk pengujian UI)
+- Bersihkan job stale di message-queue (obliterate)
+
+### Keputusan yang Diambil
+- DEC-026: Telegram real, polling (dev) + webhook (prod), token via channel.credentials, simulator jadi provider eksplisit
+
+### Yang Berhasil
+- BE+FE `tsc` bersih; 73 unit (+5 telegram parseInbound) + 22 integration hijau
+- **LIVE VERIFIED** bot @conflux_psc_bot (token via user): channel dibuat (polling), poller "Polling 1 channel"; user `/start`+kirim "halo bot" → ingest buat kontak "Albert Mangiri" + percakapan (unread 2); balas via API → terkirim ke Telegram (`message_id` numeric)
+- **Bugfix**: outbound `to` semula UUID kontak → "chat not found"; fix `getContactChannelIdentifier(contactId, channelType)` → chat_id Telegram asli (+regression test)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Enkripsi credentials (AES-256); refresh poller tanpa restart; integrasi channel berikut (WA/IG/FB)
+
+## 2026-06-18 — Module 1 Omnichannel Inbox — Integrasi Frontend ↔ Backend (hapus dummy)
+
+### Yang Dikerjakan
+- **Backend (kecil):** `conversations/types.ts`+`queries.ts` filter `contactId`; `labels/queries.ts` `conversationCount` (leftJoin+count); +2 test (conversations types + handlers integration)
+- **FE tipe:** `src/types/inbox.ts` (semua interface dipindah); `mock/inbox.ts` re-export tipe + buang QuickReply inline (array mock tetap utk Module 4)
+- **FE data layer baru:** `lib/api/client.ts` (unwrap `.data`, getAccessToken, 401→refresh sekali→logout), `lib/api/inbox.ts` (fungsi + tipe Api*), `lib/queryKeys.ts`, `hooks/inbox.ts` (useConversations/useConversation/useMessages/useAgents/useLabels/useQuickReplies/useContact + useConversationMutations + useLabelMutations), `hooks/useInboxRealtime.ts` (WS connect+auth+reconnect, message:new append dedup, updated/assigned invalidate, derive notifikasi)
+- **FE komponen diwire:** InboxPage (useInboxRealtime), ConversationList (filter/sort/search backend via store), ChatPanel (messages+send+assign/transfer/status+markRead), ContactDetailPanel (contact detail+activity+riwayat contactId+notes PUT), AssignAgentModal/TransferModal (useAgents), QuickReplyMenu (useQuickReplies), LabelPicker (useLabels), LabelsPage/LabelTable/LabelManagerModal (CRUD API + conversationCount)
+- **FE store:** notifications init `[]` (+dedup), ui +`searchQuery`/`channelTab`
+
+### Keputusan yang Diambil
+- DEC-025: integrasi FE↔BE Module 1, tipe respons API terpisah (contact subset di list), notifikasi derive WS non-persist, media upload ditunda
+
+### Yang Berhasil
+- Backend: `tsc` bersih, 69 unit + 22 integration hijau
+- FE: `tsc -p tsconfig.app.json` bersih, `bun run build` sukses
+- Verifikasi live endpoint FE-consumed: labels `conversationCount`, `contacts/:id` (keys persis FE), `conversations?contactId` filter, `PUT contacts notes` → persist
+- Grep konfirmasi: komponen inbox + /labels TIDAK pakai `MOCK_*` / data mock (hanya tipe dari `@/types/inbox`)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Verifikasi browser/Playwright untuk flow penuh; media upload (storage endpoint); integrasi channel asli; CI workflow
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Integration Tests
+
+### Yang Dikerjakan
+- Infra: `vitest.config.integration.ts` (include `*.integration.test.ts`, pool forks, maxWorkers/minWorkers 1, fileParallelism false, globalSetup+setupFiles); `vitest.config.ts` exclude `*.integration.test.ts`
+- `src/test/env.ts` (`loadRootEnv` parse ../../.env + `testDatabaseUrl` → `dbb_psc_test`), `setup-env.ts` (set DATABASE_URL test + CHANNEL_SIMULATE sebelum import db), `global-setup.ts` (CREATE DATABASE bila belum ada + drizzle `migrate`), `helpers.ts` (`testApp` via `app.handle`, `apiRequest`, `token`, `resetDb` TRUNCATE CASCADE, seed user/channel/contact/contactChannel/conversation/label)
+- Test files: `contacts/queries.integration.test.ts` (5), `conversations/handlers.integration.test.ts` (7), `messages/handlers.integration.test.ts` (4), `channels/handlers.integration.test.ts` (5)
+- Script `test:integration`; fix deprecation Vitest 4 (poolOptions → maxWorkers/minWorkers top-level)
+
+### Keputusan yang Diambil
+- DEC-024: integration pakai DB test terisolasi `dbb_psc_test` (auto-create+migrate), `app.handle` untuk uji HTTP penuh tanpa listen, TRUNCATE CASCADE per beforeEach
+
+### Yang Berhasil
+- `bun run test:integration` → 21/21 hijau (~3s, test-db auto-dibuat+migrate); `bun run test` → 68/68 (integration ter-exclude); `bunx tsc --noEmit` bersih
+- Total **89 test** (68 unit + 21 integration); cover HTTP 200/401/403/404/422 + DB CRUD/dedup/activities/filter
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Connect inbox UI ke backend (TanStack Query + WS client reconnect)
+- Integrasi channel asli (adapter provider gantikan stub)
+- CI workflow GitHub Actions (service Postgres+Redis, run test + test:integration + typecheck)
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Phase 5 (Vitest Tests) — SEMUA 5 FASE SELESAI
+
+### Yang Dikerjakan
+- 11 file `*.test.ts` baru, 68 test, tanpa DB/Redis (mock query module + `@/lib/pubsub` via `vi.mock`):
+  - `lib/ws.test.ts` — room registry: broadcast targeting, dedup multi-room, unregister cleanup, leaveRoom, empty no-op
+  - `lib/validation.test.ts` — parseSafe: output+default, coerce, ValidationError field-level
+  - `modules/channels/adapter.test.ts` — stub throw NOT_IMPLEMENTED 501 + verifyWebhook false; simulator send sim_, parseInbound normalize + reject (identifier/text/location)
+  - `modules/channels/registry.test.ts` — getAdapter resolve/unknown, getEffectiveAdapter simulator-toggle via CHANNEL_SIMULATE
+  - `modules/messages/types.test.ts` + `modules/conversations/types.test.ts` — Zod: default, refine text/location, labelIds CSV split, uuid/enum reject
+  - `modules/users/services.test.ts` — computeInitials + getAgents map
+  - `modules/messages/services.test.ts` — previewFromContent, listMessages reverse+cursor+senderName, sendMessage insert→simulator→update→emit
+  - `modules/conversations/services.test.ts` — listConversations map+label group+meta, agent embed initials, getConversationDetail channelIdentifiers, changeStatus NotFound+emit, assign activity+emit / unassign skip
+  - `modules/messages/ingest.test.ts` — new-contact (create contact+channel+activity+conv+msg+emit) + dedup (reuse, reopen snoozed, no create)
+
+### Keputusan yang Diambil
+- DEC-023: strategi test unit + mock (cepat, tanpa infra); integration handlers/queries ditunda sampai test-db CI
+
+### Yang Berhasil
+- `bun run test` → 68/68 hijau (~290ms); `bunx tsc --noEmit` bersih (test files included)
+- 2 bug data di test sendiri diperbaiki (mock insertMessage tipis → tambah field; ekspektasi nextCursor) — bukan bug produksi
+- Backend Module 1 Omnichannel Inbox: Phase 0-5 SELESAI (schema, lib foundation, 7 modul API, ingest pipeline, WS realtime, unit tests)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Connect inbox UI ke backend (ganti mock/inbox.ts → TanStack Query + WS client reconnect)
+- Handler/query integration tests (setup test-db + Redis CI)
+- Integrasi channel asli (implement adapter provider gantikan stub)
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Phase 4 (WebSocket + Realtime Wiring)
+
+### Yang Dikerjakan
+- `index.ts` — endpoint Elysia `.ws("/ws")` (Bun native µWebSocket): `open` auth via query `?token=` → `verifyToken` (gagal → `ws.close()`), register `ws.raw` ke INBOX_ROOM + agentRoom(sub); `message` parse `{action,conversationId}` → join/leave conversationRoom; `close` → unregisterClient
+- `index.ts` — `startRealtimeSubscriber((event)=>broadcast(event.rooms,{type,data}))` jembatani Redis pub/sub → WS room; `parseWsMessage` helper
+- `index.ts` — graceful shutdown tambah `stopRealtimeSubscriber()`
+
+### Keputusan yang Diambil
+- DEC-022: WS auth via query token, registry key `ws.raw`, bridge Redis→WS, reconnect = tanggung jawab FE
+
+### Yang Berhasil
+- `bunx tsc --noEmit` bersih
+- Live e2e (WS client bun): connect+auth OK, subscribe conv, simulate-inbound → terima 2 event (`message:new` + `conversation:updated`) dgn payload benar; token kosong & garbage → koneksi ditutup server
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 5: Vitest — unit (services conversations/messages, ingest, adapter/registry/simulator, ws rooms, Zod schemas) + integration (queries, handlers 200/400/401/404)
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Phase 3 (Inbound Ingest Pipeline)
+
+### Yang Dikerjakan
+- `modules/messages/ingest.ts` — `ingestInbound(channelId, inbound)`: (1) dedup kontak via `findContactByChannelIdentifier`, else auto-create kontak (new_lead, source=channelType, phoneNumber bila WA) + `createContactChannel` + activity `message_sent`; (2) `findReusableConversation` (open/pending/snoozed) atau `createConversation`; (3) insert pesan inbound (contact, delivered, externalMessageId); (4) `applyInbound` → preview + lastMessageAt + unreadCount+1 (SQL increment) + reopen snoozed→open; (5) publish realtime message:new + conversation:updated (rooms conversation+inbox+agent)
+- `conversations/queries.ts` — +`findReusableConversation`, +`createConversation`, +`applyInbound`
+- `contacts/queries.ts` — +`createContactChannel` (onConflictDoNothing)
+- `workers/message-worker.ts` — rewrite: route by `job.name === INBOUND_JOB` → `ingestInbound`, pakai `queueConnection` dari `lib/queues` (sebelumnya `{url}`)
+
+### Keputusan yang Diambil
+- DEC-021: ingest pipeline — reuse conversation non-resolved + reopen snoozed, unread SQL increment, idempoten jobId=externalMessageId, race ditangani unique index + retry
+
+### Yang Berhasil
+- `bunx tsc --noEmit` bersih
+- Live e2e: simulate-inbound nomor baru → worker log "(kontak baru) (percakapan baru)", total convs 5→6, conv unread=1 preview benar; inbound ke-2 nomor sama → worker log tanpa flag baru, total tetap 6, unread→2, messages list 2 pesan inbound
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 4: wire WS server (`/ws`, auth via query token) + `startRealtimeSubscriber` di index.ts → broadcast event pubsub ke room WS; graceful shutdown WS+subscriber
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Phase 2 (API Modules)
+
+### Yang Dikerjakan
+- `lib/validation.ts` — `parseSafe<S extends z.ZodTypeAny>(schema,data): z.output<S>` (generic hindari variance input≠output)
+- `lib/queues.ts` — BullMQ `messageQueue` + `parseRedisConnection` (host/port, hindari bentrok tipe ioredis 5.11 dep vs 5.10 bundel BullMQ)
+- **conversations** (types/queries/services/handlers/routes) — list 1 query innerJoin contacts+channels leftJoin users, filter channel/status/agent/search/labelIds (subquery inArray), sort newest/waiting/priority (CASE rank), pagination; label batched terpisah; detail + channelIdentifiers; PATCH status, resolve/snooze/read, assign/transfer (+contact activity), add/remove label; semua emit realtime
+- **messages** (types/queries/services/handlers/routes) — `/conversations/:id/messages` list cursor desc+reverse+nextCursor, agent-name batch, JSONB content→shape FE; send: insert outbound + `getEffectiveAdapter().sendMessage` + update preview/lastMessageAt + isAiHandling=false + publish message:new & conversation:updated
+- **contacts** — services/handlers baru + routes diisi; detail (base + channelIdentifiers + activityLog); queries +`findContactByChannelIdentifier` (dedup) +`listContactActivities`/`createContactActivity`; buang import mati `like`
+- **channels** (types/queries/services/handlers/routes) — CRUD (admin) + `POST /:id/simulate-inbound` → simulatorAdapter.parseInbound → enqueue messageQueue job `inbound` (jobId=externalMessageId)
+- **labels** (modul BARU) — CRUD
+- **quick-replies** (modul BARU) — CRUD
+- **users** — `GET /users/agents` + activeConversationCount (count filtered SQL, group by)
+- `routes/index.ts` — daftarkan labelsRoutes + quickRepliesRoutes; semua route Module 1 `.use(authPlugin)` + `requireAuth`/`requireRole`
+
+### Keputusan yang Diambil
+- DEC-020: konvensi API modul Phase 2 (parseSafe generic, queue conn parse, list denormalisasi+label batched, message mapper+batch, simulate enqueue, label/quick-replies modul baru)
+
+### Yang Berhasil
+- `bunx tsc --noEmit` bersih (error pre-existing `like` ikut beres)
+- Live test via server berjalan: login JWT (233 char), 401 tanpa token, `/users/agents` (Sari/Rizki/Nina + count), list percakapan (priority sort, unread, label count, agent embed), messages list (cursor, senderName AI/agent, document/text), send message (agent reply, preview update, isAiHandling→false), assign/mark-read/add-label OK, simulate-inbound→queued 1→message-worker terima job, validation error field-level
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 3: message-worker ingest — proses job `inbound`: dedup kontak via `findContactByChannelIdentifier` / auto-create kontak+contactChannel+activity, find/create open conversation, insert message, update preview+lastMessageAt+unreadCount++, publish realtime message:new + conversation:updated
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Phase 1 (Lib Foundation)
+
+### Yang Dikerjakan
+- `lib/auth-plugin.ts` — Elysia plugin `.derive({as:'scoped'})` inject `auth: JwtPayload | null` dari header Bearer; re-export `requireAuth`/`requireRole` untuk enforcement di handler
+- `lib/pubsub.ts` — Redis pub/sub single channel `realtime:events`, payload `{rooms[],type,data}`; `publishRealtime` + `startRealtimeSubscriber` (koneksi subscriber terpisah) + `stopRealtimeSubscriber`
+- `lib/ws.ts` — registry room in-memory (`Map<room,Set<client>>` + reverse map); `joinRoom/leaveRoom/registerClient/unregisterClient/broadcast/roomSize`; helper `INBOX_ROOM`/`agentRoom`/`conversationRoom`; broadcast union-dedup + auto-unregister bila send gagal
+- `modules/channels/adapter.ts` — `ChannelAdapter` interface, tipe `NormalizedInbound`/`MessageContent`/`SendResult`, `createStubAdapter` factory, `NotImplementedError` (501)
+- `modules/channels/registry.ts` — map provider→adapter; `getAdapter` (real), `getEffectiveAdapter` (simulator bila `CHANNEL_SIMULATE !== "false"`), `isSimulateMode`
+- `modules/channels/providers/` — 6 stub (whatsapp-cloud, whatsapp-fonnte, telegram, instagram, facebook, livechat) + `simulator.ts` fungsional (sendMessage fake externalId, parseInbound validasi+normalisasi, verifyWebhook true)
+
+### Keputusan yang Diambil
+- DEC-019: channel adapter abstraction + effective-adapter simulator (toggle env), realtime 1-channel + room di payload, WS in-memory single-server, auth derive-only (macro v2 Elysia 1.3 gagal typecheck)
+
+### Yang Berhasil
+- `bunx tsc --noEmit` bersih (kecuali pre-existing unused `like` contacts/queries.ts)
+- Runtime smoke test lulus: registry resolve real (`whatsapp_cloud`) + effective→`simulator`, simulator send `sim_*` + parseInbound, stub telegram throw `NOT_IMPLEMENTED`, ws broadcast ke room benar + unregister bersihkan room
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 2: modules 4-layer — conversations (list/detail/status/assign/transfer/snooze/resolve/mark-read), messages (list cursor + send), contacts (finish services/handlers + detail+activities), channels (CRUD + simulate-inbound), labels (CRUD + attach/detach), quick-replies, users/agents (list + activeConversationCount)
+
+## 2026-06-18 — Backend Module 1 Omnichannel Inbox — Phase 0 (Schema, Migration, Seed)
+
+### Yang Dikerjakan
+- Analisa mendalam frontend Module 1 (`InboxPage`, `ConversationList`, `ChatPanel`, `ContactDetailPanel`, `stores/ui.ts`, `mock/inbox.ts`) → petakan kontrak data FE ke schema backend
+- Review state backend: auth module lengkap (pola 4-layer), contacts partial, sisanya stub; gap auth-guard plugin; belum ada WS
+- Buat plan 6-fase backend inbox (disetujui: WebSocket include, channel adapter + simulator, ingest pipeline BullMQ) — semua via AskUserQuestion
+- **Phase 0 implementasi:**
+  - `lib/schema.ts`: `conversations` +`priority`/`unread_count`/`last_message_preview` + index priority; `channels` +`provider` + index provider/type; tabel baru `contact_activities` + `quick_replies`
+  - `bun run db:generate` → `drizzle/0000_pretty_ultimates.sql` (DB kosong → single fresh migration), applied via `db:migrate`
+  - Rewrite `lib/seed.ts`: demo inbox realistis (4 user incl. 3 agent, 4 channel incl. WA official `whatsapp_cloud` + unofficial `whatsapp_fonnte` + IG + FB, 6 label, 5 quick reply, 5 kontak + contact_channels + activities, 5 percakapan + label, 9 pesan text/document/location)
+  - `drizzle.config.ts`: load root `.env` sendiri (`process.cwd()` + parse manual) karena `drizzle-kit` tak mewarisi `--env-file`; `db:seed` pakai `bun --env-file`
+
+### Keputusan yang Diambil
+- DEC-018: Schema extensions + channel `provider` field + denormalisasi `last_message_preview`/`unread_count` untuk performa list inbox; tabel baru `contact_activities` & `quick_replies`
+
+### Yang Berhasil
+- `bunx tsc --noEmit` bersih (kecuali pre-existing unused import `like` di contacts/queries.ts — bukan scope)
+- Migration applied, seed inserted, verified via psql (4 channel multi-provider, 5 conversation dgn priority/unread/preview, 9 message, 5 activity, 5 quick reply)
+- Standard `bun run db:migrate/push/studio/seed` kini berfungsi; `db:push` → "No changes detected" (schema sinkron)
+
+### Yang Perlu Dikerjakan Selanjutnya
+- Phase 1: lib foundation — `auth-plugin.ts` (JWT guard Elysia), `ws.ts`, `pubsub.ts`, `modules/channels/adapter.ts` + `registry.ts` + `providers/*` stub + `simulator.ts`
+
 ## 2026-06-18 — Removed programValue/monetary values from Pipeline Kanban
 
 ### Yang Dikerjakan

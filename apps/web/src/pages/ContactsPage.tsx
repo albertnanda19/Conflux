@@ -365,7 +365,7 @@ export function ContactsPage() {
 
       {bulkStatusOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setBulkStatusOpen(false)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setBulkStatusOpen(false)} />
           <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-xs mx-4 border border-hairline p-5 animate-in zoom-in-95 fade-in duration-200">
             <h3 className="text-sm font-semibold text-ink mb-1">Ubah Status</h3>
             <p className="text-xs text-steel mb-4">{selectedIds.size} kontak dipilih</p>
@@ -393,7 +393,7 @@ export function ContactsPage() {
 
       {bulkAssignOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setBulkAssignOpen(false)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setBulkAssignOpen(false)} />
           <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-xs mx-4 border border-hairline p-5 animate-in zoom-in-95 fade-in duration-200">
             <h3 className="text-sm font-semibold text-ink mb-1">Assign ke Agent</h3>
             <p className="text-xs text-steel mb-4">{selectedIds.size} kontak dipilih</p>
@@ -434,7 +434,7 @@ export function ContactsPage() {
 
       {bulkLabelOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setBulkLabelOpen(false)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setBulkLabelOpen(false)} />
           <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-xs mx-4 border border-hairline p-5 animate-in zoom-in-95 fade-in duration-200">
             <h3 className="text-sm font-semibold text-ink mb-1">Tambah Label</h3>
             <p className="text-xs text-steel mb-4">{selectedIds.size} kontak dipilih</p>

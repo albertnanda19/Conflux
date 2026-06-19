@@ -1,4 +1,4 @@
-import type { AIAssistant } from '@/mock/ai-assistants'
+import type { AIAssistant } from '@/types/ai'
 import { Badge } from '@/components/ui/badge'
 
 const STATUS_CONFIG: Record<AIAssistant['status'], { label: string; variant: 'success' | 'warning' | 'default' }> = {

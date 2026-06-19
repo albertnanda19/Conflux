@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
-import { contacts, contactChannels } from "@/lib/schema"
-import { eq, and, like, asc, desc, sql, count } from "drizzle-orm"
+import { contacts, contactChannels, contactActivities } from "@/lib/schema"
+import { eq, and, asc, desc, sql, count } from "drizzle-orm"
 import type { ListContactsQuery } from "./types"
 
 export async function findContactById(id: string) {
@@ -28,6 +28,20 @@ export async function findContactChannels(contactId: string) {
     .select()
     .from(contactChannels)
     .where(eq(contactChannels.contactId, contactId))
+}
+
+export async function createContactChannel(data: {
+  contactId: string
+  channelType: string
+  channelIdentifier: string
+  isPrimary?: boolean
+}) {
+  const [row] = await db
+    .insert(contactChannels)
+    .values(data)
+    .onConflictDoNothing()
+    .returning()
+  return row || null
 }
 
 export async function listContacts(query: ListContactsQuery) {
@@ -115,4 +129,38 @@ export async function findContactByEmail(email: string) {
     .limit(1)
 
   return contact || null
+}
+
+export async function findContactByChannelIdentifier(channelType: string, channelIdentifier: string) {
+  const [row] = await db
+    .select({ contactId: contactChannels.contactId })
+    .from(contactChannels)
+    .where(and(eq(contactChannels.channelType, channelType), eq(contactChannels.channelIdentifier, channelIdentifier)))
+    .limit(1)
+  return row?.contactId || null
+}
+
+export async function listContactActivities(contactId: string) {
+  return db
+    .select({
+      id: contactActivities.id,
+      type: contactActivities.type,
+      description: contactActivities.description,
+      agentName: contactActivities.agentName,
+      createdAt: contactActivities.createdAt,
+    })
+    .from(contactActivities)
+    .where(eq(contactActivities.contactId, contactId))
+    .orderBy(desc(contactActivities.createdAt))
+}
+
+export async function createContactActivity(data: {
+  contactId: string
+  type: string
+  description: string
+  agentId?: string
+  agentName?: string
+}) {
+  const [row] = await db.insert(contactActivities).values(data).returning()
+  return row
 }

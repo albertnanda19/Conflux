@@ -1,58 +1,55 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useInboxStore } from '@/stores/ui'
 import { cn, formatDate, formatRelativeTime } from '@/lib/utils'
-import { MOCK_CONVERSATIONS, type Contact, type ActivityLog } from '@/mock/inbox'
+import { useConversation, useContact, useConversations } from '@/hooks/inbox'
+import { inboxApi, type ContactDetail, type ConversationListItem } from '@/lib/api/inbox'
+import { queryKeys } from '@/lib/queryKeys'
+import type { ActivityLog, Label } from '@/types/inbox'
 import { ChannelIcon } from './ChannelIcon'
 import { LabelBadge } from '@/components/labels/LabelBadge'
 
 const PIPELINE_LABELS: Record<string, string> = {
-  new_lead: 'New Lead',
-  contacted: 'Contacted',
-  qualified: 'Qualified',
-  proposal_sent: 'Proposal Sent',
-  closed_won: 'Closed Won',
-  closed_lost: 'Closed Lost',
+  new_lead: 'New Lead', contacted: 'Contacted', qualified: 'Qualified',
+  proposal_sent: 'Proposal Sent', closed_won: 'Closed Won', closed_lost: 'Closed Lost',
 }
-
 const PIPELINE_COLORS: Record<string, string> = {
-  new_lead: 'bg-brand-blue-200 text-brand-blue-deep',
-  contacted: 'bg-coral/10 text-coral',
-  qualified: 'bg-fuchsia-50 text-fuchsia-700',
-  proposal_sent: 'bg-purple-50 text-purple-700',
-  closed_won: 'bg-emerald-50 text-emerald-700',
-  closed_lost: 'bg-gray-100 text-gray-600',
+  new_lead: 'bg-brand-blue-200 text-brand-blue-deep', contacted: 'bg-coral/10 text-coral',
+  qualified: 'bg-fuchsia-50 text-fuchsia-700', proposal_sent: 'bg-purple-50 text-purple-700',
+  closed_won: 'bg-emerald-50 text-emerald-700', closed_lost: 'bg-gray-100 text-gray-600',
 }
-
 const ACTIVITY_ICON: Record<string, string> = {
-  status_change: '📋',
-  assignment: '👤',
-  note_added: '📝',
-  label_added: '🏷️',
-  message_sent: '💬',
-  ai_handoff: '🤖',
+  status_change: '📋', assignment: '👤', note_added: '📝', label_added: '🏷️', message_sent: '💬', ai_handoff: '🤖',
 }
 
 type Tab = 'info' | 'history'
 
 export function ContactDetailPanel() {
   const { selectedConversationId, detailPanelOpen, setDetailPanelOpen, selectConversation } = useInboxStore()
-  const conversation = MOCK_CONVERSATIONS.find((c) => c.id === selectedConversationId)
-  const isOpen = detailPanelOpen && !!conversation
-  const { contact } = conversation ?? { contact: null }
+  const qc = useQueryClient()
+  const { data: conversation } = useConversation(selectedConversationId)
+  const contactId = conversation?.contactId ?? null
+  const { data: contact } = useContact(contactId)
+  const { data: history } = useConversations(contactId ? { contactId, limit: 20 } : {})
 
   const [activeTab, setActiveTab] = useState<Tab>('info')
   const [notes, setNotes] = useState<string | null>(null)
   const [isEditingNotes, setIsEditingNotes] = useState(false)
 
-  const contactConversations = contact
-    ? MOCK_CONVERSATIONS.filter((c) => c.contactId === contact.id)
-    : []
+  const isOpen = detailPanelOpen && !!conversation
+
+  const saveNotes = useMutation({
+    mutationFn: (value: string) => inboxApi.updateContact(contactId!, { notes: value }),
+    onSuccess: () => {
+      if (contactId) qc.invalidateQueries({ queryKey: queryKeys.contact(contactId) })
+      setIsEditingNotes(false)
+    },
+  })
+
+  useEffect(() => { setNotes(null); setIsEditingNotes(false) }, [contactId])
 
   const effectiveNotes = notes !== null ? notes : contact?.notes ?? ''
-
-  const handleSaveNotes = useCallback(() => {
-    setIsEditingNotes(false)
-  }, [])
+  const handleSaveNotes = useCallback(() => saveNotes.mutate(effectiveNotes), [saveNotes, effectiveNotes])
 
   return (
     <div
@@ -64,48 +61,37 @@ export function ContactDetailPanel() {
       <div className="min-w-80 h-full flex flex-col">
         <div className="h-14 px-4 flex items-center justify-between border-b border-hairline flex-shrink-0">
           <h2 className="text-sm font-semibold text-ink">Detail Kontak</h2>
-          <button
-            onClick={() => setDetailPanelOpen(false)}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-steel hover:bg-surface"
-          >
+          <button onClick={() => setDetailPanelOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-steel hover:bg-surface">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {contact && (
+        {contact && conversation && (
           <>
             <div className="px-5 pt-6 pb-4 border-b border-hairline-soft">
               <div className="w-16 h-16 rounded-full bg-surface mx-auto mb-3 flex items-center justify-center text-lg font-semibold text-ink">
-                {contact.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .slice(0, 2)}
+                {(contact.name || 'NA').split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </div>
-              <h3 className="text-base font-semibold text-ink text-center">{contact.name}</h3>
-              <p className="text-xs text-steel text-center mt-1">
-                {formatDate(contact.createdAt)}
-              </p>
+              <h3 className="text-base font-semibold text-ink text-center">{contact.name || 'Tanpa Nama'}</h3>
+              <p className="text-xs text-steel text-center mt-1">{formatDate(contact.createdAt)}</p>
             </div>
 
             <div className="px-3 pt-2 flex gap-1 border-b border-hairline-soft flex-shrink-0">
-              <TabButton active={activeTab === 'info'} onClick={() => setActiveTab('info')}>
-                Info
-              </TabButton>
-              <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')}>
-                Riwayat
-              </TabButton>
+              <TabButton active={activeTab === 'info'} onClick={() => setActiveTab('info')}>Info</TabButton>
+              <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')}>Riwayat</TabButton>
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {activeTab === 'info' ? (
                 <InfoTab
                   contact={contact}
-                  conversation={conversation!}
+                  channel={conversation.channel}
+                  labels={conversation.labels}
                   notes={effectiveNotes}
                   isEditingNotes={isEditingNotes}
+                  isSaving={saveNotes.isPending}
                   onNotesChange={setNotes}
                   onStartEditNotes={() => setIsEditingNotes(true)}
                   onSaveNotes={handleSaveNotes}
@@ -114,7 +100,7 @@ export function ContactDetailPanel() {
               ) : (
                 <HistoryTab
                   activityLog={contact.activityLog}
-                  conversations={contactConversations}
+                  conversations={history?.data ?? []}
                   onSelectConversation={selectConversation}
                 />
               )}
@@ -126,45 +112,24 @@ export function ContactDetailPanel() {
   )
 }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'px-3 py-2 text-xs font-medium transition-colors relative',
-        active ? 'text-ink' : 'text-steel hover:text-ink',
-      )}
-    >
+    <button onClick={onClick} className={cn('px-3 py-2 text-xs font-medium transition-colors relative', active ? 'text-ink' : 'text-steel hover:text-ink')}>
       {children}
-      {active && (
-        <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-blue-deep rounded-full" />
-      )}
+      {active && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-blue-deep rounded-full" />}
     </button>
   )
 }
 
 function InfoTab({
-  contact,
-  conversation,
-  notes,
-  isEditingNotes,
-  onNotesChange,
-  onStartEditNotes,
-  onSaveNotes,
-  onCancelNotes,
+  contact, channel, labels, notes, isEditingNotes, isSaving, onNotesChange, onStartEditNotes, onSaveNotes, onCancelNotes,
 }: {
-  contact: Contact
-  conversation: NonNullable<ReturnType<typeof MOCK_CONVERSATIONS.find>>
+  contact: ContactDetail
+  channel: string
+  labels: Label[]
   notes: string
   isEditingNotes: boolean
+  isSaving: boolean
   onNotesChange: (val: string) => void
   onStartEditNotes: () => void
   onSaveNotes: () => void
@@ -175,31 +140,13 @@ function InfoTab({
       <div className="px-5 py-4 border-b border-hairline-soft space-y-3">
         <SectionLabel>Kontak</SectionLabel>
         {contact.phone && (
-          <InfoRow
-            icon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            }
-            value={contact.phone}
-          />
+          <InfoRow icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>} value={contact.phone} />
         )}
         {contact.email && (
-          <InfoRow
-            icon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            }
-            value={contact.email}
-          />
+          <InfoRow icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} value={contact.email} />
         )}
         {contact.channelIdentifiers.map((ci) => (
-          <InfoRow
-            key={ci.identifier}
-            icon={<ChannelIcon channel={ci.channel} size={14} />}
-            value={ci.identifier}
-          />
+          <InfoRow key={ci.identifier} icon={<ChannelIcon channel={ci.channel} size={14} />} value={ci.identifier} />
         ))}
       </div>
 
@@ -207,40 +154,35 @@ function InfoTab({
         <SectionLabel>Lead Info</SectionLabel>
         <div>
           <p className="text-[11px] text-steel mb-1">Pipeline Status</p>
-          <span
-            className={cn(
-              'inline-flex text-[11px] font-semibold rounded-full px-2.5 py-0.5',
-              PIPELINE_COLORS[contact.pipelineStatus],
-            )}
-          >
+          <span className={cn('inline-flex text-[11px] font-semibold rounded-full px-2.5 py-0.5', PIPELINE_COLORS[contact.pipelineStatus])}>
             {PIPELINE_LABELS[contact.pipelineStatus]}
           </span>
         </div>
-        <div>
-          <p className="text-[11px] text-steel mb-1">Sumber</p>
-          <div className="flex items-center gap-1.5">
-            <ChannelIcon channel={contact.source} size={14} />
-            <span className="text-xs text-ink capitalize">{contact.source}</span>
+        {contact.source && (
+          <div>
+            <p className="text-[11px] text-steel mb-1">Sumber</p>
+            <div className="flex items-center gap-1.5">
+              <ChannelIcon channel={contact.source} size={14} />
+              <span className="text-xs text-ink capitalize">{contact.source}</span>
+            </div>
           </div>
-        </div>
+        )}
         <div>
           <p className="text-[11px] text-steel mb-1">Channel Asal</p>
           <div className="flex items-center gap-1.5">
-            <ChannelIcon channel={conversation.channel} size={14} />
-            <span className="text-xs text-ink capitalize">{conversation.channel}</span>
+            <ChannelIcon channel={channel as never} size={14} />
+            <span className="text-xs text-ink capitalize">{channel}</span>
           </div>
         </div>
       </div>
 
       <div className="px-5 py-4 border-b border-hairline-soft space-y-3">
         <SectionLabel>Label</SectionLabel>
-        {contact.labels.length === 0 ? (
+        {labels.length === 0 ? (
           <p className="text-xs text-stone">Belum ada label</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
-            {contact.labels.map((label) => (
-              <LabelBadge key={label.id} name={label.name} color={label.color} size="md" />
-            ))}
+            {labels.map((label) => (<LabelBadge key={label.id} name={label.name} color={label.color} size="md" />))}
           </div>
         )}
       </div>
@@ -249,36 +191,15 @@ function InfoTab({
         <div className="flex items-center justify-between">
           <SectionLabel>Catatan</SectionLabel>
           {!isEditingNotes && (
-            <button
-              onClick={onStartEditNotes}
-              className="text-[11px] font-medium text-brand-blue hover:text-brand-blue-deep transition-colors"
-            >
-              Edit
-            </button>
+            <button onClick={onStartEditNotes} className="text-[11px] font-medium text-brand-blue hover:text-brand-blue-deep transition-colors">Edit</button>
           )}
         </div>
         {isEditingNotes ? (
           <div className="space-y-2">
-            <textarea
-              value={notes}
-              onChange={(e) => onNotesChange(e.target.value)}
-              placeholder="Tambahkan catatan..."
-              rows={4}
-              className="w-full resize-none rounded-lg border border-hairline bg-canvas px-3 py-2.5 text-xs text-ink placeholder:text-stone focus:outline-none focus:border-brand-blue-deep"
-            />
+            <textarea value={notes} onChange={(e) => onNotesChange(e.target.value)} placeholder="Tambahkan catatan..." rows={4} className="w-full resize-none rounded-lg border border-hairline bg-canvas px-3 py-2.5 text-xs text-ink placeholder:text-stone focus:outline-none focus:border-brand-blue-deep" />
             <div className="flex gap-1.5">
-              <button
-                onClick={onSaveNotes}
-                className="px-3 py-1 text-[11px] font-medium bg-brand-blue-deep text-white rounded-full hover:bg-brand-blue-700 transition-colors"
-              >
-                Simpan
-              </button>
-              <button
-                onClick={onCancelNotes}
-                className="px-3 py-1 text-[11px] font-medium text-steel hover:text-ink rounded-full hover:bg-surface transition-colors"
-              >
-                Batal
-              </button>
+              <button onClick={onSaveNotes} disabled={isSaving} className="px-3 py-1 text-[11px] font-medium bg-brand-blue-deep text-white rounded-full hover:bg-brand-blue-700 transition-colors disabled:opacity-50">{isSaving ? 'Menyimpan...' : 'Simpan'}</button>
+              <button onClick={onCancelNotes} className="px-3 py-1 text-[11px] font-medium text-steel hover:text-ink rounded-full hover:bg-surface transition-colors">Batal</button>
             </div>
           </div>
         ) : (
@@ -292,12 +213,10 @@ function InfoTab({
 }
 
 function HistoryTab({
-  activityLog,
-  conversations,
-  onSelectConversation,
+  activityLog, conversations, onSelectConversation,
 }: {
   activityLog: ActivityLog[]
-  conversations: NonNullable<ReturnType<typeof MOCK_CONVERSATIONS.find>>[]
+  conversations: ConversationListItem[]
   onSelectConversation: (id: string | null) => void
 }) {
   return (
@@ -317,9 +236,7 @@ function HistoryTab({
                 <div className="flex-1 min-w-0 pt-0.5">
                   <p className="text-xs text-ink leading-relaxed">{log.description}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    {log.agentName && (
-                      <span className="text-[10px] text-brand-blue font-medium">{log.agentName}</span>
-                    )}
+                    {log.agentName && <span className="text-[10px] text-brand-blue font-medium">{log.agentName}</span>}
                     <span className="text-[10px] text-stone">{formatRelativeTime(log.createdAt)}</span>
                   </div>
                 </div>
@@ -336,15 +253,11 @@ function HistoryTab({
         ) : (
           <div className="space-y-2">
             {conversations.map((conv) => (
-              <button
-                key={conv.id}
-                onClick={() => onSelectConversation(conv.id)}
-                className="w-full px-3 py-2.5 text-left rounded-lg border border-hairline hover:bg-surface-soft transition-colors"
-              >
+              <button key={conv.id} onClick={() => onSelectConversation(conv.id)} className="w-full px-3 py-2.5 text-left rounded-lg border border-hairline hover:bg-surface-soft transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <ChannelIcon channel={conv.channel} size={12} />
                   <span className="text-xs font-medium text-ink capitalize">{conv.channel}</span>
-                  <span className="text-[10px] text-stone">{formatRelativeTime(conv.lastMessageAt)}</span>
+                  {conv.lastMessageAt && <span className="text-[10px] text-stone">{formatRelativeTime(conv.lastMessageAt)}</span>}
                 </div>
                 <p className="text-[11px] text-slate truncate">{conv.lastMessage}</p>
               </button>
@@ -357,9 +270,7 @@ function HistoryTab({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold text-steel uppercase tracking-wide">{children}</p>
-  )
+  return <p className="text-[11px] font-semibold text-steel uppercase tracking-wide">{children}</p>
 }
 
 function InfoRow({ icon, value }: { icon: React.ReactNode; value: string }) {

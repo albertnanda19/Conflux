@@ -1,20 +1,21 @@
 import { useState, useCallback, useRef } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import { useKbMutations } from '@/hooks/knowledge-base'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { KB_CATEGORIES, type KBDocument } from '@/mock/ai-settings'
+import { KB_CATEGORIES } from '@/types/ai'
 import { XIcon, UploadIcon, CheckedIcon } from '@/icons'
 
 interface KBUploadModalProps {
   open: boolean
   onClose: () => void
+  aiAssistantId?: string
 }
 
-const ACCEPTED_TYPES = '.pdf,.docx,.txt,.csv,.xlsx'
+const ACCEPTED_TYPES = '.pdf,.docx,.txt,.csv'
 const MAX_SIZE_MB = 10
 
-export function KBUploadModal({ open, onClose }: KBUploadModalProps) {
-  const { addKBDocument } = useAISettingsStore()
+export function KBUploadModal({ open, onClose, aiAssistantId }: KBUploadModalProps) {
+  const { upload } = useKbMutations()
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('Program')
   const [file, setFile] = useState<File | null>(null)
@@ -39,7 +40,7 @@ export function KBUploadModal({ open, onClose }: KBUploadModalProps) {
       return `Ukuran file melebihi ${MAX_SIZE_MB}MB`
     }
     const ext = f.name.split('.').pop()?.toLowerCase()
-    if (!['pdf', 'docx', 'txt', 'csv', 'xlsx'].includes(ext ?? '')) {
+    if (!['pdf', 'docx', 'txt', 'csv'].includes(ext ?? '')) {
       return 'Tipe file tidak didukung'
     }
     return null
@@ -67,22 +68,14 @@ export function KBUploadModal({ open, onClose }: KBUploadModalProps) {
 
   const handleSubmit = useCallback(() => {
     if (!title.trim() || !file) return
-    const ext = file.name.split('.').pop()?.toLowerCase() as KBDocument['fileType']
-    const doc: KBDocument = {
-      id: `kb-${Date.now()}`,
-      title: title.trim(),
-      category,
-      fileType: ext,
-      fileSize: `${(file.size / 1024).toFixed(0)} KB`,
-      chunkCount: 0,
-      processingStatus: 'pending',
-      isActive: true,
-      createdBy: 'Admin User',
-      createdAt: new Date().toISOString(),
-    }
-    addKBDocument(doc)
-    handleClose()
-  }, [title, category, file, addKBDocument, handleClose])
+    upload.mutate(
+      { file, title: title.trim(), category, aiAssistantId },
+      {
+        onSuccess: handleClose,
+        onError: (err) => setError(err instanceof Error ? err.message : 'Gagal mengunggah dokumen.'),
+      },
+    )
+  }, [title, category, file, aiAssistantId, upload, handleClose])
 
   if (!open) return null
 
@@ -166,7 +159,7 @@ export function KBUploadModal({ open, onClose }: KBUploadModalProps) {
                     <UploadIcon size={18} className="text-steel" />
                   </div>
                   <p className="text-sm text-steel">Seret file ke sini atau klik untuk memilih</p>
-                  <p className="text-xs text-stone">PDF, DOCX, TXT, CSV, XLSX — Maks {MAX_SIZE_MB}MB</p>
+                  <p className="text-xs text-stone">PDF, DOCX, TXT, CSV — Maks {MAX_SIZE_MB}MB</p>
                 </div>
               )}
             </div>
@@ -181,10 +174,10 @@ export function KBUploadModal({ open, onClose }: KBUploadModalProps) {
           <Button
             variant="primary"
             size="sm"
-            disabled={!title.trim() || !file}
+            disabled={!title.trim() || !file || upload.isPending}
             onClick={handleSubmit}
           >
-            Upload
+            {upload.isPending ? 'Mengunggah…' : 'Upload'}
           </Button>
         </div>
       </div>

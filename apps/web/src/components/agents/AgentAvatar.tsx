@@ -11,7 +11,7 @@ interface AgentAvatarProps {
 
 const BRAND_COLORS = [
   'bg-brand-blue text-white',
-  'bg-brand-coral text-white',
+  'bg-coral text-white',
   'bg-brand-cyan text-white',
   'bg-brand-magenta text-white',
   'bg-purple-500 text-white',

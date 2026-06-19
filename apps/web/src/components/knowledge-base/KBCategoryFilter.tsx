@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { KB_CATEGORIES } from '@/mock/ai-settings'
+import { KB_CATEGORIES } from '@/types/ai'
 
 interface KBCategoryFilterProps {
   selected: string

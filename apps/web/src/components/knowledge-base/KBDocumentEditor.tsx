@@ -10,17 +10,6 @@ interface KBDocumentEditorProps {
   editable?: boolean
 }
 
-const MOCK_CONTENT: Record<string, string> = {
-  'kb-1': '<h2>FAQ Program Data Science</h2><p>Berikut adalah pertanyaan yang sering ditanyakan seputar program Data Science kami:</p><h3>Apa saja topik yang dipelajari?</h3><p>Program ini mencakup statistik, machine learning, deep learning, dan data visualization menggunakan Python, R, dan tools modern lainnya.</p><h3>Berapa lama durasi program?</h3><p>Program berlangsung selama 16 minggu dengan 3 sesi per minggu.</p>',
-  'kb-2': '<h2>Daftar Harga & Promo 2026</h2><p>Harga program per batch:</p><ul><li>Data Science Bootcamp: Rp 8.500.000</li><li>AI Engineering: Rp 9.200.000</li><li>Data Analytics: Rp 6.800.000</li></ul><p><strong>Promo early bird:</strong> Diskon 15% untuk pendaftaran 30 hari sebelum batch dimulai.</p>',
-  'kb-3': '<h2>Jadwal Batch Juli–Desember 2026</h2><p>Batch yang tersedia:</p><ul><li>Batch 7: 7 Juli – 24 Oktober 2026</li><li>Batch 8: 4 Agustus – 21 November 2026</li><li>Batch 9: 1 September – 28 Desember 2026</li></ul><p>Kelas diadakan Senin–Rabu, pukul 19.00–21.30 WIB.</p>',
-  'kb-4': '<h2>Syarat & Ketentuan Pendaftaran</h2><p>Persyaratan umum:</p><ol><li>Berusia minimal 18 tahun</li><li>Lulusan SMK/SMA atau sederajat</li><li>Mengisi formulir pendaftaran online</li><li>Melakukan pembayaran DP sebesar Rp 1.000.000</li></ol>',
-  'kb-5': '<h2>Cara Pembayaran & Transfer</h2><p>Metode pembayaran yang diterima:</p><ul><li>Transfer Bank BCA: 1234567890 a.n. Acme Corp</li><li>Transfer Bank Mandiri: 0987654321 a.n. Acme Corp</li><li>Credit Card via Midtrans</li></ul><p>Pembayaran bisa dicicil 3x tanpa bunga.</p>',
-  'kb-6': '<h2>Testimoni Alumni 2025</h2><p>Kumpulan testimoni dari alumni yang telah menyelesaikan program kami.</p><p><em>Dokumen ini sedang dalam proses pemrosesan.</em></p>',
-  'kb-7': '<h2>Panduan Career Service</h2><p>Services yang tersedia untuk alumni:</p><ul><li>Resume review</li><li>Mock interview</li><li>Job matching dengan perusahaan partner</li></ul><p><em>Dokumen ini gagal diproses. Silakan upload ulang.</em></p>',
-  'kb-8': '<h2>FAQ Teknis & Troubleshooting</h2><p>Pertanyaan teknis seputar penggunaan platform:</p><h3>Lupa password?</h3><p>Klik "Lupa Password" di halaman login, masukkan email terdaftar, dan ikuti link reset yang dikirim ke email Anda.</p><h3>Tidak bisa login?</h3><p>Pastikan email dan password benar. Jika masih gagal, hubungi admin di admin@test.com.</p>',
-}
-
 function ToolbarButton({
   onClick,
   active,
@@ -56,7 +45,7 @@ export function KBDocumentEditor({ content, onChange, editable = true }: KBDocum
       StarterKit,
       Placeholder.configure({ placeholder: 'Mulai menulis konten dokumen...' }),
     ],
-    content: MOCK_CONTENT[content] || content || '<p>Mulai menulis konten dokumen...</p>',
+    content: content || '<p>Mulai menulis konten dokumen...</p>',
     editable,
     onUpdate: ({ editor: e }) => onChange(e.getHTML()),
   }, [content, editable])

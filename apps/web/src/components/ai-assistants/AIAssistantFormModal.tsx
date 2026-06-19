@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { AIAssistant } from '@/mock/ai-assistants'
+import type { AIAssistant } from '@/types/ai'
 
 const TONE_OPTIONS = [
   { value: 'formal', label: 'Formal', desc: 'Bahasa baku, sopan, profesional' },
@@ -70,7 +70,7 @@ export function AIAssistantFormModal({ open, onOpenChange, editingAssistant, onS
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
+      <div className="absolute inset-0 bg-black/30" onClick={() => onOpenChange(false)} />
       <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-hairline overflow-hidden animate-in zoom-in-95 fade-in duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-hairline-soft">
           <h2 className="text-base font-semibold text-ink">

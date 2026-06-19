@@ -1,7 +1,10 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useMemo, useRef, useEffect, useCallback, memo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useInboxStore } from '@/stores/ui'
-import { MOCK_CONVERSATIONS, MOCK_AGENTS, MOCK_MESSAGES, type Message, type ConversationStatus, type Agent } from '@/mock/inbox'
+import { queryKeys } from '@/lib/queryKeys'
+import { useConversation, useMessages, useConversationMutations } from '@/hooks/inbox'
+import type { Message } from '@/types/inbox'
 import { ChannelIcon } from './ChannelIcon'
 import { MessageInput } from './MessageInput'
 import { MediaMessage } from './MediaMessage'
@@ -9,142 +12,74 @@ import { ActionBar } from './ActionBar'
 
 export function ChatPanel() {
   const { selectedConversationId, detailPanelOpen, setDetailPanelOpen } = useInboxStore()
-  const [messages, setMessages] = useState(MOCK_MESSAGES)
-  const [convOverrides, setConvOverrides] = useState<Record<string, { status?: ConversationStatus; agent?: Agent | null }>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
+  const qc = useQueryClient()
 
-  const conversation = MOCK_CONVERSATIONS.find((c) => c.id === selectedConversationId)
-  const conversationMessages = selectedConversationId ? messages[selectedConversationId] ?? [] : []
+  const { data: conversation, isLoading: convLoading } = useConversation(selectedConversationId)
+  const { data: messagesData } = useMessages(selectedConversationId)
+  const { send, sendMedia, assign, transfer, setStatus, markRead, addLabel, removeLabel, assignAi, deactivateAi } = useConversationMutations(selectedConversationId)
 
-  const overrides = selectedConversationId ? convOverrides[selectedConversationId] : undefined
-  const currentStatus = overrides?.status ?? conversation?.status ?? 'open'
-  const currentAgent = overrides?.agent !== undefined ? overrides.agent ?? undefined : conversation?.assignedAgent
+  const conversationMessages = useMemo(() => messagesData?.data ?? [], [messagesData])
+  const currentStatus = conversation?.status ?? 'open'
+  const currentAgent = conversation?.assignedAgent
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    if (selectedConversationId && conversation && conversation.unreadCount > 0) {
+      markRead.mutate()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConversationId, conversation?.unreadCount])
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [conversationMessages.length, selectedConversationId])
 
   const groupedMessages = useMemo(() => {
     const groups: { date: string; messages: Message[] }[] = []
     let currentDate = ''
     for (const msg of conversationMessages) {
-      const date = new Date(msg.createdAt).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
+      const date = new Date(msg.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
       if (date !== currentDate) {
         currentDate = date
         groups.push({ date, messages: [] })
       }
-      groups[groups.length - 1].messages.push(msg)
+      groups[groups.length - 1]!.messages.push(msg)
     }
     return groups
   }, [conversationMessages])
 
   const handleSend = useCallback((content: string) => {
+    if (!selectedConversationId || !content.trim()) return
+    send.mutate({ text: content, tempId: `temp_${crypto.randomUUID()}` })
+  }, [selectedConversationId, send])
+
+  const handleRetry = useCallback((message: Message) => {
     if (!selectedConversationId) return
-    const newMsg: Message = {
-      id: `m${Date.now()}`,
-      conversationId: selectedConversationId,
-      direction: 'outbound',
-      senderType: 'agent',
-      senderName: 'Anda',
-      content,
-      contentType: 'text',
-      status: 'sent',
-      createdAt: new Date().toISOString(),
-    }
-    setMessages((prev) => ({
-      ...prev,
-      [selectedConversationId]: [...(prev[selectedConversationId] ?? []), newMsg],
-    }))
-  }, [selectedConversationId])
+    qc.setQueryData<{ data: Message[]; nextCursor: string | null }>(
+      queryKeys.messages(selectedConversationId),
+      (prev) => (prev ? { ...prev, data: prev.data.filter((m) => m.id !== message.id) } : prev),
+    )
+    send.mutate({ text: message.content, tempId: `temp_${crypto.randomUUID()}` })
+  }, [selectedConversationId, send, qc])
 
   const handleFileSelect = useCallback((file: File) => {
     if (!selectedConversationId) return
-    const isImage = file.type.startsWith('image/')
-    const isVideo = file.type.startsWith('video/')
-    const contentType = isImage ? 'image' : isVideo ? 'video' : 'document'
-    const newMsg: Message = {
-      id: `m${Date.now()}`,
-      conversationId: selectedConversationId,
-      direction: 'outbound',
-      senderType: 'agent',
-      senderName: 'Anda',
-      content: file.name,
-      contentType,
-      status: 'sent',
-      createdAt: new Date().toISOString(),
-      mediaUrl: URL.createObjectURL(file),
-      fileName: file.name,
-      fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-    }
-    setMessages((prev) => ({
-      ...prev,
-      [selectedConversationId]: [...(prev[selectedConversationId] ?? []), newMsg],
-    }))
-  }, [selectedConversationId])
+    sendMedia.mutate({ file, tempId: `temp_${crypto.randomUUID()}` })
+  }, [selectedConversationId, sendMedia])
 
-  const handleAssignAgent = useCallback((agentId: string) => {
-    if (!selectedConversationId) return
-    const agent = MOCK_AGENTS.find((a) => a.id === agentId)
-    setConvOverrides((prev) => ({
-      ...prev,
-      [selectedConversationId]: { ...prev[selectedConversationId], agent: agent ?? null },
-    }))
-  }, [selectedConversationId])
+  const handleAssignAgent = useCallback((agentId: string) => assign.mutate(agentId), [assign])
+  const handleTransfer = useCallback((agentId: string, notes: string) => transfer.mutate({ agentId, note: notes }), [transfer])
+  const handleAssignAi = useCallback((aiAssistantId: string) => assignAi.mutate(aiAssistantId), [assignAi])
+  const handleDeactivateAi = useCallback(() => deactivateAi.mutate(), [deactivateAi])
+  const handleResolve = useCallback(() => setStatus.mutate(currentStatus === 'resolved' ? 'open' : 'resolved'), [setStatus, currentStatus])
+  const handleSnooze = useCallback(() => setStatus.mutate(currentStatus === 'snoozed' ? 'open' : 'snoozed'), [setStatus, currentStatus])
+  const currentLabelIds = useMemo(() => conversation?.labels.map((l) => l.id) ?? [], [conversation])
+  const handleToggleLabel = useCallback((labelId: string) => {
+    if (currentLabelIds.includes(labelId)) removeLabel.mutate(labelId)
+    else addLabel.mutate(labelId)
+  }, [currentLabelIds, addLabel, removeLabel])
 
-  const handleTransfer = useCallback((agentId: string, notes: string) => {
-    if (!selectedConversationId) return
-    const agent = MOCK_AGENTS.find((a) => a.id === agentId)
-    setConvOverrides((prev) => ({
-      ...prev,
-      [selectedConversationId]: { ...prev[selectedConversationId], agent: agent ?? null },
-    }))
-    if (notes) {
-      const systemMsg: Message = {
-        id: `m${Date.now()}`,
-        conversationId: selectedConversationId,
-        direction: 'outbound',
-        senderType: 'system',
-        content: `Percakapan ditransfer. Catatan: ${notes}`,
-        contentType: 'text',
-        status: 'delivered',
-        createdAt: new Date().toISOString(),
-      }
-      setMessages((prev) => ({
-        ...prev,
-        [selectedConversationId]: [...(prev[selectedConversationId] ?? []), systemMsg],
-      }))
-    }
-  }, [selectedConversationId])
-
-  const handleResolve = useCallback(() => {
-    if (!selectedConversationId) return
-    setConvOverrides((prev) => ({
-      ...prev,
-      [selectedConversationId]: {
-        ...prev[selectedConversationId],
-        status: currentStatus === 'resolved' ? 'open' : 'resolved',
-      },
-    }))
-  }, [selectedConversationId, currentStatus])
-
-  const handleSnooze = useCallback(() => {
-    if (!selectedConversationId) return
-    setConvOverrides((prev) => ({
-      ...prev,
-      [selectedConversationId]: {
-        ...prev[selectedConversationId],
-        status: currentStatus === 'snoozed' ? 'open' : 'snoozed',
-      },
-    }))
-  }, [selectedConversationId, currentStatus])
-
-  if (!conversation) {
+  if (!selectedConversationId) {
     return (
       <div className="flex-1 flex items-center justify-center bg-canvas">
         <div className="text-center">
@@ -159,6 +94,12 @@ export function ChatPanel() {
     )
   }
 
+  if (convLoading || !conversation) {
+    return <div className="flex-1 flex items-center justify-center bg-canvas"><p className="text-sm text-steel">Memuat percakapan...</p></div>
+  }
+
+  const contactName = conversation.contact.name || 'Tanpa Nama'
+
   return (
     <div className="flex-1 flex flex-col h-full bg-canvas min-w-0">
       <button
@@ -166,15 +107,11 @@ export function ChatPanel() {
         className="h-14 px-4 flex items-center gap-3 border-b border-hairline flex-shrink-0 w-full text-left hover:bg-surface-soft transition-colors"
       >
         <div className="w-9 h-9 rounded-full bg-surface flex items-center justify-center text-sm font-semibold text-ink flex-shrink-0">
-          {conversation.contact.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .slice(0, 2)}
+          {contactName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-ink truncate">{conversation.contact.name}</span>
+            <span className="text-sm font-medium text-ink truncate">{contactName}</span>
             <ChannelIcon channel={conversation.channel} size={14} />
           </div>
           <p className="text-[11px] text-steel">
@@ -190,11 +127,18 @@ export function ChatPanel() {
       </button>
 
       <ActionBar
-        contactName={conversation.contact.name}
+        contactName={contactName}
         assignedAgent={currentAgent}
         status={currentStatus}
+        labelIds={currentLabelIds}
+        isAiHandling={conversation.isAiHandling}
+        aiAssistantName={conversation.aiAssistant?.name}
+        aiAssistantId={conversation.aiAssistantId}
+        onToggleLabel={handleToggleLabel}
         onAssignAgent={handleAssignAgent}
         onTransfer={handleTransfer}
+        onAssignAi={handleAssignAi}
+        onDeactivateAi={handleDeactivateAi}
         onResolve={handleResolve}
         onSnooze={handleSnooze}
       />
@@ -209,7 +153,7 @@ export function ChatPanel() {
             </div>
             <div className="space-y-2">
               {group.messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
+                <MessageBubble key={msg.id} message={msg} onRetry={handleRetry} />
               ))}
             </div>
           </div>
@@ -221,7 +165,7 @@ export function ChatPanel() {
   )
 }
 
-function MessageBubble({ message }: { message: Message }) {
+const MessageBubble = memo(function MessageBubble({ message, onRetry }: { message: Message; onRetry: (m: Message) => void }) {
   const isOutbound = message.direction === 'outbound'
   const hasMedia = message.contentType && message.contentType !== 'text'
 
@@ -232,7 +176,7 @@ function MessageBubble({ message }: { message: Message }) {
           className={cn(
             'rounded-2xl overflow-hidden',
             isOutbound ? 'bg-brand-blue text-white rounded-br-md' : 'bg-surface text-ink rounded-bl-md',
-            hasMedia && (isOutbound ? 'bg-transparent text-ink' : 'bg-transparent text-ink'),
+            hasMedia && 'bg-transparent text-ink',
           )}
         >
           {hasMedia ? (
@@ -248,17 +192,18 @@ function MessageBubble({ message }: { message: Message }) {
               <p className="whitespace-pre-wrap">{message.content}</p>
             </div>
           )}
-          <div
-            className={cn(
-              'flex items-center gap-1 px-3.5 pb-2',
-              isOutbound ? 'justify-end' : 'justify-start',
-            )}
-          >
+          <div className={cn('flex items-center gap-1 px-3.5 pb-2', isOutbound ? 'justify-end' : 'justify-start')}>
             <span className={cn('text-[10px]', isOutbound ? 'text-white/60' : 'text-steel')}>
               {new Date(message.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
             </span>
             {isOutbound && (
               <span className="flex-shrink-0">
+                {message.status === 'sending' && (
+                  <svg className="w-3.5 h-3.5 text-white/50 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="9" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 2" />
+                  </svg>
+                )}
                 {message.status === 'read' && (
                   <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M1.5 12.5l5 5L17.5 7" />
@@ -285,7 +230,18 @@ function MessageBubble({ message }: { message: Message }) {
             )}
           </div>
         </div>
+        {isOutbound && message.status === 'failed' && (
+          <button
+            onClick={() => onRetry(message)}
+            className="mt-1 flex items-center gap-1 text-[10px] font-medium text-red-500 hover:text-red-600"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5 9a7 7 0 0111-3M19 15a7 7 0 01-11 3" />
+            </svg>
+            Gagal terkirim · Coba lagi
+          </button>
+        )}
       </div>
     </div>
   )
-}
+})

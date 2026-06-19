@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
 import { RefreshIcon, XIcon, MessageCircleIcon, CheckedIcon } from '@/icons'
 import { cn } from '@/lib/utils'
-import { MOCK_AGENTS, type Agent } from '@/mock/inbox'
+import { useAgents } from '@/hooks/inbox'
+import type { Agent } from '@/types/inbox'
 import {
   Modal,
   ModalContent,
@@ -31,6 +32,7 @@ export function TransferModal({
 }: TransferModalProps) {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
+  const { data: agents = [] } = useAgents()
 
   const handleTransfer = useCallback(() => {
     if (selectedAgentId) {
@@ -75,7 +77,7 @@ export function TransferModal({
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-steel">Pilih Agent</label>
             <div className="space-y-1.5">
-              {MOCK_AGENTS.filter((a) => a.status !== 'offline').map((agent) => {
+              {agents.filter((a) => a.status !== 'offline').map((agent) => {
                 const isSelected = selectedAgentId === agent.id
                 return (
                   <button

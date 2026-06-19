@@ -1,25 +1,25 @@
 import { useState, useCallback } from 'react'
 import { PenIcon, XIcon, TrashIcon } from '@/icons'
-import { type Label } from '@/mock/inbox'
-import { getLabels, createLabel, updateLabel, deleteLabel } from '@/mock/labels'
+import { type Label } from '@/types/inbox'
+import { useLabels, useLabelMutations } from '@/hooks/inbox'
 import { LabelTable } from '@/components/labels/LabelTable'
 import { LabelManagerModal } from '@/components/labels/LabelManagerModal'
 
 export function LabelsPage() {
-  const [labels, setLabels] = useState<Label[]>(() => getLabels())
+  const { data: labels = [], isLoading } = useLabels()
+  const { create, update, remove } = useLabelMutations()
   const [showModal, setShowModal] = useState(false)
   const [editingLabel, setEditingLabel] = useState<Label | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Label | null>(null)
 
   const handleSave = useCallback((name: string, color: string) => {
     if (editingLabel) {
-      updateLabel(editingLabel.id, name, color)
+      update.mutate({ id: editingLabel.id, body: { name, color } })
     } else {
-      createLabel(name, color)
+      create.mutate({ name, color })
     }
-    setLabels(getLabels())
     setEditingLabel(null)
-  }, [editingLabel])
+  }, [editingLabel, create, update])
 
   const handleEdit = useCallback((label: Label) => {
     setEditingLabel(label)
@@ -32,11 +32,10 @@ export function LabelsPage() {
 
   const confirmDelete = useCallback(() => {
     if (deleteTarget) {
-      deleteLabel(deleteTarget.id)
-      setLabels(getLabels())
+      remove.mutate(deleteTarget.id)
       setDeleteTarget(null)
     }
-  }, [deleteTarget])
+  }, [deleteTarget, remove])
 
   return (
     <div className="flex-1 flex flex-col h-full bg-canvas min-w-0 overflow-hidden">
@@ -55,7 +54,11 @@ export function LabelsPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <LabelTable labels={labels} onEdit={handleEdit} onDelete={handleDelete} />
+        {isLoading ? (
+          <p className="px-4 py-10 text-sm text-steel text-center">Memuat label...</p>
+        ) : (
+          <LabelTable labels={labels} onEdit={handleEdit} onDelete={handleDelete} />
+        )}
       </div>
 
       <LabelManagerModal
@@ -66,7 +69,7 @@ export function LabelsPage() {
       />
 
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30">
           <div className="bg-canvas rounded-xl border border-hairline shadow-lg p-5 w-[380px]">
             <h3 className="text-sm font-semibold text-ink mb-1">Hapus Label?</h3>
             <p className="text-xs text-steel mb-4">

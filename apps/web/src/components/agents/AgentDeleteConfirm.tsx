@@ -11,7 +11,7 @@ export function AgentDeleteConfirm({ agent, onConfirm, onCancel }: AgentDeleteCo
   const hasActive = agent.activeConversationCount > 0
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 animate-fade-in">
       <div className="bg-canvas rounded-xl border border-hairline shadow-lg p-5 w-[380px] animate-fade-in">
         <div className="flex items-start gap-3 mb-3">
           <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">

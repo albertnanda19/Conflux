@@ -9,7 +9,7 @@ const metrics = (agent: AgentProfile) => [
   { label: 'Total Percakapan', value: agent.totalConversations, icon: '💬', color: 'text-ink', bgColor: 'bg-surface' },
   { label: 'Diselesaikan', value: agent.resolvedConversations, icon: '✅', color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
   { label: 'Avg Response Time', value: parseFloat(agent.avgResponseTime.replace(/(\d+)m\s*(\d+)s/, (_, m, s) => `${parseInt(m)}.${s.padStart(2, '0')}`)) || 0, icon: '⏱️', color: 'text-brand-blue-deep', bgColor: 'bg-brand-blue-200', decimals: 1, suffix: 'm' },
-  { label: 'Conversion Rate', value: agent.conversionRate, icon: '📈', color: agent.conversionRate >= 30 ? 'text-emerald-600' : agent.conversionRate >= 20 ? 'text-amber-600' : 'text-steel', bgColor: 'bg-brand-coral/10', suffix: '%' },
+  { label: 'Conversion Rate', value: agent.conversionRate, icon: '📈', color: agent.conversionRate >= 30 ? 'text-emerald-600' : agent.conversionRate >= 20 ? 'text-amber-600' : 'text-steel', bgColor: 'bg-coral/10', suffix: '%' },
 ]
 
 export function AgentPerformanceCard({ agent }: AgentPerformanceCardProps) {

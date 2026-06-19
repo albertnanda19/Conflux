@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import type { AgentProfile } from '@/mock/agents'
-import type { AIAssistant } from '@/mock/ai-assistants'
+import type { AIAssistant } from '@/types/ai'
 import { AgentAvatar } from './AgentAvatar'
 import { AgentRoleBadge } from './AgentRoleBadge'
 import { AgentStatusBadge } from './AgentStatusBadge'

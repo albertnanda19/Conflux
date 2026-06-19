@@ -1,4 +1,4 @@
-import { useAISettingsStore } from '@/stores/ai-settings'
+import type { PersonaConfig as PersonaConfigType } from '@/types/ai'
 
 const TONE_OPTIONS = [
   { value: 'formal', label: 'Formal', desc: 'Bahasa baku, sopan, profesional' },
@@ -6,9 +6,12 @@ const TONE_OPTIONS = [
   { value: 'casual', label: 'Casual', desc: 'Santai, friendly, kekinian' },
 ] as const
 
-export function PersonaConfig() {
-  const { persona, updatePersona } = useAISettingsStore()
+interface PersonaConfigProps {
+  persona: PersonaConfigType
+  onChange: (patch: Partial<PersonaConfigType>) => void
+}
 
+export function PersonaConfig({ persona, onChange }: PersonaConfigProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
@@ -17,7 +20,7 @@ export function PersonaConfig() {
           <input
             type="text"
             value={persona.name}
-            onChange={(e) => updatePersona({ name: e.target.value })}
+            onChange={(e) => onChange({ name: e.target.value })}
             className="w-full text-sm text-ink bg-canvas border border-hairline-soft rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-blue-deep focus:ring-offset-1"
           />
         </div>
@@ -25,7 +28,7 @@ export function PersonaConfig() {
           <label className="text-sm font-medium text-ink">Bahasa</label>
           <select
             value={persona.language}
-            onChange={(e) => updatePersona({ language: e.target.value })}
+            onChange={(e) => onChange({ language: e.target.value })}
             className="w-full text-sm text-ink bg-canvas border border-hairline-soft rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-blue-deep focus:ring-offset-1"
           >
             <option value="Bahasa Indonesia">Bahasa Indonesia</option>
@@ -41,7 +44,7 @@ export function PersonaConfig() {
           {TONE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => updatePersona({ tone: opt.value })}
+              onClick={() => onChange({ tone: opt.value })}
               className={`px-4 py-3 rounded-xl text-left transition-colors ${
                 persona.tone === opt.value
                   ? 'bg-brand-blue-deep text-white'
@@ -66,7 +69,7 @@ export function PersonaConfig() {
         </p>
         <textarea
           value={persona.systemPrompt}
-          onChange={(e) => updatePersona({ systemPrompt: e.target.value })}
+          onChange={(e) => onChange({ systemPrompt: e.target.value })}
           rows={5}
           className="w-full text-sm text-ink bg-canvas border border-hairline-soft rounded-xl px-4 py-3 resize-none font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-brand-blue-deep focus:ring-offset-1"
         />

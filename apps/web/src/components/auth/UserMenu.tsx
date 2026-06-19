@@ -10,7 +10,7 @@ const ROLE_LABEL: Record<string, string> = {
 }
 
 const ROLE_COLOR: Record<string, string> = {
-  super_admin: 'bg-brand-coral/10 text-brand-coral',
+  super_admin: 'bg-coral/10 text-coral',
   admin: 'bg-brand-blue-200 text-brand-blue-deep',
   supervisor: 'bg-purple-100 text-purple-700',
   agent: 'bg-gray-100 text-gray-600',

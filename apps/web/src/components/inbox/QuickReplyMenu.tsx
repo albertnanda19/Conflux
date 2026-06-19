@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { MOCK_QUICK_REPLIES, type QuickReply } from '@/mock/inbox'
+import { useQuickReplies } from '@/hooks/inbox'
+import type { QuickReply } from '@/types/inbox'
 
 interface QuickReplyMenuProps {
   query: string
@@ -11,16 +12,17 @@ interface QuickReplyMenuProps {
 export function QuickReplyMenu({ query, onSelect, onClose }: QuickReplyMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const listRef = useRef<HTMLDivElement>(null)
+  const { data: quickReplies = [] } = useQuickReplies()
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
-    return MOCK_QUICK_REPLIES.filter(
+    return quickReplies.filter(
       (qr) =>
         qr.shortcut.toLowerCase().includes(q) ||
         qr.name.toLowerCase().includes(q) ||
-        qr.category.toLowerCase().includes(q),
+        (qr.category ?? '').toLowerCase().includes(q),
     )
-  }, [query])
+  }, [query, quickReplies])
 
   useEffect(() => {
     setSelectedIndex(0)

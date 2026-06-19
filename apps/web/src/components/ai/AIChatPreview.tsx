@@ -1,61 +1,56 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import { aiAssistantsApi } from '@/lib/api/ai-assistants'
 
 interface ChatMessage {
-  role: 'user' | 'ai'
+  role: 'user' | 'assistant'
   text: string
 }
 
-const MOCK_RESPONSES: Record<string, string> = {
-  'harga': 'Program Data Science Bootcamp kami dibanderol seharga Rp 8.500.000. Untuk early bird, ada diskon 15% jika mendaftar 30 hari sebelum batch dimulai. Pembayaran bisa dicicil 3x tanpa bunga.',
-  'jadwal': 'Batch berikutnya mulai 7 Juli 2026 dan berakhir 24 Oktober 2026. Kelas diadakan Senin–Rabu pukul 19.00–21.30 WIB. Masih ada slot!',
-  'daftar': 'Untuk mendaftar, Anda perlu: (1) minimal 18 tahun, (2) mengisi formulir online, dan (3) membayar DP Rp 1.000.000. Mau saya bantu proses pendaftarannya?',
-  'bayar': 'Kami menerima transfer Bank BCA (1234567890) dan Bank Mandiri (0987654321) a.n. Acme Corp. Pembayaran juga bisa via credit card Midtrans.',
-  'konsultasi': 'Tentu! Saya akan menghubungkan Anda dengan tim kami untuk sesi konsultasi gratis. Mohon tunggu sebentar ya 😊',
-  'default': 'Terima kasih atas pertanyaannya! Berdasarkan knowledge base kami, saya akan membantu menjawab. Silakan tanyakan lebih spesifik tentang program, harga, jadwal, atau cara pendaftaran.',
+interface AIChatPreviewProps {
+  assistantId: string
+  personaName: string
 }
 
-function getAIResponse(input: string): string {
-  const lower = input.toLowerCase()
-  for (const [keyword, response] of Object.entries(MOCK_RESPONSES)) {
-    if (keyword !== 'default' && lower.includes(keyword)) return response
-  }
-  return MOCK_RESPONSES.default
-}
-
-export function AIChatPreview() {
-  const { persona } = useAISettingsStore()
+export function AIChatPreview({ assistantId, personaName }: AIChatPreviewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'ai', text: `Halo! Saya ${persona.name}. Ada yang bisa saya bantu hari ini? 😊` },
+    { role: 'assistant', text: `Halo! Saya ${personaName}. Ada yang bisa saya bantu hari ini? 😊` },
   ])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [handoff, setHandoff] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, isTyping])
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const text = input.trim()
-    if (!text) return
+    if (!text || isTyping) return
 
-    setMessages((prev) => [...prev, { role: 'user', text }])
+    const nextMessages: ChatMessage[] = [...messages, { role: 'user', text }]
+    setMessages(nextMessages)
     setInput('')
     setIsTyping(true)
+    setHandoff(false)
 
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: 'ai', text: getAIResponse(text) }])
+    try {
+      const result = await aiAssistantsApi.testChat(
+        assistantId,
+        nextMessages.map((m) => ({ role: m.role, content: m.text })),
+      )
+      setMessages((prev) => [...prev, { role: 'assistant', text: result.response }])
+      setHandoff(result.handoffDetected)
+    } catch {
+      setMessages((prev) => [...prev, { role: 'assistant', text: 'Maaf, terjadi kesalahan saat menghubungi AI. Coba lagi.' }])
+    } finally {
       setIsTyping(false)
-    }, 800 + Math.random() * 700)
-  }, [input])
+    }
+  }, [input, isTyping, messages, assistantId])
 
   return (
     <div className="flex flex-col h-full">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
@@ -80,6 +75,13 @@ export function AIChatPreview() {
             </div>
           </div>
         )}
+        {handoff && !isTyping && (
+          <div className="flex justify-center">
+            <span className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+              ⚡ Sinyal handoff terdeteksi — percakapan akan diserahkan ke agent
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-hairline-soft">
@@ -93,7 +95,7 @@ export function AIChatPreview() {
         />
         <button
           onClick={handleSend}
-          disabled={!input.trim()}
+          disabled={!input.trim() || isTyping}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-brand-blue-deep text-white hover:bg-brand-blue-700 transition-colors disabled:opacity-40 disabled:pointer-events-none"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,12 +103,6 @@ export function AIChatPreview() {
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
         </button>
-      </div>
-
-      <div className="px-4 py-2 text-center border-t border-hairline-soft">
-        <p className="text-[10px] text-stone">
-          Persona: {persona.name} · Tone: {persona.tone} · Mode simulasi (mock responses)
-        </p>
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { type Message } from '@/mock/inbox'
+import { type Message } from '@/types/inbox'
 
 interface MediaMessageProps {
   message: Message
@@ -19,10 +19,20 @@ export function MediaMessage({ message, isOutbound: _isOutbound }: MediaMessageP
   if (message.contentType === 'audio') {
     return <AudioMessage />
   }
+  if (message.contentType === 'sticker') {
+    return <StickerMessage message={message} />
+  }
   if (message.contentType === 'location') {
     return <LocationMessage message={message} />
   }
   return null
+}
+
+function StickerMessage({ message }: { message: Message }) {
+  if (message.mediaUrl) {
+    return <img src={message.mediaUrl} alt="Stiker" className="w-28 h-28 object-contain" loading="lazy" />
+  }
+  return <div className="w-28 h-28 flex items-center justify-center text-5xl">{message.content || '🙂'}</div>
 }
 
 function ImageMessage({ message }: { message: Message }) {

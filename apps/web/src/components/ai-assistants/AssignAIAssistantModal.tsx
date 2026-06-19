@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { AIAssistant } from '@/mock/ai-assistants'
+import type { AIAssistant } from '@/types/ai'
 import { Badge } from '@/components/ui/badge'
 
 const STATUS_CONFIG: Record<AIAssistant['status'], { label: string; variant: 'success' | 'warning' | 'default' }> = {
@@ -45,7 +45,7 @@ export function AssignAIAssistantModal({ open, onOpenChange, currentAssistantId,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
+      <div className="absolute inset-0 bg-black/30" onClick={() => onOpenChange(false)} />
       <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-md mx-4 border border-hairline overflow-hidden animate-in zoom-in-95 fade-in duration-200">
         <div className="px-6 py-4 border-b border-hairline-soft">
           <h2 className="text-base font-semibold text-ink">Assign AI Assistant</h2>

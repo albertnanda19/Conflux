@@ -1,16 +1,31 @@
 import { Worker } from "bullmq"
-
-const connection = { url: process.env.REDIS_URL || "redis://localhost:6379" }
+import { AI_QUEUE, AI_REPLY_JOB, queueConnection } from "@/lib/queues"
+import { maybeAutoReply } from "@/modules/messages/ai-reply"
 
 let worker: Worker | null = null
 
 export function startAiWorker() {
-  worker = new Worker("ai-queue", async (job) => {
-    console.log(`[AiWorker] Memproses job ${job.id}:`, job.data)
-  }, { connection })
+  worker = new Worker(
+    AI_QUEUE,
+    async (job) => {
+      if (job.name === AI_REPLY_JOB) {
+        const { conversationId, inboundText, contactName } = job.data as {
+          conversationId: string
+          inboundText: string
+          contactName?: string
+        }
+        await maybeAutoReply(conversationId, inboundText, contactName)
+        return
+      }
+      console.warn(`[AiWorker] Job tidak dikenal: ${job.name}`)
+    },
+    { connection: queueConnection, concurrency: 5 },
+  )
+
   worker.on("failed", (job, err) => {
     console.error(`[AiWorker] Job ${job?.id} gagal:`, err.message)
   })
+
   console.log("[AiWorker] Worker AI aktif.")
 }
 

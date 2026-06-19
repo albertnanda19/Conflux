@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import { useMemo, useState } from 'react'
+import { useAiSettings, useAiSettingsMutations } from '@/hooks/ai-settings'
+import { useAIAssistants, useAIAssistantMutations } from '@/hooks/ai-assistants'
+import { useAssistantDraft } from '@/hooks/useAssistantDraft'
 import { Tabs, TabList, TabTrigger, TabContent } from '@/components/ui/tabs'
 import { ProviderConfig } from '@/components/settings/ProviderConfig'
 import { WorkingHours } from '@/components/settings/WorkingHours'
@@ -11,7 +13,13 @@ import { UmumTab } from '@/components/settings/umum/UmumTab'
 import { AkunTab } from '@/components/settings/akun/AkunTab'
 
 export function SettingsPage() {
-  const { aiEnabled, toggleAiEnabled } = useAISettingsStore()
+  const { data: settings } = useAiSettings()
+  const { setEnabled } = useAiSettingsMutations()
+  const aiEnabled = settings?.aiEnabled ?? false
+  const { data: assistants = [] } = useAIAssistants({})
+  const defaultAssistant = useMemo(() => assistants.find((a) => a.isDefault) ?? assistants[0], [assistants])
+  const { update } = useAIAssistantMutations()
+  const { draft, edit } = useAssistantDraft(defaultAssistant, (id, patch) => update.mutate({ id, patch }))
   const [chatPreviewOpen, setChatPreviewOpen] = useState(false)
 
   return (
@@ -43,7 +51,7 @@ export function SettingsPage() {
                   </p>
                 </div>
                 <button
-                  onClick={toggleAiEnabled}
+                  onClick={() => setEnabled.mutate(!aiEnabled)}
                   className={`relative w-12 h-7 rounded-full transition-colors ${
                     aiEnabled ? 'bg-emerald-500' : 'bg-hairline'
                   }`}
@@ -77,7 +85,7 @@ export function SettingsPage() {
               <p className="text-sm text-steel mb-6">
                 Tentukan kapan AI aktif secara otomatis. Di luar jam kerja, AI akan selalu merespons pesan.
               </p>
-              <WorkingHours />
+              {draft && <WorkingHours workingHours={draft.workingHours} onChange={(next) => edit({ workingHours: next })} />}
             </div>
 
             <div className="card-base p-6">
@@ -85,7 +93,7 @@ export function SettingsPage() {
               <p className="text-sm text-steel mb-6">
                 Konfigurasi kapan AI menyerahkan percakapan ke agent manusia.
               </p>
-              <HandoffConfig />
+              {draft && <HandoffConfig handoffConfig={draft.handoffConfig} onChange={(next) => edit({ handoffConfig: next })} />}
             </div>
 
             <div className="card-base p-6">
@@ -103,7 +111,7 @@ export function SettingsPage() {
                   ✨ Test AI
                 </button>
               </div>
-              <PersonaConfig />
+              {draft && <PersonaConfig persona={draft.persona} onChange={(patch) => edit({ persona: { ...draft.persona, ...patch } })} />}
             </div>
           </div>
         </TabContent>
@@ -139,7 +147,7 @@ export function SettingsPage() {
               </button>
             </div>
             <div className="flex-1 min-h-0">
-              <AIChatPreview />
+              {draft && <AIChatPreview assistantId={draft.id} personaName={draft.persona.name} />}
             </div>
           </div>
         </div>

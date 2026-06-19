@@ -1,8 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Toggle } from '@/components/ui/toggle'
 import { EyeIcon, TrashIcon } from '@/icons'
-import { useAISettingsStore } from '@/stores/ai-settings'
-import type { KBDocument } from '@/mock/ai-settings'
+import type { KBDocument } from '@/types/ai'
 
 const FILE_TYPE_ICONS: Record<string, { label: string; color: string }> = {
   pdf: { label: 'PDF', color: 'text-red-500 bg-red-50' },
@@ -23,10 +22,10 @@ interface KBDocumentCardProps {
   document: KBDocument
   onView: (doc: KBDocument) => void
   onRemove: (id: string) => void
+  onToggleActive: (id: string, isActive: boolean) => void
 }
 
-export function KBDocumentCard({ document, onView, onRemove }: KBDocumentCardProps) {
-  const { toggleDocumentActive } = useAISettingsStore()
+export function KBDocumentCard({ document, onView, onRemove, onToggleActive }: KBDocumentCardProps) {
   const fileInfo = FILE_TYPE_ICONS[document.fileType] ?? FILE_TYPE_ICONS.txt
   const statusInfo = STATUS_CONFIG[document.processingStatus]
 
@@ -59,7 +58,7 @@ export function KBDocumentCard({ document, onView, onRemove }: KBDocumentCardPro
       <div className="flex items-center gap-2 flex-shrink-0">
         <Toggle
           checked={document.isActive}
-          onCheckedChange={() => toggleDocumentActive(document.id)}
+          onCheckedChange={() => onToggleActive(document.id, !document.isActive)}
         />
         <button
           onClick={() => onView(document)}

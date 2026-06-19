@@ -1,16 +1,25 @@
 import { useState } from 'react'
 import { UserPlusIcon, UserIcon, CheckedIcon, ClockIcon, RefreshIcon } from '@/icons'
-import { type Agent, type ConversationStatus } from '@/mock/inbox'
+import { type Agent, type ConversationStatus } from '@/types/inbox'
 import { cn } from '@/lib/utils'
 import { AssignAgentModal } from './AssignAgentModal'
+import { AssignAIModal } from './AssignAIModal'
 import { TransferModal } from './TransferModal'
+import { LabelPicker } from '@/components/labels/LabelPicker'
 
 interface ActionBarProps {
   contactName: string
   assignedAgent?: Agent
   status: ConversationStatus
+  labelIds: string[]
+  isAiHandling: boolean
+  aiAssistantName?: string
+  aiAssistantId?: string | null
+  onToggleLabel: (labelId: string) => void
   onAssignAgent: (agentId: string) => void
   onTransfer: (agentId: string, notes: string) => void
+  onAssignAi: (aiAssistantId: string) => void
+  onDeactivateAi: () => void
   onResolve: () => void
   onSnooze: () => void
 }
@@ -26,12 +35,20 @@ export function ActionBar({
   contactName,
   assignedAgent,
   status,
+  labelIds,
+  isAiHandling,
+  aiAssistantName,
+  aiAssistantId,
+  onToggleLabel,
   onAssignAgent,
   onTransfer,
+  onAssignAi,
+  onDeactivateAi,
   onResolve,
   onSnooze,
 }: ActionBarProps) {
   const [showAssign, setShowAssign] = useState(false)
+  const [showAssignAi, setShowAssignAi] = useState(false)
   const [showTransfer, setShowTransfer] = useState(false)
   const isResolved = status === 'resolved'
   const isSnoozed = status === 'snoozed'
@@ -62,6 +79,37 @@ export function ActionBar({
             Transfer
           </button>
         )}
+
+        {isAiHandling ? (
+          <button
+            onClick={onDeactivateAi}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-lg hover:bg-cyan-100 transition-colors"
+            title={aiAssistantName ? `Ditangani ${aiAssistantName}` : 'Ditangani AI'}
+          >
+            🤖 {aiAssistantName ?? 'AI'} · Ambil Alih
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowAssignAi(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-cyan-700 border border-dashed border-cyan-200 rounded-lg hover:bg-cyan-50 transition-colors"
+          >
+            🤖 Assign AI
+          </button>
+        )}
+
+        <LabelPicker
+          selectedIds={labelIds}
+          onToggle={onToggleLabel}
+          trigger={
+            <button className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-steel border border-hairline rounded-lg hover:bg-surface-soft hover:text-ink transition-colors">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+              </svg>
+              Label{labelIds.length > 0 ? ` (${labelIds.length})` : ''}
+            </button>
+          }
+        />
 
         <button
           onClick={onResolve}
@@ -109,6 +157,13 @@ export function ActionBar({
         onClose={() => setShowTransfer(false)}
         onTransfer={onTransfer}
         currentAgentName={assignedAgent?.name}
+        conversationContactName={contactName}
+      />
+      <AssignAIModal
+        open={showAssignAi}
+        onClose={() => setShowAssignAi(false)}
+        onAssign={onAssignAi}
+        currentAssistantId={aiAssistantId}
         conversationContactName={contactName}
       />
     </>

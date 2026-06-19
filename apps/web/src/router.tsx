@@ -27,6 +27,9 @@ const SettingsPage = lazy(() =>
 const LabelsPage = lazy(() =>
   import("./pages/LabelsPage").then((m) => ({ default: m.LabelsPage })),
 )
+const ChannelsPage = lazy(() =>
+  import("./pages/ChannelsPage").then((m) => ({ default: m.ChannelsPage })),
+)
 const CampaignsPage = lazy(() =>
   import("./pages/CampaignsPage").then((m) => ({ default: m.CampaignsPage })),
 )
@@ -112,6 +115,10 @@ export const router = createBrowserRouter([
           {
             path: "labels",
             element: <SuspenseWrap><LabelsPage /></SuspenseWrap>,
+          },
+          {
+            path: "channels",
+            element: <SuspenseWrap><ChannelsPage /></SuspenseWrap>,
           },
           {
             path: "settings",

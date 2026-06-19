@@ -1,4 +1,4 @@
-import { useAISettingsStore } from '@/stores/ai-settings'
+import type { WorkingHoursConfig } from '@/types/ai'
 
 const TIME_OPTIONS = Array.from({ length: 25 }, (_, i) => {
   const h = Math.floor(i / 2)
@@ -6,8 +6,17 @@ const TIME_OPTIONS = Array.from({ length: 25 }, (_, i) => {
   return `${String(h).padStart(2, '0')}:${m}`
 })
 
-export function WorkingHours() {
-  const { workingHours, toggleDay, updateDayHours, updateWorkingHours } = useAISettingsStore()
+interface WorkingHoursProps {
+  workingHours: WorkingHoursConfig
+  onChange: (next: WorkingHoursConfig) => void
+}
+
+export function WorkingHours({ workingHours, onChange }: WorkingHoursProps) {
+  const toggleDay = (day: string) =>
+    onChange({ ...workingHours, days: workingHours.days.map((d) => (d.day === day ? { ...d, enabled: !d.enabled } : d)) })
+
+  const updateDayHours = (day: string, start: string, end: string) =>
+    onChange({ ...workingHours, days: workingHours.days.map((d) => (d.day === day ? { ...d, start, end } : d)) })
 
   return (
     <div className="space-y-6">
@@ -82,7 +91,7 @@ export function WorkingHours() {
         </label>
         <textarea
           value={workingHours.oooMessage}
-          onChange={(e) => updateWorkingHours({ oooMessage: e.target.value })}
+          onChange={(e) => onChange({ ...workingHours, oooMessage: e.target.value })}
           rows={3}
           className="w-full text-sm text-ink bg-canvas border border-hairline-soft rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-brand-blue-deep focus:ring-offset-1"
         />

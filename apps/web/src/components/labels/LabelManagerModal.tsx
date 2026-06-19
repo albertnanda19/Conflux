@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalBody, ModalFooter, ModalCloseButton } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { LabelColorPicker } from './LabelColorPicker'
-import { type Label } from '@/mock/inbox'
+import { type Label } from '@/types/inbox'
 
 interface LabelManagerModalProps {
   open: boolean

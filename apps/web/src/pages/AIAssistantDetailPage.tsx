@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAIAssistantsStore } from '@/stores/ai-assistants'
+import { useAIAssistant, useAIAssistantMutations } from '@/hooks/ai-assistants'
+import { useAssistantDraft } from '@/hooks/useAssistantDraft'
 import { AIAssistantAssignmentCard } from '@/components/ai-assistants/AIAssistantAssignmentCard'
 import { AIAssistantFormModal } from '@/components/ai-assistants/AIAssistantFormModal'
 import { AIAssistantKBSelector } from '@/components/ai-assistants/AIAssistantKBSelector'
@@ -29,11 +30,13 @@ const TIME_OPTIONS = Array.from({ length: 25 }, (_, i) => {
 export function AIAssistantDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const assistants = useAIAssistantsStore((s) => s.assistants)
-  const editAssistant = useAIAssistantsStore((s) => s.editAssistant)
-  const removeAssistant = useAIAssistantsStore((s) => s.removeAssistant)
-  const toggleStatus = useAIAssistantsStore((s) => s.toggleStatus)
-  const assistant = assistants.find((a) => a.id === id)
+  const { data: serverAssistant, isLoading } = useAIAssistant(id)
+  const { update, remove, cycleStatus, assign } = useAIAssistantMutations()
+  const saveDraft = useCallback((aid: string, patch: Parameters<typeof update.mutate>[0]['patch']) => {
+    update.mutate({ id: aid, patch })
+  }, [update])
+  const { draft: assistant, edit } = useAssistantDraft(serverAssistant, saveDraft)
+  const editAssistant = useCallback((_id: string, patch: Parameters<typeof edit>[0]) => edit(patch), [edit])
 
   const [editOpen, setEditOpen] = useState(false)
   const [assignOpen, setAssignOpen] = useState(false)
@@ -41,35 +44,35 @@ export function AIAssistantDetailPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [keywordInput, setKeywordInput] = useState('')
 
-  const handleSave = useCallback((data: Parameters<typeof editAssistant>[1]) => {
+  const handleSave = useCallback((data: Parameters<typeof edit>[0]) => {
     if (id && data) {
-      editAssistant(id, data)
+      edit(data)
       setEditOpen(false)
     }
-  }, [id, editAssistant])
+  }, [id, edit])
 
   const handleAssign = useCallback((agentId: string) => {
-    if (id) editAssistant(id, { assignedAgentId: agentId })
-  }, [id, editAssistant])
+    if (id) assign.mutate({ id, agentId })
+  }, [id, assign])
 
   const handleUnassign = useCallback(() => {
-    if (id) editAssistant(id, { assignedAgentId: null })
-  }, [id, editAssistant])
+    if (id) assign.mutate({ id, agentId: null })
+  }, [id, assign])
 
   const handleToggleStatus = useCallback(() => {
-    if (id) toggleStatus(id)
-  }, [id, toggleStatus])
+    if (id) cycleStatus.mutate(id)
+  }, [id, cycleStatus])
 
   const handleDelete = useCallback(() => {
     if (id) {
-      removeAssistant(id)
+      remove.mutate(id)
       navigate('/ai-assistants')
     }
-  }, [id, removeAssistant, navigate])
+  }, [id, remove, navigate])
 
   const handleKBChange = useCallback((patch: { knowledgeBaseScope?: 'global' | 'custom'; customKBDocumentIds?: string[] }) => {
-    if (id) editAssistant(id, patch)
-  }, [id, editAssistant])
+    edit(patch)
+  }, [edit])
 
   const handleAddKeyword = useCallback(() => {
     const val = keywordInput.trim()
@@ -125,6 +128,14 @@ export function AIAssistantDetailPage() {
       editAssistant(id!, { workingHours: { ...assistant.workingHours, days: newDays } })
     }
   }, [assistant, id, editAssistant])
+
+  if (isLoading && !assistant) {
+    return (
+      <div className="p-8 h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand-blue-deep border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   if (!assistant) {
     return (
@@ -497,7 +508,7 @@ export function AIAssistantDetailPage() {
               </button>
             </div>
             <div className="flex-1 min-h-0">
-              <AIChatPreview />
+              <AIChatPreview assistantId={assistant.id} personaName={assistant.persona.name} />
             </div>
           </div>
         </div>
@@ -505,7 +516,7 @@ export function AIAssistantDetailPage() {
 
       {deleteConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setDeleteConfirmOpen(false)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmOpen(false)} />
           <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-sm mx-4 border border-hairline p-6 text-center animate-in zoom-in-95 fade-in duration-200">
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-xl mx-auto mb-4">🗑️</div>
             <h3 className="text-base font-semibold text-ink mb-1">Hapus AI Assistant?</h3>

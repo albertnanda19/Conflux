@@ -22,31 +22,35 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 - [ ] 🔴 Integrasi WhatsApp Business API
 - [ ] 🔴 Integrasi Instagram Messaging API
 - [ ] 🔴 Integrasi Facebook Messenger API
-- [ ] 🟢 Dashboard inbox dasar (UI mock selesai, perlu connect ke backend)
-- [ ] 🟢 Assignment percakapan ke agent (UI mock — AssignAgentModal, TransferModal, ActionBar)
-- [ ] 🔴 Notifikasi real-time (WebSocket)
-- [ ] 🟢 Filter & search percakapan (UI mock — agent filter, label filter, sort, phone search)
-- [ ] 🟢 Label & tag system (UI mock — CRUD /labels page, assign ke conversations)
-- [ ] 🟢 Real-time chat panel (UI mock — media messages, emoji, quick reply, send)
+- [ ] 🟢 Dashboard inbox dasar — UI + **terintegrasi backend** (GET /conversations, no mock)
+- [ ] 🟢 Assignment percakapan ke agent — UI + **API** (assign/transfer/useAgents) + **auto-assign round-robin (least-busy online)** saat pesan masuk baru (DEC-033)
+- [ ] 🟢 Notifikasi real-time (WebSocket) — Backend `/ws` + Redis bridge + **FE WS client** + UI prefs (suara/browser push) + **persist per-user** (tabel notifications, GET/mark-read, targeting assigned/broadcast) (DEC-032)
+- [ ] 🟢 Filter & search percakapan — channel/agent/label/search/sort/status **di backend**; filter tanggal + presence switcher UI ada (wiring pending)
+- [ ] 🟢 UI Channel integration page (/channels) — 6 channel + connect modal (UI; CRUD asli pending)
+- [ ] 🟢 Label & tag system — UI + **API CRUD** (/labels) + attach/detach ke conversation
+- [ ] 🟢 Real-time chat panel — UI + **API** (messages cursor + send + WS append); media upload pending
 - [ ] 🟢 Kelola Agent (UI mock — CRUD, role management, profile page, performance stats, cross-module sync)
 
 ### Minggu 7–10: Modul 2 — AI Auto-Reply Engine
 
-- [ ] 🟢 Knowledge base management (CRUD + upload dokumen + editor) — UI mock selesai (Phase 1-4)
-- [ ] 🟢 Integrasi AI provider (Gemini Flash + fallback chain) — UI mock selesai (Phase 1-2)
-- [ ] 🟢 Logika aktivasi/deaktivasi AI — UI mock selesai (toggle ready)
-- [ ] 🟢 Handoff otomatis ke human agent — UI mock selesai (Phase 6)
-- [ ] 🟢 Pengaturan jam kerja — UI mock selesai (Phase 5)
-- [ ] 🟢 AI persona konfigurasi — UI mock selesai (Phase 7)
+- [x] 🟢 Knowledge base management (CRUD + upload dokumen + editor) — **backend + FE terintegrasi**: upload→pipeline async (extract→chunk→embedding pgvector 768d), list/filter/scope, editor simpan konten, toggle/delete cascade (DEC-035)
+- [x] 🟢 Integrasi AI provider (Gemini Flash + fallback chain) — **backend**: 3-chain Gemini→OpenRouter→OpenAI DB-driven, key env-only; settings/ai UI terintegrasi (DEC-035); **timeout per-provider → failover cepat** (DEC-039)
+- [x] 🟢 AI reply async (BullMQ `ai-queue`) — generasi AI dipindah dari sinkron ke worker async (non-blocking, concurrency 5), sesuai PRD §7.4; **kualitas:** RAG threshold relevansi + enrichment profil kontak + query expansion + anti-halusinasi. **LIVE-VERIFIED** Gemini asli (DEC-039)
+- [x] 🟢 Logika aktivasi/deaktivasi AI — **LIVE di inbox**: AI balas saat aiEnabled + tak ada agen online (RAG); skip saat agen online; **di luar jam kerja → pesan OOO** (DEC-036/037)
+- [x] 🟢 Handoff otomatis ke human agent — **LIVE di inbox**: keyword + **conversion signals** + **batas maxAiMessages** → pesan transisi + auto-assign agen + activity ai_handoff + notif + isAiHandling off (DEC-036/037). Sentiment ML = open item
+- [x] 🟢 Pengaturan jam kerja — working hours per-assistant + **dipakai sebagai gate aktivasi + pesan OOO** (DEC-037)
+- [x] 🟢 AI persona konfigurasi — persona (nama/tone/bahasa/system prompt) per-assistant terintegrasi + test-chat RAG real
+- [x] 🟢 CRUD AI Assistant + assignment 1:1 ke agent — backend + FE terintegrasi penuh (DEC-035)
+- [x] 🟢 Assign AI Assistant ke percakapan (manual takeover di inbox) — tombol "Assign AI" + "Ambil Alih", AI langsung balas (override penuh, agen dipertahankan) (DEC-038)
 
 ### Minggu 11–12: Modul 4 — CRM Dasar
 
-- [ ] 🔴 Auto-create kontak dari pesan masuk
+- [ ] 🟢 Auto-create kontak dari pesan masuk — Backend ingest pipeline (message-worker, dedup + auto-create) done (Module 1 Phase 3)
 - [ ] 🟢 Profil kontak dasar — UI Phase 5 done (profile page, info card, activity timeline, edit modal)
 - [ ] 🟢 Pipeline Kanban sederhana (6 kolom default) — UI Phase 1-7 done + Column Management Phase 1-4 done (KanbanBoard, drag-drop, filters, column customize, rename/add/delete columns)
 - [ ] 🟢 Daftar kontak (tabel, search, bulk actions) — UI Phase 4 done (ContactTable, ContactFilters, BulkActionBar, pagination)
 - [ ] 🟢 Import kontak CSV/Excel — UI Phase 6 done (ImportContactsModal, drag-drop, validation, preview)
-- [ ] 🔴 Deduplikasi kontak cross-channel
+- [ ] 🟡 Deduplikasi kontak cross-channel — dedup per (channelType, identifier) done di ingest; merge lintas-channel ke satu profil belum
 
 ---
 
@@ -95,7 +99,7 @@ Status: 🔴 Belum mulai | 🟡 Sedang dikerjakan | 🟢 Selesai
 ## Fase 3 — Nice to Have (Bulan 7+)
 
 - [ ] 🔴 Live chat widget website
-- [ ] 🔴 Integrasi Telegram
+- [ ] 🟢 Integrasi Telegram — adapter REAL (Bot API) + polling worker + webhook route + FE (ikon/tab); verifikasi live pending (DEC-026)
 - [ ] 🔴 Sequence / drip message
 - [ ] 🔴 A/B testing template
 - [ ] 🔴 AI lead qualification

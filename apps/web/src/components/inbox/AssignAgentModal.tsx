@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
 import { UserCheckIcon, XIcon, CheckedIcon } from '@/icons'
 import { cn } from '@/lib/utils'
-import { MOCK_AGENTS, type Agent } from '@/mock/inbox'
+import { useAgents } from '@/hooks/inbox'
+import type { Agent } from '@/types/inbox'
 import {
   Modal,
   ModalContent,
@@ -30,6 +31,7 @@ export function AssignAgentModal({
   conversationContactName,
 }: AssignAgentModalProps) {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(currentAgentId ?? null)
+  const { data: agents = [] } = useAgents()
 
   const handleAssign = useCallback(() => {
     if (selectedAgentId) {
@@ -62,7 +64,7 @@ export function AssignAgentModal({
         </ModalHeader>
 
         <ModalBody className="space-y-1.5 py-3">
-          {MOCK_AGENTS.map((agent) => {
+          {agents.map((agent) => {
             const isSelected = selectedAgentId === agent.id
             return (
               <button

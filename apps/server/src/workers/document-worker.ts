@@ -1,16 +1,28 @@
 import { Worker } from "bullmq"
-
-const connection = { url: process.env.REDIS_URL || "redis://localhost:6379" }
+import { DOCUMENT_QUEUE, PROCESS_DOC_JOB, queueConnection } from "@/lib/queues"
+import { processDocument } from "@/modules/knowledge-base/processing"
 
 let worker: Worker | null = null
 
 export function startDocumentWorker() {
-  worker = new Worker("document-queue", async (job) => {
-    console.log(`[DocumentWorker] Memproses job ${job.id}:`, job.data)
-  }, { connection })
+  worker = new Worker(
+    DOCUMENT_QUEUE,
+    async (job) => {
+      if (job.name === PROCESS_DOC_JOB) {
+        const { documentId, storageKey } = job.data as { documentId: string; storageKey: string }
+        await processDocument(documentId, storageKey)
+        console.log(`[DocumentWorker] Dokumen ${documentId} selesai diproses.`)
+        return
+      }
+      console.warn(`[DocumentWorker] Job tidak dikenal: ${job.name}`)
+    },
+    { connection: queueConnection },
+  )
+
   worker.on("failed", (job, err) => {
     console.error(`[DocumentWorker] Job ${job?.id} gagal:`, err.message)
   })
+
   console.log("[DocumentWorker] Worker dokumen aktif.")
 }
 

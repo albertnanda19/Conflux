@@ -6,7 +6,7 @@ interface AgentRoleBadgeProps {
 }
 
 const ROLE_CONFIG: Record<AgentRole, { bg: string; text: string; label: string }> = {
-  super_admin: { bg: 'bg-brand-coral/10', text: 'text-brand-coral', label: 'Super Admin' },
+  super_admin: { bg: 'bg-coral/10', text: 'text-coral', label: 'Super Admin' },
   admin: { bg: 'bg-brand-blue-200', text: 'text-brand-blue-deep', label: 'Admin' },
   supervisor: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Supervisor' },
   agent: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Agent' },

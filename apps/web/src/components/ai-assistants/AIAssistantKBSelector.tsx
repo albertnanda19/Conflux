@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import { useKbDocuments } from '@/hooks/knowledge-base'
 
 interface AIAssistantKBSelectorProps {
   scope: 'global' | 'custom'
@@ -14,11 +14,10 @@ export function AIAssistantKBSelector({
   onScopeChange,
   onCustomDocsChange,
 }: AIAssistantKBSelectorProps) {
-  const { kbDocuments } = useAISettingsStore()
+  const { data: kbDocuments = [] } = useKbDocuments({ status: 'completed' })
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredDocs = kbDocuments.filter((doc) =>
-    doc.processingStatus === 'completed' &&
     doc.title.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
@@ -30,7 +29,7 @@ export function AIAssistantKBSelector({
     }
   }
 
-  const completedGlobalCount = kbDocuments.filter((d) => d.processingStatus === 'completed').length
+  const completedGlobalCount = kbDocuments.filter((d) => !d.aiAssistantId).length
 
   return (
     <div className="space-y-4">

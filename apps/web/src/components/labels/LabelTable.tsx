@@ -1,12 +1,11 @@
 import { PenIcon, TrashIcon } from '@/icons'
-import { type Label } from '@/mock/inbox'
-import { getLabelConversationCount } from '@/mock/labels'
+import { type LabelWithCount } from '@/lib/api/inbox'
 import { LabelBadge } from './LabelBadge'
 
 interface LabelTableProps {
-  labels: Label[]
-  onEdit: (label: Label) => void
-  onDelete: (label: Label) => void
+  labels: LabelWithCount[]
+  onEdit: (label: LabelWithCount) => void
+  onDelete: (label: LabelWithCount) => void
 }
 
 export function LabelTable({ labels, onEdit, onDelete }: LabelTableProps) {
@@ -27,7 +26,7 @@ export function LabelTable({ labels, onEdit, onDelete }: LabelTableProps) {
                 <LabelBadge name={label.name} color={label.color} size="md" />
               </td>
               <td className="py-3 px-4 text-sm text-steel text-right">
-                {getLabelConversationCount(label.id)}
+                {label.conversationCount ?? 0}
               </td>
               <td className="py-3 px-4 text-right">
                 <div className="flex items-center justify-end gap-1.5">

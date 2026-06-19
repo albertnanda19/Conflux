@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAgentsStore } from '@/stores/agents'
-import { useAIAssistantsStore } from '@/stores/ai-assistants'
+import { useAIAssistants, useAIAssistantMutations } from '@/hooks/ai-assistants'
 import { AgentProfileHeader } from '@/components/agents/AgentProfileHeader'
 import { AgentPerformanceCard } from '@/components/agents/AgentPerformanceCard'
 import { AgentActivityTimeline } from '@/components/agents/AgentActivityTimeline'
@@ -16,8 +16,8 @@ export function AgentProfilePage() {
   const agents = useAgentsStore((s) => s.agents)
   const cycleStatus = useAgentsStore((s) => s.cycleStatus)
   const editAgent = useAgentsStore((s) => s.editAgent)
-  const assistants = useAIAssistantsStore((s) => s.assistants)
-  const editAssistant = useAIAssistantsStore((s) => s.editAssistant)
+  const { data: assistants = [] } = useAIAssistants({})
+  const { assign } = useAIAssistantMutations()
 
   const agent = agents.find((a) => a.id === id)
   const [editOpen, setEditOpen] = useState(false)
@@ -30,22 +30,17 @@ export function AgentProfilePage() {
 
   const handleAssign = useCallback((assistantId: string) => {
     if (!id || !agent) return
-
-    const prevAgentId = assistants.find((a) => a.id === assistantId)?.assignedAgentId
-    if (prevAgentId && prevAgentId !== id) {
-      editAssistant(prevAgentId, { assignedAgentId: null })
-    }
-    editAssistant(assistantId, { assignedAgentId: id })
+    assign.mutate({ id: assistantId, agentId: id })
     editAgent(id, { aiAssistantId: assistantId })
     setAssignOpen(false)
-  }, [id, agent, assistants, editAssistant, editAgent])
+  }, [id, agent, assign, editAgent])
 
   const handleUnassign = useCallback(() => {
     if (!id || !agent?.aiAssistantId) return
-    editAssistant(agent.aiAssistantId, { assignedAgentId: null })
+    assign.mutate({ id: agent.aiAssistantId, agentId: null })
     editAgent(id, { aiAssistantId: null })
     setAssignOpen(false)
-  }, [id, agent?.aiAssistantId, editAssistant, editAgent])
+  }, [id, agent?.aiAssistantId, assign, editAgent])
 
   const handleToggleStatus = useCallback(() => {
     if (id) cycleStatus(id)

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { PenIcon, TrashIcon } from '@/icons'
 import type { AgentProfile } from '@/mock/agents'
-import { useAIAssistantsStore } from '@/stores/ai-assistants'
+import { useAIAssistants } from '@/hooks/ai-assistants'
 import { AgentAvatar } from './AgentAvatar'
 import { AgentStatusBadge } from './AgentStatusBadge'
 import { AgentRoleBadge } from './AgentRoleBadge'
@@ -14,7 +14,7 @@ interface AgentTableProps {
 
 export function AgentTable({ agents, onEdit, onDelete }: AgentTableProps) {
   const navigate = useNavigate()
-  const assistants = useAIAssistantsStore((s) => s.assistants)
+  const { data: assistants = [] } = useAIAssistants({})
 
   const getAssistantName = (aiAssistantId?: string | null) => {
     if (!aiAssistantId) return null

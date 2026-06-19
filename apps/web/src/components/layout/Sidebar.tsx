@@ -19,6 +19,8 @@ function NavIcon({ name }: { name: string }) {
       return <svg {...props}><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="11" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
     case "labels":
       return <svg {...props}><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/></svg>
+    case "channels":
+      return <svg {...props}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     case "campaigns":
       return <svg {...props}><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
     case "templates":
@@ -42,6 +44,7 @@ const navItems = [
   { to: "/ai-assistants", label: "AI Assistant", icon: "ai" },
   { to: "/pipeline", label: "Pipeline", icon: "pipeline" },
   { to: "/labels", label: "Label", icon: "labels" },
+  { to: "/channels", label: "Channel", icon: "channels" },
   { to: "/campaigns", label: "Campaign", icon: "campaigns" },
   { to: "/templates", label: "Template", icon: "templates" },
   { to: "/knowledge-base", label: "Knowledge Base", icon: "knowledge" },

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { getLabels } from '@/mock/labels'
+import { useLabels } from '@/hooks/inbox'
 
 interface LabelPickerProps {
   selectedIds: string[]
@@ -14,7 +14,7 @@ export function LabelPicker({ selectedIds, onToggle, onCreateNew, trigger }: Lab
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
 
-  const allLabels = getLabels()
+  const { data: allLabels = [] } = useLabels()
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allLabels

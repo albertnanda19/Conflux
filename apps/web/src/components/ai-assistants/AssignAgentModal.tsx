@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react'
-import type { AIAssistant } from '@/mock/ai-assistants'
-import { useAgentsStore } from '@/stores/agents'
+import type { AIAssistant } from '@/types/ai'
+import { useAgents } from '@/hooks/inbox'
 import { AgentAvatar } from '@/components/agents/AgentAvatar'
-import { AgentRoleBadge } from '@/components/agents/AgentRoleBadge'
 import { AgentStatusBadge } from '@/components/agents/AgentStatusBadge'
 
 interface AssignAgentModalProps {
@@ -14,16 +13,14 @@ interface AssignAgentModalProps {
 }
 
 export function AssignAgentModal({ open, onOpenChange, assistant, onAssign, onUnassign }: AssignAgentModalProps) {
-  const agents = useAgentsStore((s) => s.agents)
+  const { data: agents = [] } = useAgents()
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(assistant.assignedAgentId)
 
   const currentAgent = assistant.assignedAgentId
     ? agents.find((a) => a.id === assistant.assignedAgentId)
     : null
 
-  const availableAgents = agents.filter(
-    (a) => a.id !== assistant.assignedAgentId && a.role !== 'super_admin',
-  )
+  const availableAgents = agents.filter((a) => a.id !== assistant.assignedAgentId)
 
   const handleConfirm = useCallback(() => {
     if (selectedAgentId && selectedAgentId !== assistant.assignedAgentId) {
@@ -42,7 +39,7 @@ export function AssignAgentModal({ open, onOpenChange, assistant, onAssign, onUn
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
+      <div className="absolute inset-0 bg-black/30" onClick={() => onOpenChange(false)} />
       <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-md mx-4 border border-hairline overflow-hidden animate-in zoom-in-95 fade-in duration-200">
         <div className="px-6 py-4 border-b border-hairline-soft">
           <h2 className="text-base font-semibold text-ink">Assign AI Assistant ke Agent</h2>
@@ -59,7 +56,6 @@ export function AssignAgentModal({ open, onOpenChange, assistant, onAssign, onUn
                   <div>
                     <p className="text-sm font-medium text-ink">{currentAgent.name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <AgentRoleBadge role={currentAgent.role} />
                       <AgentStatusBadge status={currentAgent.status} />
                     </div>
                   </div>
@@ -96,7 +92,6 @@ export function AssignAgentModal({ open, onOpenChange, assistant, onAssign, onUn
                     <div className="flex-1 text-left">
                       <p className="text-sm font-medium text-ink">{agent.name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <AgentRoleBadge role={agent.role} />
                         <AgentStatusBadge status={agent.status} />
                       </div>
                     </div>

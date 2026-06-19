@@ -1,8 +1,8 @@
 import { Elysia } from "elysia"
+import { authPlugin } from "@/lib/auth-plugin"
+import { handleListMessages, handleSendMessage } from "./handlers"
 
-export const messagesRoutes = new Elysia({ prefix: "/messages" })
-  .get("/", async () => ({ success: true, message: "Belum diimplementasi." }))
-  .get("/:id", async () => ({ success: true, message: "Belum diimplementasi." }))
-  .post("/", async () => ({ success: true, message: "Belum diimplementasi." }))
-  .put("/:id", async () => ({ success: true, message: "Belum diimplementasi." }))
-  .delete("/:id", async () => ({ success: true, message: "Belum diimplementasi." }))
+export const messagesRoutes = new Elysia({ prefix: "/conversations" })
+  .use(authPlugin)
+  .get("/:id/messages", ({ auth, params, query }) => handleListMessages(auth, params.id, query), { detail: { summary: "Daftar pesan percakapan (cursor)" } })
+  .post("/:id/messages", ({ auth, params, body }) => handleSendMessage(auth, params.id, body), { detail: { summary: "Kirim pesan keluar" } })

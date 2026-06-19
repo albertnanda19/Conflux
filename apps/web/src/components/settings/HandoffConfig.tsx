@@ -1,23 +1,30 @@
 import { useState, useCallback } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import type { HandoffConfig as HandoffConfigType } from '@/types/ai'
 
-export function HandoffConfig() {
-  const {
-    handoffConfig,
-    addKeyword,
-    removeKeyword,
-    toggleConversionSignal,
-    updateHandoffConfig,
-  } = useAISettingsStore()
+interface HandoffConfigProps {
+  handoffConfig: HandoffConfigType
+  onChange: (next: HandoffConfigType) => void
+}
+
+export function HandoffConfig({ handoffConfig, onChange }: HandoffConfigProps) {
   const [keywordInput, setKeywordInput] = useState('')
 
   const handleAddKeyword = useCallback(() => {
     const val = keywordInput.trim()
     if (val && !handoffConfig.triggerKeywords.includes(val)) {
-      addKeyword(val)
+      onChange({ ...handoffConfig, triggerKeywords: [...handoffConfig.triggerKeywords, val] })
       setKeywordInput('')
     }
-  }, [keywordInput, handoffConfig.triggerKeywords, addKeyword])
+  }, [keywordInput, handoffConfig, onChange])
+
+  const removeKeyword = (kw: string) =>
+    onChange({ ...handoffConfig, triggerKeywords: handoffConfig.triggerKeywords.filter((k) => k !== kw) })
+
+  const toggleConversionSignal = (csId: string) =>
+    onChange({
+      ...handoffConfig,
+      conversionSignals: handoffConfig.conversionSignals.map((cs) => (cs.id === csId ? { ...cs, enabled: !cs.enabled } : cs)),
+    })
 
   return (
     <div className="space-y-8">
@@ -105,7 +112,7 @@ export function HandoffConfig() {
         </p>
         <textarea
           value={handoffConfig.handoffMessage}
-          onChange={(e) => updateHandoffConfig({ handoffMessage: e.target.value })}
+          onChange={(e) => onChange({ ...handoffConfig, handoffMessage: e.target.value })}
           rows={3}
           className="w-full text-sm text-ink bg-canvas border border-hairline-soft rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-brand-blue-deep focus:ring-offset-1"
         />
@@ -123,7 +130,7 @@ export function HandoffConfig() {
           min={1}
           max={50}
           value={handoffConfig.maxAiMessages}
-          onChange={(e) => updateHandoffConfig({ maxAiMessages: Math.max(1, Number(e.target.value)) })}
+          onChange={(e) => onChange({ ...handoffConfig, maxAiMessages: Math.max(1, Number(e.target.value)) })}
           className="w-16 text-center text-sm font-medium text-ink bg-canvas border border-hairline-soft rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-blue-deep focus:ring-offset-1"
         />
       </div>
@@ -136,7 +143,7 @@ export function HandoffConfig() {
           </p>
         </div>
         <button
-          onClick={() => updateHandoffConfig({ priorityNotification: !handoffConfig.priorityNotification })}
+          onClick={() => onChange({ ...handoffConfig, priorityNotification: !handoffConfig.priorityNotification })}
           className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${
             handoffConfig.priorityNotification ? 'bg-emerald-500' : 'bg-hairline'
           }`}

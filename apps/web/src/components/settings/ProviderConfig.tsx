@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef } from 'react'
-import { useAISettingsStore } from '@/stores/ai-settings'
+import { useState } from 'react'
+import { useAiSettings, useAiSettingsMutations } from '@/hooks/ai-settings'
 import { Badge } from '@/components/ui/badge'
 import { CheckedIcon } from '@/icons'
 import { cn } from '@/lib/utils'
-import type { AIProvider } from '@/mock/ai-settings'
+import type { AIProvider } from '@/types/ai'
 
 const PROVIDER_ICONS: Record<string, string> = {
   'Google Gemini': '✦',
@@ -15,167 +15,124 @@ const STATUS_BADGE: Record<AIProvider['status'], { label: string; variant: strin
   active: { label: 'Primary', variant: 'success' },
   fallback: { label: 'Fallback', variant: 'info' },
   disabled: { label: 'Nonaktif', variant: 'default' },
-  error: { label: 'Error', variant: 'error' },
+  error: { label: 'Tanpa API Key', variant: 'error' },
 }
 
 export function ProviderConfig() {
-  const { providers, toggleProvider, reorderProviders, updateProvider } = useAISettingsStore()
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [overIndex, setOverIndex] = useState<number | null>(null)
+  const { data, isLoading } = useAiSettings()
+  const { updateProvider } = useAiSettingsMutations()
   const [editingId, setEditingId] = useState<string | null>(null)
-  const dragRef = useRef<HTMLDivElement>(null)
 
-  const sorted = [...providers].sort((a, b) => a.priority - b.priority)
+  if (isLoading || !data) {
+    return <div className="h-24 rounded-xl bg-surface-soft animate-pulse" />
+  }
 
-  const handleDragStart = useCallback((index: number) => {
-    setDragIndex(index)
-  }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    setOverIndex(index)
-  }, [])
-
-  const handleDrop = useCallback(
-    (dropIndex: number) => {
-      if (dragIndex !== null && dragIndex !== dropIndex) {
-        reorderProviders(dragIndex, dropIndex)
-      }
-      setDragIndex(null)
-      setOverIndex(null)
-    },
-    [dragIndex, reorderProviders],
-  )
-
-  const handleDragEnd = useCallback(() => {
-    setDragIndex(null)
-    setOverIndex(null)
-  }, [])
+  const sorted = [...data.providers].sort((a, b) => a.priority - b.priority)
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-stone font-medium uppercase tracking-wider">
-          Fallback Chain — Drag untuk ubah urutan
-        </p>
-      </div>
+      <p className="text-xs text-stone font-medium uppercase tracking-wider mb-2">
+        Fallback Chain — dicoba berurutan sesuai prioritas
+      </p>
 
-      {sorted.map((provider, index) => {
+      {sorted.map((provider) => {
         const statusInfo = STATUS_BADGE[provider.status]
         const isEditing = editingId === provider.id
-        const isDragging = dragIndex === index
-        const isOver = overIndex === index && dragIndex !== null && dragIndex !== index
         const icon = PROVIDER_ICONS[provider.name] ?? '●'
 
         return (
-          <div
-            key={provider.id}
-            ref={dragRef}
-            draggable
-            onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDrop={() => handleDrop(index)}
-            onDragEnd={handleDragEnd}
-            className={cn(
-              'card-base p-0 transition-all',
-              isDragging && 'opacity-50 scale-[0.98]',
-              isOver && 'ring-2 ring-brand-blue-deep ring-offset-2',
-            )}
-          >
-            <div className="flex items-stretch">
-              <div className="w-10 flex items-center justify-center text-stone cursor-grab active:cursor-grabbing border-r border-hairline-soft flex-shrink-0 select-none">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
+          <div key={provider.id} className="card-base p-0">
+            <div className="flex-1 p-4 min-w-0">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{icon}</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-ink">{provider.name}</span>
+                      <Badge variant={statusInfo.variant as 'success' | 'info' | 'default' | 'error'}>
+                        {statusInfo.label}
+                      </Badge>
+                      <span className="text-[10px] text-stone">Prioritas {provider.priority}</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updateProvider.mutate({ id: provider.id, patch: { isEnabled: !provider.isEnabled } })}
+                  className={cn(
+                    'relative w-10 h-6 rounded-full transition-colors flex-shrink-0',
+                    !provider.isEnabled ? 'bg-hairline' : 'bg-emerald-500',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform',
+                      !provider.isEnabled ? 'translate-x-0' : 'translate-x-4',
+                    )}
+                  />
+                </button>
               </div>
 
-              <div className="flex-1 p-4 min-w-0">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{icon}</span>
+              <div className="flex items-center gap-3 text-xs text-steel mb-3">
+                <span className="font-mono bg-surface rounded px-1.5 py-0.5">{provider.model}</span>
+                <span className={cn('font-mono rounded px-1.5 py-0.5', provider.hasKey ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500')}>
+                  {provider.hasKey ? 'API Key terpasang' : 'API Key belum diset (env)'}
+                </span>
+              </div>
+
+              {isEditing ? (
+                <div className="space-y-3 pt-3 border-t border-hairline-soft">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-ink">{provider.name}</span>
-                        <Badge variant={statusInfo.variant as 'success' | 'info' | 'default' | 'error'}>
-                          {statusInfo.label}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-steel mt-0.5">{provider.description}</p>
+                      <label className="text-xs font-medium text-steel mb-1 block">Prioritas</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        defaultValue={provider.priority}
+                        onBlur={(e) => updateProvider.mutate({ id: provider.id, patch: { priority: Number(e.target.value) } })}
+                        className="w-full h-8 rounded-md border border-hairline bg-canvas px-2.5 text-sm text-ink focus:outline-none focus:border-2 focus:border-brand-blue-deep"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-steel mb-1 block">Max Tokens</label>
+                      <input
+                        type="number"
+                        defaultValue={provider.maxTokens}
+                        onBlur={(e) => updateProvider.mutate({ id: provider.id, patch: { maxTokens: Number(e.target.value) } })}
+                        className="w-full h-8 rounded-md border border-hairline bg-canvas px-2.5 text-sm text-ink focus:outline-none focus:border-2 focus:border-brand-blue-deep"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-steel mb-1 block">
+                        Temperature: {provider.temperature.toFixed(1)}
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        defaultValue={provider.temperature}
+                        onChange={(e) => updateProvider.mutate({ id: provider.id, patch: { temperature: Number(e.target.value) } })}
+                        className="w-full mt-1.5 accent-brand-blue-deep"
+                      />
                     </div>
                   </div>
                   <button
-                    onClick={() => toggleProvider(provider.id)}
-                    className={cn(
-                      'relative w-10 h-6 rounded-full transition-colors flex-shrink-0',
-                      provider.status === 'disabled' ? 'bg-hairline' : 'bg-emerald-500',
-                    )}
+                    onClick={() => setEditingId(null)}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
                   >
-                    <span
-                      className={cn(
-                        'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform',
-                        provider.status === 'disabled' ? 'translate-x-0' : 'translate-x-4',
-                      )}
-                    />
+                    <CheckedIcon size={14} color="currentColor" />
+                    Selesai
                   </button>
                 </div>
-
-                {provider.status !== 'disabled' && (
-                  <>
-                    <div className="flex items-center gap-3 text-xs text-steel mb-3">
-                      <span className="font-mono bg-surface rounded px-1.5 py-0.5">{provider.model}</span>
-                      <span className="font-mono bg-surface rounded px-1.5 py-0.5">{provider.apiKey}</span>
-                    </div>
-
-                    {isEditing ? (
-                      <div className="space-y-3 pt-3 border-t border-hairline-soft">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-medium text-steel mb-1 block">Max Tokens</label>
-                            <input
-                              type="number"
-                              value={provider.maxTokens}
-                              onChange={(e) =>
-                                updateProvider(provider.id, { maxTokens: Number(e.target.value) })
-                              }
-                              className="w-full h-8 rounded-md border border-hairline bg-canvas px-2.5 text-sm text-ink focus:outline-none focus:border-2 focus:border-brand-blue-deep"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-steel mb-1 block">
-                              Temperature: {provider.temperature.toFixed(1)}
-                            </label>
-                            <input
-                              type="range"
-                              min="0"
-                              max="2"
-                              step="0.1"
-                              value={provider.temperature}
-                              onChange={(e) =>
-                                updateProvider(provider.id, { temperature: Number(e.target.value) })
-                              }
-                              className="w-full mt-1.5 accent-brand-blue-deep"
-                            />
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
-                        >
-                          <CheckedIcon size={14} color="currentColor" />
-                          Selesai
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setEditingId(provider.id)}
-                        className="text-xs text-brand-blue-deep hover:underline"
-                      >
-                        Pengaturan lanjutan →
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+              ) : (
+                <button
+                  onClick={() => setEditingId(provider.id)}
+                  className="text-xs text-brand-blue-deep hover:underline"
+                >
+                  Pengaturan lanjutan →
+                </button>
+              )}
             </div>
           </div>
         )

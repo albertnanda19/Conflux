@@ -1,34 +1,31 @@
 import { useMemo, useState, useCallback } from 'react'
 import { useAIAssistantsStore } from '@/stores/ai-assistants'
+import { useAIAssistants, useAIAssistantMutations } from '@/hooks/ai-assistants'
 import { AIAssistantStats } from '@/components/ai-assistants/AIAssistantStats'
 import { AIAssistantCard } from '@/components/ai-assistants/AIAssistantCard'
 import { AIAssistantFormModal } from '@/components/ai-assistants/AIAssistantFormModal'
-import { MOCK_WORKING_HOURS, MOCK_HANDOFF_CONFIG } from '@/mock/ai-settings'
-import type { AIAssistant } from '@/mock/ai-assistants'
+import type { AIAssistant } from '@/types/ai'
 
 export function AIAssistantsPage() {
-  const assistants = useAIAssistantsStore((s) => s.assistants)
   const searchQuery = useAIAssistantsStore((s) => s.searchQuery)
   const statusFilter = useAIAssistantsStore((s) => s.statusFilter)
   const setSearchQuery = useAIAssistantsStore((s) => s.setSearchQuery)
   const setStatusFilter = useAIAssistantsStore((s) => s.setStatusFilter)
-  const getFilteredAssistants = useAIAssistantsStore((s) => s.getFilteredAssistants)
-  const addAssistant = useAIAssistantsStore((s) => s.addAssistant)
-  const editAssistant = useAIAssistantsStore((s) => s.editAssistant)
-  const removeAssistant = useAIAssistantsStore((s) => s.removeAssistant)
 
-  const filtered = useMemo(() => getFilteredAssistants(), [assistants, searchQuery, statusFilter, getFilteredAssistants])
+  const { data: filtered = [], isLoading } = useAIAssistants({ search: searchQuery, status: statusFilter })
+  const { data: allAssistants = [] } = useAIAssistants({})
+  const { create, update, remove } = useAIAssistantMutations()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<AIAssistant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AIAssistant | null>(null)
 
   const stats = useMemo(() => ({
-    total: assistants.length,
-    active: assistants.filter((a) => a.status === 'active').length,
-    draft: assistants.filter((a) => a.status === 'draft').length,
-    unassigned: assistants.filter((a) => !a.assignedAgentId).length,
-  }), [assistants])
+    total: allAssistants.length,
+    active: allAssistants.filter((a) => a.status === 'active').length,
+    draft: allAssistants.filter((a) => a.status === 'draft').length,
+    unassigned: allAssistants.filter((a) => !a.assignedAgentId).length,
+  }), [allAssistants])
 
   const handleEdit = useCallback((assistant: AIAssistant) => {
     setEditing(assistant)
@@ -41,31 +38,19 @@ export function AIAssistantsPage() {
 
   const confirmDelete = useCallback(() => {
     if (deleteTarget) {
-      removeAssistant(deleteTarget.id)
+      remove.mutate(deleteTarget.id)
       setDeleteTarget(null)
     }
-  }, [deleteTarget, removeAssistant])
+  }, [deleteTarget, remove])
 
   const handleSave = useCallback((data: { name: string; description: string; avatar: string; persona: { name: string; language: string; tone: 'formal' | 'semi-formal' | 'casual'; systemPrompt: string } }) => {
     if (editing) {
-      editAssistant(editing.id, data)
+      update.mutate({ id: editing.id, patch: data })
     } else {
-      addAssistant({
-        ...data,
-        status: 'draft',
-        workingHours: { ...MOCK_WORKING_HOURS, days: MOCK_WORKING_HOURS.days.map((d) => ({ ...d })) },
-        handoffConfig: {
-          ...MOCK_HANDOFF_CONFIG,
-          triggerKeywords: [...MOCK_HANDOFF_CONFIG.triggerKeywords],
-          conversionSignals: MOCK_HANDOFF_CONFIG.conversionSignals.map((s) => ({ ...s })),
-        },
-        knowledgeBaseScope: 'global',
-        customKBDocumentIds: [],
-        assignedAgentId: null,
-      })
+      create.mutate({ ...data, status: 'draft' })
     }
     setEditing(null)
-  }, [editing, addAssistant, editAssistant])
+  }, [editing, create, update])
 
   return (
     <div className="p-8 h-full">
@@ -124,7 +109,13 @@ export function AIAssistantsPage() {
         </div>
       </div>
 
-      {filtered.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-2xl bg-surface-soft animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((assistant, i) => (
             <AIAssistantCard
@@ -164,7 +155,7 @@ export function AIAssistantsPage() {
 
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteTarget(null)} />
           <div className="relative bg-canvas rounded-2xl shadow-xl w-full max-w-sm mx-4 border border-hairline p-6 text-center animate-in zoom-in-95 fade-in duration-200">
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-xl mx-auto mb-4">
               🗑️
